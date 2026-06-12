@@ -1,0 +1,104 @@
+/// Centralized enums used across the data layer.
+///
+/// All enums serialize to/from their stable `wire` string so that the value
+/// stored in Firestore never depends on the Dart enum index (which can shift
+/// when reordering). Dropdown labels are kept separate from the wire value.
+library;
+
+/// Application roles. Drives both routing and query scoping.
+enum UserRole {
+  superAdmin('super_admin'), // Us — manages subscriptions across all tenants.
+  companyAdmin('company_admin'), // Company-wide stats + all agents.
+  agent('agent'); // Creates contracts, sees only their own stats.
+
+  const UserRole(this.wire);
+  final String wire;
+
+  static UserRole fromWire(String? value) => UserRole.values.firstWhere(
+        (r) => r.wire == value,
+        orElse: () => UserRole.agent,
+      );
+}
+
+/// Contract type discriminator stored as `contract_type`.
+enum ContractType {
+  rent('rent'),
+  sale('sale');
+
+  const ContractType(this.wire);
+  final String wire;
+
+  static ContractType fromWire(String? value) => ContractType.values.firstWhere(
+        (t) => t.wire == value,
+        orElse: () => ContractType.rent,
+      );
+}
+
+/// Lifecycle of a single rent installment.
+/// 0 = pending, 1 = received from tenant, 2 = delivered to owner.
+enum PaymentStatus {
+  pending(0),
+  receivedFromTenant(1),
+  deliveredToOwner(2);
+
+  const PaymentStatus(this.code);
+  final int code;
+
+  static PaymentStatus fromCode(int? code) => PaymentStatus.values.firstWhere(
+        (s) => s.code == code,
+        orElse: () => PaymentStatus.pending,
+      );
+}
+
+/// Whether a listing is an Offer (`properties`) or a Demand (`requests`).
+enum ListingKind {
+  offer('offer'),
+  demand('demand');
+
+  const ListingKind(this.wire);
+  final String wire;
+
+  static ListingKind fromWire(String? value) => ListingKind.values.firstWhere(
+        (k) => k.wire == value,
+        orElse: () => ListingKind.offer,
+      );
+}
+
+/// Dropdown-backed property type.
+enum PropertyType {
+  apartment('apartment', 'Apartment'),
+  house('house', 'House'),
+  villa('villa', 'Villa'),
+  land('land', 'Land'),
+  shop('shop', 'Shop / Commercial'),
+  office('office', 'Office');
+
+  const PropertyType(this.wire, this.label);
+  final String wire;
+  final String label;
+
+  static PropertyType fromWire(String? value) => PropertyType.values.firstWhere(
+        (p) => p.wire == value,
+        orElse: () => PropertyType.apartment,
+      );
+}
+
+/// Dropdown-backed location enum. Extend with your real city/district list.
+enum PropertyLocation {
+  erbil('erbil', 'Erbil'),
+  sulaymaniyah('sulaymaniyah', 'Sulaymaniyah'),
+  duhok('duhok', 'Duhok'),
+  kirkuk('kirkuk', 'Kirkuk'),
+  baghdad('baghdad', 'Baghdad'),
+  basra('basra', 'Basra');
+
+  const PropertyLocation(this.wire, this.label);
+  final String wire;
+  final String label;
+
+  static PropertyLocation fromWire(String? value) =>
+      PropertyLocation.values.firstWhere(
+        (l) => l.wire == value,
+        orElse: () => PropertyLocation.erbil,
+      );
+}

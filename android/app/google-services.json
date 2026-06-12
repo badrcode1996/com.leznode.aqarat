@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "621558994857",
+    "project_id": "aqarat-49fc2",
+    "storage_bucket": "aqarat-49fc2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:621558994857:android:6bfeddcf9007283a7d96b8",
+        "android_client_info": {
+          "package_name": "com.example.aqarat"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBgUe0KaGRhlHOKF9q-iR6Wcb6vKZ2Vpmc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:621558994857:android:81fd734f356269bc7d96b8",
+        "android_client_info": {
+          "package_name": "com.leznode.aqarat"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBgUe0KaGRhlHOKF9q-iR6Wcb6vKZ2Vpmc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

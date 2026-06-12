@@ -1,0 +1,107 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../models/company_model.dart';
+import '../models/enums.dart';
+import 'auth_repository.dart';
+
+/// The authenticated user's tenant context. Single source of truth that every
+/// data query depends on — change it and all dependent providers rebuild +
+/// dispose, which is what structurally prevents tenant data bleed-through.
+class SessionUser {
+  const SessionUser({
+    required this.uid,
+    required this.companyId,
+    required this.role,
+    required this.displayName,
+    required this.phone,
+  });
+
+  final String uid;
+  final String companyId;
+  final UserRole role;
+  final String displayName;
+
+  /// The signed-in user's own phone (their Global Market contact number).
+  final String phone;
+
+  String get agentId => uid;
+
+  bool get isCompanyWide =>
+      role == UserRole.companyAdmin || role == UserRole.superAdmin;
+}
+
+// --------------------------------------------------------------------------
+// Singletons
+// --------------------------------------------------------------------------
+final firestoreProvider =
+    Provider<FirebaseFirestore>((ref) => FirebaseFirestore.instance);
+
+final firebaseAuthProvider =
+    Provider<FirebaseAuth>((ref) => FirebaseAuth.instance);
+
+final authRepositoryProvider = Provider<AuthRepository>((ref) {
+  return AuthRepository(ref.watch(firebaseAuthProvider));
+});
+
+/// Raw Firebase Auth state (null = signed out).
+final authStateProvider = StreamProvider<User?>((ref) {
+  return ref.watch(authRepositoryProvider).authStateChanges();
+});
+
+/// Resolves the full [SessionUser] for the signed-in account by reading the
+/// `users/{uid}` profile and its company. Returns:
+///   - null when signed out, OR
+///   - null when signed in but no profile yet (needs onboarding).
+final sessionProvider = FutureProvider<SessionUser?>((ref) async {
+  final user = ref.watch(authStateProvider).value;
+  if (user == null) return null;
+
+  final db = ref.watch(firestoreProvider);
+  final userSnap = await db.collection('users').doc(user.uid).get();
+  if (!userSnap.exists) return null; // signed in, but not provisioned yet
+
+  final data = userSnap.data()!;
+  final role = UserRole.fromWire(data['role'] as String?);
+
+  // Super Admin is identified by their profile document (role == super_admin),
+  // NOT by a hardcoded email. This allows any number of super admins, managed
+  // as documents in Firestore. They have no company.
+  if (role == UserRole.superAdmin) {
+    return SessionUser(
+      uid: user.uid,
+      companyId: '',
+      role: UserRole.superAdmin,
+      displayName: data['display_name'] as String? ?? user.email ?? '',
+      phone: '',
+    );
+  }
+
+  return SessionUser(
+    uid: user.uid,
+    companyId: data['company_id'] as String? ?? '',
+    role: role,
+    displayName: data['display_name'] as String? ?? user.email ?? '',
+    phone: data['phone'] as String? ?? '',
+  );
+});
+
+/// The signed-in user's company (for the contract PDF header, etc.).
+final currentCompanyProvider = FutureProvider<Company?>((ref) async {
+  final user = ref.watch(currentUserProvider);
+  if (user.companyId.isEmpty) return null;
+  final snap =
+      await ref.watch(firestoreProvider).collection('companies').doc(user.companyId).get();
+  return snap.exists ? Company.fromJson(snap.id, snap.data()!) : null;
+});
+
+/// Synchronous access for screens shown only when a session exists.
+/// Throws if read before the session resolves — by design.
+final currentUserProvider = Provider<SessionUser>((ref) {
+  final session = ref.watch(sessionProvider).value;
+  if (session == null) {
+    throw StateError('No active session — user must be authenticated first.');
+  }
+  return session;
+});

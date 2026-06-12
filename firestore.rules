@@ -1,0 +1,93 @@
+rules_version = '2';
+
+// =============================================================================
+// Aqarat — multi-tenant security rules.
+//
+// Tenant boundary: a document is only readable/writable by users whose
+// `users/{uid}.company_id` matches the document's `company_id`.
+//
+// Super Admins (SaaS owners) are identified by their profile document
+// (users/{uid}.role == 'super_admin') — NOT by a hardcoded email. This supports
+// any number of super admins, managed as Firestore documents. They may
+// provision companies and users across all tenants.
+// =============================================================================
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function profileExists() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function userData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isSuperAdmin() {
+      return isSignedIn() && profileExists()
+        && userData().role == 'super_admin';
+    }
+
+    // True if the signed-in user has a profile and belongs to company [cid].
+    function sameCompany(cid) {
+      return isSignedIn() && profileExists() && userData().company_id == cid;
+    }
+
+    // --- User profiles.
+    //     Super Admin provisions users. A normal user may create only their own
+    //     profile and may never self-assign super_admin or change their
+    //     company_id / role afterwards (no tenant hop / privilege escalation).
+    match /users/{uid} {
+      allow read: if isSuperAdmin() || (isSignedIn() &&
+        (request.auth.uid == uid || sameCompany(resource.data.company_id)));
+      allow create: if isSuperAdmin() || (isSignedIn()
+        && request.auth.uid == uid
+        && request.resource.data.role != 'super_admin');
+      allow update: if isSuperAdmin() || (isSignedIn()
+        && request.auth.uid == uid
+        && request.resource.data.company_id == resource.data.company_id
+        && request.resource.data.role == resource.data.role);
+      allow delete: if isSuperAdmin();
+    }
+
+    // --- Companies.
+    match /companies/{companyId} {
+      allow read: if isSuperAdmin() || sameCompany(companyId);
+      allow create: if isSuperAdmin() || (isSignedIn()
+        && request.resource.data.owner_uid == request.auth.uid);
+      allow update, delete: if isSuperAdmin() || sameCompany(companyId);
+    }
+
+    // --- Aggregated stats: one doc per company (doc id == company_id).
+    match /company_stats/{companyId} {
+      allow read, write: if isSuperAdmin() || sameCompany(companyId);
+    }
+
+    // --- Contracts: strictly company-scoped.
+    match /contracts/{id} {
+      allow read:   if isSuperAdmin() || sameCompany(resource.data.company_id);
+      allow create: if sameCompany(request.resource.data.company_id);
+      allow update, delete: if sameCompany(resource.data.company_id);
+    }
+
+    // --- Listings: own company sees full data; any signed-in user can READ a
+    //     public listing (Global Market). Owner fields are hidden in the UI,
+    //     not the rules — see PublicListingView in the app.
+    match /properties/{id} {
+      allow read:   if isSuperAdmin() || resource.data.is_public == true ||
+                       sameCompany(resource.data.company_id);
+      allow create: if sameCompany(request.resource.data.company_id);
+      allow update, delete: if sameCompany(resource.data.company_id);
+    }
+
+    match /requests/{id} {
+      allow read:   if isSuperAdmin() || resource.data.is_public == true ||
+                       sameCompany(resource.data.company_id);
+      allow create: if sameCompany(request.resource.data.company_id);
+      allow update, delete: if sameCompany(resource.data.company_id);
+    }
+  }
+}
