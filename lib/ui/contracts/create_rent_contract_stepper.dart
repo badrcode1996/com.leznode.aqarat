@@ -5,12 +5,10 @@ import 'package:intl/intl.dart';
 import '../../auth/session.dart';
 import '../../data/contract_repository.dart';
 import '../../models/contract_model.dart';
+import '../../models/enums.dart';
 
-/// 3-step Stepper for creating a RENT contract.
-///
+/// 3-step Stepper for creating a RENT contract — mirrors the paper form.
 /// Step 1: Parties · Step 2: Property · Step 3: Financials/Dates
-/// The 12-month installment schedule is generated automatically from the
-/// chosen start date (no per-month columns).
 class CreateRentContractStepper extends ConsumerStatefulWidget {
   const CreateRentContractStepper({super.key});
 
@@ -28,50 +26,105 @@ class _CreateRentContractStepperState
   final _propertyKey = GlobalKey<FormState>();
   final _financialsKey = GlobalKey<FormState>();
 
-  final _clientName = TextEditingController();
-  final _clientMobile = TextEditingController();
-  final _propertyTitle = TextEditingController();
-  final _monthlyAmount = TextEditingController();
+  // Step 1 — parties
+  final _party1Name = TextEditingController();
+  final _party1Mobile = TextEditingController();
+  final _party2Name = TextEditingController();
+  final _party2Mobile = TextEditingController();
+  // Step 2 — property
+  final _propertyType = TextEditingController();
+  final _projectName = TextEditingController();
+  final _propertyNumber = TextEditingController();
+  final _area = TextEditingController();
+  // Step 3 — financials / dates
+  final _voucherNumber = TextEditingController();
+  final _rentAmount = TextEditingController();
+  final _rentalPeriod = TextEditingController();
+  final _downPayment = TextEditingController();
+  final _downPaymentMonths = TextEditingController();
+  final _paymentFrequency = TextEditingController(text: '1');
+  final _guarantee = TextEditingController();
+  final _gracePeriod = TextEditingController();
+  final _rentalPurpose = TextEditingController();
+  final _lateFee = TextEditingController();
 
+  Currency _currency = Currency.iqd;
   DateTime _startDate = DateTime.now();
+  DateTime _handoverDate = DateTime.now().add(const Duration(days: 365));
+
   static final _date = DateFormat('yyyy/MM/dd');
 
   @override
   void dispose() {
     for (final c in [
-      _clientName,
-      _clientMobile,
-      _propertyTitle,
-      _monthlyAmount,
+      _party1Name,
+      _party1Mobile,
+      _party2Name,
+      _party2Mobile,
+      _propertyType,
+      _projectName,
+      _propertyNumber,
+      _area,
+      _voucherNumber,
+      _rentAmount,
+      _rentalPeriod,
+      _downPayment,
+      _downPaymentMonths,
+      _paymentFrequency,
+      _guarantee,
+      _gracePeriod,
+      _rentalPurpose,
+      _lateFee,
     ]) {
       c.dispose();
     }
     super.dispose();
   }
 
+  num _n(TextEditingController c) => num.tryParse(c.text.trim()) ?? 0;
+  int _i(TextEditingController c) => int.tryParse(c.text.trim()) ?? 0;
+
   Future<void> _submit() async {
     if (!_financialsKey.currentState!.validate()) return;
     setState(() => _saving = true);
 
     final user = ref.read(currentUserProvider);
+    final freq = _i(_paymentFrequency) < 1 ? 1 : _i(_paymentFrequency);
     final contract = RentContract(
       id: '',
       companyId: user.companyId,
       agentId: user.agentId,
-      clientName: _clientName.text.trim(),
-      clientMobile: _clientMobile.text.trim(),
-      propertyTitle: _propertyTitle.text.trim(),
       createdAt: DateTime.now(),
-      monthlyAmount: num.tryParse(_monthlyAmount.text.trim()) ?? 0,
-      installments: RentContract.buildSchedule(_startDate), // 12 months
+      voucherNumber: _voucherNumber.text.trim(),
+      party1Name: _party1Name.text.trim(),
+      party1Mobile: _party1Mobile.text.trim(),
+      party2Name: _party2Name.text.trim(),
+      party2Mobile: _party2Mobile.text.trim(),
+      propertyType: _propertyType.text.trim(),
+      projectName: _projectName.text.trim(),
+      propertyNumber: _propertyNumber.text.trim(),
+      area: _n(_area),
+      rentAmount: _n(_rentAmount),
+      currency: _currency,
+      rentalPeriod: _rentalPeriod.text.trim(),
+      downPayment: _n(_downPayment),
+      downPaymentMonths: _i(_downPaymentMonths),
+      startDate: _startDate,
+      handoverDate: _handoverDate,
+      paymentFrequencyMonths: freq,
+      guaranteeAmount: _n(_guarantee),
+      gracePeriod: _gracePeriod.text.trim(),
+      rentalPurpose: _rentalPurpose.text.trim(),
+      lateFeePerDay: _n(_lateFee),
+      installments: RentContract.buildSchedule(_startDate, everyMonths: freq),
     );
 
     try {
       final id =
           await ref.read(contractRepositoryProvider).createContract(contract);
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('گرێبەستی کرێ دروستکرا ($id)')));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('گرێبەستی کرێ دروستکرا ($id)')));
         Navigator.of(context).pop(id);
       }
     } catch (e) {
@@ -131,18 +184,12 @@ class _CreateRentContractStepperState
               key: _partiesKey,
               child: Column(
                 children: [
-                  TextFormField(
-                    controller: _clientName,
-                    decoration:
-                        const InputDecoration(labelText: 'ناوی کرێچی'),
-                    validator: _required,
-                  ),
-                  TextFormField(
-                    controller: _clientMobile,
-                    keyboardType: TextInputType.phone,
-                    decoration: const InputDecoration(labelText: 'مۆبایل'),
-                    validator: _required,
-                  ),
+                  _text(_party1Name, 'لایەنی یەکەم'),
+                  _text(_party1Mobile, 'ژمارەی مۆبایل',
+                      keyboard: TextInputType.phone),
+                  _text(_party2Name, 'لایەنی دووەم'),
+                  _text(_party2Mobile, 'ژمارەی مۆبایل',
+                      keyboard: TextInputType.phone),
                 ],
               ),
             ),
@@ -153,11 +200,15 @@ class _CreateRentContractStepperState
             state: _step > 1 ? StepState.complete : StepState.indexed,
             content: Form(
               key: _propertyKey,
-              child: TextFormField(
-                controller: _propertyTitle,
-                decoration:
-                    const InputDecoration(labelText: 'ناونیشانی موڵک'),
-                validator: _required,
+              child: Column(
+                children: [
+                  _text(_propertyType, 'جۆری موڵک'),
+                  _text(_projectName, 'پڕۆژە/گەرەک'),
+                  _text(_propertyNumber, 'ژمارەی عەقار'),
+                  _text(_area, 'ڕووبەر (م²)',
+                      keyboard: const TextInputType.numberWithOptions(
+                          decimal: true)),
+                ],
               ),
             ),
           ),
@@ -169,47 +220,71 @@ class _CreateRentContractStepperState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  TextFormField(
-                    controller: _monthlyAmount,
-                    keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true),
-                    decoration:
-                        const InputDecoration(labelText: 'کرێی مانگانە'),
-                    validator: (v) {
-                      final n = num.tryParse((v ?? '').trim());
-                      if (n == null || n <= 0) return 'بڕێکی دروست بنووسە';
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 12),
+                  _text(_voucherNumber, 'ژمارەی پسووله'),
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                          child: Text(
-                              'دەستپێکی قیستەکان: ${_date.format(_startDate)}')),
-                      TextButton.icon(
-                        icon: const Icon(Icons.calendar_today),
-                        label: const Text('بەروار'),
-                        onPressed: () async {
-                          final picked = await showDatePicker(
-                            context: context,
-                            initialDate: _startDate,
-                            firstDate: DateTime(2020),
-                            lastDate: DateTime(2100),
-                          );
-                          if (picked != null) {
-                            setState(() => _startDate = picked);
-                          }
-                        },
+                        flex: 2,
+                        child: _text(_rentAmount, 'بری کرێ',
+                            keyboard: const TextInputType.numberWithOptions(
+                                decimal: true)),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 12),
+                          child: DropdownButtonFormField<Currency>(
+                            initialValue: _currency,
+                            decoration:
+                                const InputDecoration(labelText: 'دراو'),
+                            items: Currency.values
+                                .map((c) => DropdownMenuItem(
+                                    value: c, child: Text(c.label)))
+                                .toList(),
+                            onChanged: (v) =>
+                                setState(() => _currency = v ?? Currency.iqd),
+                          ),
+                        ),
                       ),
                     ],
                   ),
+                  _text(_rentalPeriod, 'ماوەی بەکریگرتن'),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: _text(_downPayment, 'بری پێشەکی',
+                            keyboard: const TextInputType.numberWithOptions(
+                                decimal: true)),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _text(_downPaymentMonths, 'بۆ چەند مانگ',
+                            keyboard: TextInputType.number),
+                      ),
+                    ],
+                  ),
+                  _datePicker('بەرواری بەکریگرتن', _startDate,
+                      (d) => setState(() => _startDate = d)),
+                  _datePicker('بەرواری ڕادەستکردن', _handoverDate,
+                      (d) => setState(() => _handoverDate = d)),
+                  _text(_paymentFrequency, 'کرێدان چەند مانگ جارێک',
+                      keyboard: TextInputType.number),
+                  _text(_guarantee, 'بری دڵنیایی',
+                      keyboard: const TextInputType.numberWithOptions(
+                          decimal: true)),
+                  _text(_gracePeriod, 'ماوەی ڕێپێدان'),
+                  _text(_rentalPurpose, 'هۆکاری بەکری گرتن'),
+                  _text(_lateFee, 'بری دواکەوتن بۆ ڕۆژ',
+                      keyboard: const TextInputType.numberWithOptions(
+                          decimal: true)),
                   const Padding(
                     padding: EdgeInsets.only(top: 8),
-                    child: Text(
-                      '١٢ قیست بەشێوەی خۆکار دروست دەکرێن.',
-                      style: TextStyle(color: Colors.black54, fontSize: 12),
-                    ),
+                    child: Text('١٢ قیست بەشێوەی خۆکار دروست دەکرێن.',
+                        style:
+                            TextStyle(color: Colors.black54, fontSize: 12)),
                   ),
                 ],
               ),
@@ -220,6 +295,39 @@ class _CreateRentContractStepperState
     );
   }
 
-  String? _required(String? v) =>
-      (v == null || v.trim().isEmpty) ? 'پێویستە' : null;
+  Widget _text(TextEditingController c, String label,
+          {TextInputType? keyboard}) =>
+      Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: TextFormField(
+          controller: c,
+          keyboardType: keyboard,
+          decoration: InputDecoration(labelText: label),
+          validator: (v) =>
+              (v == null || v.trim().isEmpty) ? 'پێویستە' : null,
+        ),
+      );
+
+  Widget _datePicker(String label, DateTime value, ValueChanged<DateTime> onPick) =>
+      Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          children: [
+            Expanded(child: Text('$label: ${_date.format(value)}')),
+            TextButton.icon(
+              icon: const Icon(Icons.calendar_today, size: 18),
+              label: const Text('بەروار'),
+              onPressed: () async {
+                final picked = await showDatePicker(
+                  context: context,
+                  initialDate: value,
+                  firstDate: DateTime(2020),
+                  lastDate: DateTime(2100),
+                );
+                if (picked != null) onPick(picked);
+              },
+            ),
+          ],
+        ),
+      );
 }

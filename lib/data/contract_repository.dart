@@ -61,7 +61,7 @@ class ContractRepository {
       // Expected value added to the pipeline by this contract.
       final num expectedValue = switch (contract) {
         SaleContract s => s.totalPrice,
-        RentContract r => r.monthlyAmount * 12,
+        RentContract r => r.rentAmount * 12,
       };
 
       final updates = <String, dynamic>{
@@ -143,8 +143,8 @@ class ContractRepository {
       final wasReceived = oldStatus == PaymentStatus.receivedFromTenant;
       final nowReceived = newStatus == PaymentStatus.receivedFromTenant;
       num delta = 0;
-      if (!wasReceived && nowReceived) delta = contract.monthlyAmount;
-      if (wasReceived && !nowReceived) delta = -contract.monthlyAmount;
+      if (!wasReceived && nowReceived) delta = contract.rentAmount;
+      if (wasReceived && !nowReceived) delta = -contract.rentAmount;
 
       if (delta != 0) {
         txn.set(

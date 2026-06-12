@@ -20,6 +20,21 @@ enum UserRole {
       );
 }
 
+/// Currency used on a contract.
+enum Currency {
+  iqd('IQD', 'دینار'),
+  usd('USD', 'دۆلار');
+
+  const Currency(this.wire, this.label);
+  final String wire;
+  final String label;
+
+  static Currency fromWire(String? value) => Currency.values.firstWhere(
+        (c) => c.wire == value,
+        orElse: () => Currency.iqd,
+      );
+}
+
 /// Contract type discriminator stored as `contract_type`.
 enum ContractType {
   rent('rent'),

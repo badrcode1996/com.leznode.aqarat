@@ -6,38 +6,27 @@ import 'enums.dart';
 /// CONTRACTS  (collection: `contracts`)
 /// ===========================================================================
 ///
-/// Modeled as a sealed hierarchy: a single `Contract.fromJson` factory reads
-/// the `contract_type` discriminator and hydrates the correct subtype. This
-/// keeps the "rent only has installments / sale only has financials" rule
-/// enforced by the type system instead of scattered null checks.
+/// Sealed hierarchy: `Contract.fromJson` reads the `contract_type`
+/// discriminator and hydrates the correct subtype. Every document carries
+/// `company_id` (tenant isolation) and `agent_id`.
 ///
-/// Every document carries `company_id` (tenant isolation) and `agent_id`.
+/// `listTitle` / `listSubtitle` give each subtype a uniform way to render in
+/// the contracts list without the caller knowing the concrete type.
 sealed class Contract {
   const Contract({
     required this.id,
     required this.companyId,
     required this.agentId,
     required this.type,
-    required this.clientName,
-    required this.clientMobile,
-    required this.propertyTitle,
     required this.createdAt,
   });
 
-  /// Firestore document id (not persisted inside the doc body).
   final String id;
   final String companyId;
   final String agentId;
   final ContractType type;
-
-  // Shared "Step 1: Parties" + "Step 2: Property" fields.
-  final String clientName;
-  final String clientMobile;
-  final String propertyTitle;
-
   final DateTime createdAt;
 
-  /// Dispatch on the `contract_type` discriminator.
   factory Contract.fromJson(String id, Map<String, dynamic> json) {
     switch (ContractType.fromWire(json['contract_type'] as String?)) {
       case ContractType.rent:
@@ -47,42 +36,87 @@ sealed class Contract {
     }
   }
 
-  /// Fields common to both subtypes. Subclasses spread this into their map.
   Map<String, dynamic> baseJson() => {
         'contract_type': type.wire,
         'company_id': companyId,
         'agent_id': agentId,
-        'client_name': clientName,
-        'client_mobile': clientMobile,
-        'property_title': propertyTitle,
         'created_at': Timestamp.fromDate(createdAt),
       };
 
+  String get listTitle;
+  String get listSubtitle;
   Map<String, dynamic> toJson();
 }
 
 /// ---------------------------------------------------------------------------
-/// Rent contract
+/// Rent contract — mirrors the paper rent form.
 /// ---------------------------------------------------------------------------
 class RentContract extends Contract {
   const RentContract({
     required super.id,
     required super.companyId,
     required super.agentId,
-    required super.clientName,
-    required super.clientMobile,
-    required super.propertyTitle,
     required super.createdAt,
-    required this.monthlyAmount,
+    required this.voucherNumber,
+    // Parties
+    required this.party1Name,
+    required this.party1Mobile,
+    required this.party2Name,
+    required this.party2Mobile,
+    // Property
+    required this.propertyType,
+    required this.projectName,
+    required this.propertyNumber,
+    required this.area,
+    // Financials / dates
+    required this.rentAmount,
+    required this.currency,
+    required this.rentalPeriod,
+    required this.downPayment,
+    required this.downPaymentMonths,
+    required this.startDate,
+    required this.handoverDate,
+    required this.paymentFrequencyMonths,
+    required this.guaranteeAmount,
+    required this.gracePeriod,
+    required this.rentalPurpose,
+    required this.lateFeePerDay,
     required this.installments,
   }) : super(type: ContractType.rent);
 
-  /// Amount of a single monthly installment. Used by stats transactions to
-  /// know how much to add when an installment is received/delivered.
-  final num monthlyAmount;
+  final String voucherNumber; // ژمارەی پسووله
 
-  /// Exactly 12 installments. Stored as an array of maps (no per-month columns).
+  final String party1Name; // لایەنی یەکەم (خاوەن)
+  final String party1Mobile;
+  final String party2Name; // لایەنی دووەم (کرێچی)
+  final String party2Mobile;
+
+  final String propertyType; // جۆری موڵک
+  final String projectName; // پڕۆژە/گەرەک
+  final String propertyNumber; // ژمارەی عەقار
+  final num area; // ڕووبەر (م²)
+
+  final num rentAmount; // بری کرێ (per installment period)
+  final Currency currency; // دینار یان دۆلار
+  final String rentalPeriod; // ماوەی بەکریگرتن
+  final num downPayment; // بری پێشەکی
+  final int downPaymentMonths; // بۆ ___ مانگ
+  final DateTime startDate; // بەرواری بەکریگرتن
+  final DateTime handoverDate; // بەرواری ڕادەستکردن
+  final int paymentFrequencyMonths; // کرێدان چەند مانگ جارێک
+  final num guaranteeAmount; // بری دڵنیایی
+  final String gracePeriod; // ماوەی ڕێپێدان
+  final String rentalPurpose; // هۆکاری بەکری گرتن
+  final num lateFeePerDay; // بری دواکەوتن بۆ ڕۆژ
+
+  /// Exactly 12 installments (array of maps, no per-month columns).
   final List<Installment> installments;
+
+  @override
+  String get listTitle => party2Name.isNotEmpty ? party2Name : party1Name;
+  @override
+  String get listSubtitle =>
+      [projectName, propertyNumber].where((s) => s.isNotEmpty).join(' / ');
 
   factory RentContract.fromJson(String id, Map<String, dynamic> json) {
     final rawList = (json['installments'] as List<dynamic>? ?? const []);
@@ -90,12 +124,30 @@ class RentContract extends Contract {
       id: id,
       companyId: json['company_id'] as String? ?? '',
       agentId: json['agent_id'] as String? ?? '',
-      clientName: json['client_name'] as String? ?? '',
-      clientMobile: json['client_mobile'] as String? ?? '',
-      propertyTitle: json['property_title'] as String? ?? '',
       createdAt:
           (json['created_at'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      monthlyAmount: json['monthly_amount'] as num? ?? 0,
+      voucherNumber: json['voucher_number'] as String? ?? '',
+      party1Name: json['party1_name'] as String? ?? '',
+      party1Mobile: json['party1_mobile'] as String? ?? '',
+      party2Name: json['party2_name'] as String? ?? '',
+      party2Mobile: json['party2_mobile'] as String? ?? '',
+      propertyType: json['property_type'] as String? ?? '',
+      projectName: json['project_name'] as String? ?? '',
+      propertyNumber: json['property_number'] as String? ?? '',
+      area: json['area'] as num? ?? 0,
+      rentAmount: json['rent_amount'] as num? ?? 0,
+      currency: Currency.fromWire(json['currency'] as String?),
+      rentalPeriod: json['rental_period'] as String? ?? '',
+      downPayment: json['down_payment'] as num? ?? 0,
+      downPaymentMonths: json['down_payment_months'] as int? ?? 0,
+      startDate: (json['start_date'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      handoverDate:
+          (json['handover_date'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      paymentFrequencyMonths: json['payment_frequency_months'] as int? ?? 1,
+      guaranteeAmount: json['guarantee_amount'] as num? ?? 0,
+      gracePeriod: json['grace_period'] as String? ?? '',
+      rentalPurpose: json['rental_purpose'] as String? ?? '',
+      lateFeePerDay: json['late_fee_per_day'] as num? ?? 0,
       installments: rawList
           .map((e) => Installment.fromJson(e as Map<String, dynamic>))
           .toList(),
@@ -105,33 +157,71 @@ class RentContract extends Contract {
   @override
   Map<String, dynamic> toJson() => {
         ...baseJson(),
-        'monthly_amount': monthlyAmount,
+        'voucher_number': voucherNumber,
+        'party1_name': party1Name,
+        'party1_mobile': party1Mobile,
+        'party2_name': party2Name,
+        'party2_mobile': party2Mobile,
+        'property_type': propertyType,
+        'project_name': projectName,
+        'property_number': propertyNumber,
+        'area': area,
+        'rent_amount': rentAmount,
+        'currency': currency.wire,
+        'rental_period': rentalPeriod,
+        'down_payment': downPayment,
+        'down_payment_months': downPaymentMonths,
+        'start_date': Timestamp.fromDate(startDate),
+        'handover_date': Timestamp.fromDate(handoverDate),
+        'payment_frequency_months': paymentFrequencyMonths,
+        'guarantee_amount': guaranteeAmount,
+        'grace_period': gracePeriod,
+        'rental_purpose': rentalPurpose,
+        'late_fee_per_day': lateFeePerDay,
         'installments': installments.map((i) => i.toJson()).toList(),
       };
 
-  /// Builds a fresh 12-month schedule starting from [start] (one per month).
-  static List<Installment> buildSchedule(DateTime start) => List.generate(
+  /// Builds a 12-period schedule from [start], spaced by [everyMonths].
+  static List<Installment> buildSchedule(DateTime start, {int everyMonths = 1}) =>
+      List.generate(
         12,
         (i) => Installment(
           monthNumber: i + 1,
-          dueDate: DateTime(start.year, start.month + i, start.day),
+          dueDate: DateTime(start.year, start.month + i * everyMonths, start.day),
           status: PaymentStatus.pending,
         ),
       );
 
-  /// Count of installments already delivered to the owner.
-  int get deliveredCount =>
-      installments.where((i) => i.status == PaymentStatus.deliveredToOwner).length;
+  int get deliveredCount => installments
+      .where((i) => i.status == PaymentStatus.deliveredToOwner)
+      .length;
 
   RentContract copyWith({List<Installment>? installments}) => RentContract(
         id: id,
         companyId: companyId,
         agentId: agentId,
-        clientName: clientName,
-        clientMobile: clientMobile,
-        propertyTitle: propertyTitle,
         createdAt: createdAt,
-        monthlyAmount: monthlyAmount,
+        voucherNumber: voucherNumber,
+        party1Name: party1Name,
+        party1Mobile: party1Mobile,
+        party2Name: party2Name,
+        party2Mobile: party2Mobile,
+        propertyType: propertyType,
+        projectName: projectName,
+        propertyNumber: propertyNumber,
+        area: area,
+        rentAmount: rentAmount,
+        currency: currency,
+        rentalPeriod: rentalPeriod,
+        downPayment: downPayment,
+        downPaymentMonths: downPaymentMonths,
+        startDate: startDate,
+        handoverDate: handoverDate,
+        paymentFrequencyMonths: paymentFrequencyMonths,
+        guaranteeAmount: guaranteeAmount,
+        gracePeriod: gracePeriod,
+        rentalPurpose: rentalPurpose,
+        lateFeePerDay: lateFeePerDay,
         installments: installments ?? this.installments,
       );
 }
@@ -175,10 +265,10 @@ class SaleContract extends Contract {
     required super.id,
     required super.companyId,
     required super.agentId,
-    required super.clientName,
-    required super.clientMobile,
-    required super.propertyTitle,
     required super.createdAt,
+    required this.clientName,
+    required this.clientMobile,
+    required this.propertyTitle,
     required this.totalPrice,
     required this.downPayment,
     required this.remainingAmount,
@@ -187,28 +277,33 @@ class SaleContract extends Contract {
     required this.commissionBuyer,
   }) : super(type: ContractType.sale);
 
+  final String clientName;
+  final String clientMobile;
+  final String propertyTitle;
   final num totalPrice;
   final num downPayment;
   final num remainingAmount;
   final DateTime? remainingDueDate;
-
-  /// Commission charged to seller / buyer. Editable; seller defaults to 1%.
-  final num commissionSeller;
+  final num commissionSeller; // editable; seller defaults to 1%
   final num commissionBuyer;
 
-  /// Default commission rate (1%).
   static const double defaultCommissionRate = 0.01;
+
+  @override
+  String get listTitle => clientName;
+  @override
+  String get listSubtitle => propertyTitle;
 
   factory SaleContract.fromJson(String id, Map<String, dynamic> json) {
     return SaleContract(
       id: id,
       companyId: json['company_id'] as String? ?? '',
       agentId: json['agent_id'] as String? ?? '',
+      createdAt:
+          (json['created_at'] as Timestamp?)?.toDate() ?? DateTime.now(),
       clientName: json['client_name'] as String? ?? '',
       clientMobile: json['client_mobile'] as String? ?? '',
       propertyTitle: json['property_title'] as String? ?? '',
-      createdAt:
-          (json['created_at'] as Timestamp?)?.toDate() ?? DateTime.now(),
       totalPrice: json['total_price'] as num? ?? 0,
       downPayment: json['down_payment'] as num? ?? 0,
       remainingAmount: json['remaining_amount'] as num? ?? 0,
@@ -221,6 +316,9 @@ class SaleContract extends Contract {
   @override
   Map<String, dynamic> toJson() => {
         ...baseJson(),
+        'client_name': clientName,
+        'client_mobile': clientMobile,
+        'property_title': propertyTitle,
         'total_price': totalPrice,
         'down_payment': downPayment,
         'remaining_amount': remainingAmount,

@@ -164,30 +164,59 @@ class ContractPdfService {
         ),
       );
 
-  static pw.Widget _partiesSection(Contract contract) => _card(
-        'لایەنەکانی گرێبەست',
-        [
-          _row('ناوی موشتەری:', contract.clientName),
-          _row('مۆبایل:', contract.clientMobile),
-          _row('موڵک:', contract.propertyTitle),
-          _row('بەروار:', _date.format(contract.createdAt)),
-        ],
-      );
+  static pw.Widget _partiesSection(Contract contract) {
+    if (contract is RentContract) {
+      return _card('لایەنەکانی گرێبەست', [
+        _row('ژمارەی پسووله:', contract.voucherNumber),
+        _row('لایەنی یەکەم:', contract.party1Name),
+        _row('ژمارەی مۆبایل:', contract.party1Mobile),
+        _row('لایەنی دووەم:', contract.party2Name),
+        _row('ژمارەی مۆبایل:', contract.party2Mobile),
+        _row('بەروار:', _date.format(contract.createdAt)),
+      ]);
+    }
+    final s = contract as SaleContract;
+    return _card('لایەنەکانی گرێبەست', [
+      _row('ناوی موشتەری:', s.clientName),
+      _row('مۆبایل:', s.clientMobile),
+      _row('موڵک:', s.propertyTitle),
+      _row('بەروار:', _date.format(contract.createdAt)),
+    ]);
+  }
 
-  static pw.Widget _rentBody(RentContract c) => pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.stretch,
-        children: [
-          _card('وردەکاری دارایی', [
-            _row('کرێی مانگانە:', _money.format(c.monthlyAmount)),
-            _row('کۆی ساڵانە:', _money.format(c.monthlyAmount * 12)),
-          ]),
-          pw.SizedBox(height: 10),
-          pw.Text('خشتەی قیستەکان',
-              style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-          pw.SizedBox(height: 6),
-          _installmentsTable(c),
-        ],
-      );
+  static pw.Widget _rentBody(RentContract c) {
+    final cur = c.currency.label;
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+      children: [
+        _card('زانیاری موڵک', [
+          _row('جۆری موڵک:', c.propertyType),
+          _row('پڕۆژە/گەرەک:', c.projectName),
+          _row('ژمارەی عەقار:', c.propertyNumber),
+          _row('ڕووبەر:', '${c.area} م²'),
+          _row('هۆکاری بەکریگرتن:', c.rentalPurpose),
+        ]),
+        pw.SizedBox(height: 10),
+        _card('زانیاری دارایی', [
+          _row('بری کرێ:', '${_money.format(c.rentAmount)} $cur'),
+          _row('ماوەی بەکریگرتن:', c.rentalPeriod),
+          _row('بری پێشەکی:',
+              '${_money.format(c.downPayment)} بۆ ${c.downPaymentMonths} مانگ'),
+          _row('بەرواری بەکریگرتن:', _date.format(c.startDate)),
+          _row('بەرواری ڕادەستکردن:', _date.format(c.handoverDate)),
+          _row('کرێدان:', 'هەر ${c.paymentFrequencyMonths} مانگ جارێک'),
+          _row('بری دڵنیایی:', _money.format(c.guaranteeAmount)),
+          _row('ماوەی ڕێپێدان:', c.gracePeriod),
+          _row('بری دواکەوتن بۆ ڕۆژ:', _money.format(c.lateFeePerDay)),
+        ]),
+        pw.SizedBox(height: 10),
+        pw.Text('خشتەی قیستەکان',
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+        pw.SizedBox(height: 6),
+        _installmentsTable(c),
+      ],
+    );
+  }
 
   static pw.Widget _installmentsTable(RentContract c) {
     String statusLabel(PaymentStatus s) => switch (s) {
@@ -208,7 +237,7 @@ class ContractPdfService {
                 '${i.monthNumber}',
                 _date.format(i.dueDate),
                 statusLabel(i.status),
-                _money.format(c.monthlyAmount),
+                _money.format(c.rentAmount),
               ])
           .toList(),
     );

@@ -130,8 +130,8 @@ class _ContractCard extends ConsumerWidget {
     return Card(
       child: ListTile(
         leading: Icon(isRent ? Icons.home_outlined : Icons.sell_outlined),
-        title: Text(contract.clientName),
-        subtitle: Text(contract.propertyTitle),
+        title: Text(contract.listTitle),
+        subtitle: Text(contract.listSubtitle),
         trailing: Wrap(
           spacing: 4,
           children: [
@@ -154,7 +154,7 @@ class _ContractCard extends ConsumerWidget {
                   context,
                   MaterialPageRoute(
                     builder: (_) => Scaffold(
-                      appBar: AppBar(title: Text(contract.clientName)),
+                      appBar: AppBar(title: Text(contract.listTitle)),
                       body: SingleChildScrollView(
                         child: InstallmentGrid(
                             contract: contract as RentContract),
