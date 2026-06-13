@@ -58,11 +58,21 @@ class ContractPdfService {
 
     final doc = pw.Document(theme: theme);
 
+    final pageTheme = pw.PageTheme(
+      pageFormat: PdfPageFormat.a4,
+      textDirection: pw.TextDirection.rtl,
+      margin: const pw.EdgeInsets.all(32),
+      theme: theme,
+      // Force a solid white (#ffffff) page background.
+      buildBackground: (ctx) => pw.FullPage(
+        ignoreMargins: true,
+        child: pw.Container(color: PdfColors.white),
+      ),
+    );
+
     doc.addPage(
       pw.MultiPage(
-        pageFormat: PdfPageFormat.a4,
-        textDirection: pw.TextDirection.rtl,
-        margin: const pw.EdgeInsets.all(32),
+        pageTheme: pageTheme,
         // Company name + logo repeat on every page; the title is in the body
         // (first line of page 1 only).
         header: (ctx) => _header(company, logo),
@@ -236,7 +246,6 @@ class ContractPdfService {
       'لەسەر لایەنی یەکەم پێویستە قەرزی کارەبا و هەر خزمەتگوزاریەک لەسەر ئەم موڵکە هەبێت پاک بکاتەوە تا بەرواری ڕادەست کردنی موڵکەکە.',
       'لەسەر لایەنی یەکەم پێویستە بڕی ٪١ لە نرخی ئەم موڵکەی سەرەوە بدات بە $cn لە بەرامبەر فرۆشتنی ئەم موڵکە.',
       'لەسەر لایەنی دووەم پێویستە بڕی ٪١ لە نرخی ئەم موڵکەی سەرەوە بدات بە $cn لە بەرامبەر کڕینی ئەم موڵکە.',
-      'گەر لایەنی یەکەم دواکەوت لە پێدانی کلیل بە لایەنی دووەم لە ڕێکەوتی دیاریکراو ئەوا دەبێت بڕی ${m(s.lateFeePerDay)} $cur بدات بە لایەنی یەکەم بۆ هەر ڕۆژێک لە دواکەوتن.',
     ];
   }
 
