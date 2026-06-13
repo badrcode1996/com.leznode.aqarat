@@ -81,7 +81,7 @@ class _MarketCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 4),
-            Text('شوێن: ${view.location.label}'),
+            Text('پڕۆژە/گەرەک: ${view.projectName}'),
             const Divider(height: 20),
             // Owner is intentionally absent — only the agent + company phone.
             Row(

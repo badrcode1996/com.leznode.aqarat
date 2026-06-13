@@ -22,8 +22,8 @@ class PropertyListing {
     required this.kind,
     required this.ownerName,
     required this.ownerMobile,
+    required this.projectName,
     required this.propertyType,
-    required this.location,
     required this.area,
     required this.isPublic,
     required this.agentName,
@@ -37,12 +37,12 @@ class PropertyListing {
   final ListingKind kind;
 
   // ----- PRIVATE: never expose in the Global Market -----
-  final String ownerName;
-  final String ownerMobile;
+  final String ownerName; // ناوی خاوەن
+  final String ownerMobile; // مۆبایلی خاوەن
 
-  final PropertyType propertyType;
-  final PropertyLocation location;
-  final num area; // m²
+  final String projectName; // پڕۆژە / گەرەک
+  final PropertyType propertyType; // جۆری موڵک
+  final num area; // ڕووبەر (م²)
   final bool isPublic;
 
   // ----- DENORMALIZED public contact info (safe to expose) -----
@@ -50,6 +50,10 @@ class PropertyListing {
   final String agentPhone; // the creating user's own phone
 
   final DateTime createdAt;
+
+  /// Normalized key used to match a demand against an offer.
+  String get matchKey =>
+      '${propertyType.wire}|${projectName.trim().toLowerCase()}';
 
   factory PropertyListing.fromJson(String id, Map<String, dynamic> json) {
     return PropertyListing(
@@ -59,8 +63,8 @@ class PropertyListing {
       kind: ListingKind.fromWire(json['listing_kind'] as String?),
       ownerName: json['owner_name'] as String? ?? '',
       ownerMobile: json['owner_mobile'] as String? ?? '',
+      projectName: json['project_name'] as String? ?? '',
       propertyType: PropertyType.fromWire(json['property_type'] as String?),
-      location: PropertyLocation.fromWire(json['location'] as String?),
       area: json['area'] as num? ?? 0,
       isPublic: json['is_public'] as bool? ?? false,
       agentName: json['agent_name'] as String? ?? '',
@@ -76,8 +80,8 @@ class PropertyListing {
         'listing_kind': kind.wire,
         'owner_name': ownerName,
         'owner_mobile': ownerMobile,
+        'project_name': projectName,
         'property_type': propertyType.wire,
-        'location': location.wire,
         'area': area,
         'is_public': isPublic,
         'agent_name': agentName,
@@ -91,7 +95,7 @@ class PropertyListing {
         id: id,
         kind: kind,
         propertyType: propertyType,
-        location: location,
+        projectName: projectName,
         area: area,
         agentName: agentName,
         agentPhone: agentPhone,
@@ -106,7 +110,7 @@ class PublicListingView {
     required this.id,
     required this.kind,
     required this.propertyType,
-    required this.location,
+    required this.projectName,
     required this.area,
     required this.agentName,
     required this.agentPhone,
@@ -115,7 +119,7 @@ class PublicListingView {
   final String id;
   final ListingKind kind;
   final PropertyType propertyType;
-  final PropertyLocation location;
+  final String projectName;
   final num area;
   final String agentName;
   final String agentPhone;

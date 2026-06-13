@@ -7,6 +7,7 @@ import '../../data/contract_repository.dart';
 import '../../data/listing_repository.dart';
 import '../../models/contract_model.dart';
 import '../../models/enums.dart';
+import '../../models/property_model.dart';
 import 'widgets/property_card.dart';
 import 'widgets/request_card.dart';
 import 'widgets/stat_card.dart';
@@ -26,6 +27,13 @@ class DashboardScreen extends ConsumerWidget {
     final contracts = ref.watch(contractsStreamProvider).value ?? const [];
     final offers = ref.watch(myListingsProvider(ListingKind.offer)).value;
     final demands = ref.watch(myListingsProvider(ListingKind.demand)).value;
+
+    // Matchmaking: a demand and an offer "match" when they share the same
+    // property type + project/neighborhood. Matched ones are shown green.
+    final offerKeys = {for (final o in (offers ?? const [])) o.matchKey};
+    final demandKeys = {for (final d in (demands ?? const [])) d.matchKey};
+    bool offerMatched(PropertyListing p) => demandKeys.contains(p.matchKey);
+    bool demandMatched(PropertyListing p) => offerKeys.contains(p.matchKey);
 
     // Computed live from the contracts stream.
     final now = DateTime.now();
@@ -151,8 +159,9 @@ class DashboardScreen extends ConsumerWidget {
                         scrollDirection: Axis.horizontal,
                         padding: const EdgeInsets.fromLTRB(16, 4, 4, 4),
                         itemCount: demands.length,
-                        itemBuilder: (_, i) =>
-                            RequestCard(listing: demands[i]),
+                        itemBuilder: (_, i) => RequestCard(
+                            listing: demands[i],
+                            matched: demandMatched(demands[i])),
                       ),
           ),
         ),
@@ -173,7 +182,8 @@ class DashboardScreen extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 90),
             sliver: SliverList.builder(
               itemCount: offers.length,
-              itemBuilder: (_, i) => PropertyCard(listing: offers[i]),
+              itemBuilder: (_, i) => PropertyCard(
+                  listing: offers[i], matched: offerMatched(offers[i])),
             ),
           ),
       ],

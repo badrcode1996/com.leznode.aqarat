@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../models/enums.dart';
 import '../contracts/contracts_screen.dart';
 import '../contracts/create_rent_contract_stepper.dart';
 import '../contracts/create_sale_contract_stepper.dart';
 import '../dashboard/dashboard_screen.dart';
+import '../listings/create_listing_screen.dart';
 import '../market/market_screen.dart';
 import '../settings/settings_screen.dart';
 
@@ -48,10 +50,13 @@ class _MainShellState extends ConsumerState<MainShell> {
             _action(Icons.sell_outlined, 'گرێبەستی فرۆشتن',
                 const Color(0xFF1565C0),
                 () => _push(const CreateSaleContractStepper())),
-            _action(Icons.add_home_work_outlined, 'پێشکەشکردنی موڵک',
-                const Color(0xFFEF6C00), _comingSoon),
+            _action(Icons.add_home_work_outlined, 'خستنەڕووی موڵک',
+                const Color(0xFFEF6C00),
+                () => _push(const CreateListingScreen(kind: ListingKind.offer))),
             _action(Icons.person_search_outlined, 'داواکاری موشتەری',
-                const Color(0xFF6A1B9A), _comingSoon),
+                const Color(0xFF6A1B9A),
+                () => _push(
+                    const CreateListingScreen(kind: ListingKind.demand))),
             const SizedBox(height: 8),
           ],
         ),
@@ -76,10 +81,6 @@ class _MainShellState extends ConsumerState<MainShell> {
   void _push(Widget screen) => Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => screen),
-      );
-
-  void _comingSoon() => ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('بەم زووانە...')),
       );
 
   @override

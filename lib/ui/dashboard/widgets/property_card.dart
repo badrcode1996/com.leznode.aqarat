@@ -5,20 +5,27 @@ import '../../../models/property_model.dart';
 
 /// Vertical list card for a real property listing (the company's own offers).
 class PropertyCard extends StatelessWidget {
-  const PropertyCard({super.key, required this.listing});
+  const PropertyCard({super.key, required this.listing, this.matched = false});
 
   final PropertyListing listing;
 
+  /// True when a matching demand exists → highlighted green.
+  final bool matched;
+
+  static const _green = Color(0xFF2E7D32);
   static final _date = DateFormat('yyyy/MM/dd');
 
   @override
   Widget build(BuildContext context) {
-    final accent = Theme.of(context).colorScheme.primary;
+    final accent = matched ? _green : Theme.of(context).colorScheme.primary;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: matched ? _green.withValues(alpha: 0.06) : Colors.white,
         borderRadius: BorderRadius.circular(16),
+        border: matched
+            ? Border.all(color: _green.withValues(alpha: 0.5))
+            : null,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -70,7 +77,7 @@ class PropertyCard extends StatelessWidget {
                           size: 14, color: Colors.black45),
                       const SizedBox(width: 3),
                       Expanded(
-                        child: Text(listing.location.label,
+                        child: Text(listing.projectName,
                             style: const TextStyle(
                                 fontSize: 12.5, color: Colors.black54),
                             maxLines: 1,
