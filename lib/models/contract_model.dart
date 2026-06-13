@@ -146,8 +146,9 @@ class RentContract extends Contract {
       downPayment: json['down_payment'] as num? ?? 0,
       downPaymentMonths: json['down_payment_months'] as int? ?? 0,
       startDate: (json['start_date'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      handoverDate:
-          (json['handover_date'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      handoverDate: ((json['end_date'] ?? json['handover_date']) as Timestamp?)
+              ?.toDate() ??
+          DateTime.now(),
       paymentFrequencyMonths: json['payment_frequency_months'] as int? ?? 1,
       guaranteeAmount: json['guarantee_amount'] as num? ?? 0,
       gracePeriod: json['grace_period'] as String? ?? '',
@@ -176,7 +177,7 @@ class RentContract extends Contract {
         'down_payment': downPayment,
         'down_payment_months': downPaymentMonths,
         'start_date': Timestamp.fromDate(startDate),
-        'handover_date': Timestamp.fromDate(handoverDate),
+        'end_date': Timestamp.fromDate(handoverDate),
         'payment_frequency_months': paymentFrequencyMonths,
         'guarantee_amount': guaranteeAmount,
         'grace_period': gracePeriod,
