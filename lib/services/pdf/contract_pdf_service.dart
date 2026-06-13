@@ -65,7 +65,7 @@ class ContractPdfService {
         textDirection: pw.TextDirection.rtl, // whole document is RTL
         margin: const pw.EdgeInsets.all(32),
         header: (ctx) => _header(contract, company, logo),
-        footer: (ctx) => _footer(ctx),
+        footer: (ctx) => _footer(ctx, company),
         build: (ctx) => switch (contract) {
           RentContract r => _rentContent(r, company),
           SaleContract s => _saleContent(s),
@@ -148,14 +148,41 @@ class ContractPdfService {
     );
   }
 
-  static pw.Widget _footer(pw.Context ctx) => pw.Container(
-        alignment: pw.Alignment.center,
-        margin: const pw.EdgeInsets.only(top: 8),
-        child: pw.Text(
-          'لاپەڕە ${ctx.pageNumber} لە ${ctx.pagesCount}',
-          style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey600),
+  static pw.Widget _footer(pw.Context ctx, Company? company) {
+    final phones = company == null
+        ? ''
+        : [company.phone1, company.phone2].where((p) => p.isNotEmpty).join(' / ');
+    final address = company?.address ?? '';
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+      children: [
+        pw.Divider(thickness: 0.8, color: PdfColors.grey400),
+        pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            // RTL: first child sits on the RIGHT → phones.
+            if (phones.isNotEmpty)
+              pw.Expanded(
+                child: pw.Text('تەلەفۆن: $phones',
+                    style: const pw.TextStyle(fontSize: 9)),
+              ),
+            if (address.isNotEmpty)
+              pw.Expanded(
+                child: pw.Text('ناونیشان: $address',
+                    textAlign: pw.TextAlign.left,
+                    style: const pw.TextStyle(fontSize: 9)),
+              ),
+          ],
         ),
-      );
+        pw.SizedBox(height: 2),
+        pw.Center(
+          child: pw.Text('لاپەڕە ${ctx.pageNumber} لە ${ctx.pagesCount}',
+              style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600)),
+        ),
+      ],
+    );
+  }
 
   // ----------------------------- SALE -----------------------------
   static List<pw.Widget> _saleContent(SaleContract s) => [
