@@ -51,9 +51,11 @@ class InstallmentGrid extends ConsumerWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: contract.installments.length,
+      // Fixed pixel height per cell — robust across screen widths and text
+      // scales (an aspect ratio depends on width and can still overflow).
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 1.7,
+        mainAxisExtent: 108,
         crossAxisSpacing: 8,
         mainAxisSpacing: 8,
       ),

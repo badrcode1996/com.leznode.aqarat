@@ -39,6 +39,8 @@ class RequestCard extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
@@ -57,20 +59,19 @@ class RequestCard extends StatelessWidget {
                 const Icon(Icons.handshake, size: 16, color: _green),
             ],
           ),
-          const SizedBox(height: 10),
-          Expanded(
-            child: Text(
-              '${listing.propertyType.label} لە ${listing.projectName}',
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 13, color: Colors.black87),
-            ),
+          const SizedBox(height: 8),
+          Text(
+            '${listing.propertyType.label} لە ${listing.projectName}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 13, color: Colors.black87),
           ),
           const SizedBox(height: 8),
-          Wrap(
-            spacing: 6,
+          Row(
             children: [
-              _miniChip(Icons.place_outlined, listing.projectName),
+              Flexible(
+                  child: _miniChip(Icons.place_outlined, listing.projectName)),
+              const SizedBox(width: 6),
               _miniChip(Icons.straighten, '${listing.area} م²'),
             ],
           ),
@@ -90,7 +91,12 @@ class RequestCard extends StatelessWidget {
           children: [
             Icon(icon, size: 13, color: Colors.black54),
             const SizedBox(width: 4),
-            Text(label, style: const TextStyle(fontSize: 11)),
+            Flexible(
+              child: Text(label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 11)),
+            ),
           ],
         ),
       );

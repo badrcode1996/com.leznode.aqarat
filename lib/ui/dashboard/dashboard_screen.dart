@@ -150,7 +150,7 @@ class DashboardScreen extends ConsumerWidget {
         _sectionTitle('داواکارییە چالاکەکان'),
         SliverToBoxAdapter(
           child: SizedBox(
-            height: 132,
+            height: 150,
             child: (demands == null)
                 ? const Center(child: CircularProgressIndicator())
                 : demands.isEmpty
