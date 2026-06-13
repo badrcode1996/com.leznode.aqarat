@@ -10,31 +10,58 @@ import '../../services/pdf/contract_pdf_service.dart';
 import 'contract_preview_screen.dart';
 import 'installment_grid.dart';
 
-/// Contracts tab: the current tenant/role's contracts with print/share + the
-/// rent installment grid.
-class ContractsScreen extends ConsumerWidget {
+/// Contracts tab: rent / sale sub-tabs (like the market), with print/share +
+/// the rent installment grid.
+class ContractsScreen extends StatelessWidget {
   const ContractsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('گرێبەستەکان'),
+          bottom: const TabBar(
+            tabs: [
+              Tab(text: 'کرێ'),
+              Tab(text: 'فرۆشتن'),
+            ],
+          ),
+        ),
+        body: const TabBarView(
+          children: [
+            _ContractsList(type: ContractType.rent),
+            _ContractsList(type: ContractType.sale),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ContractsList extends ConsumerWidget {
+  const _ContractsList({required this.type});
+  final ContractType type;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(contractsStreamProvider);
-    return Scaffold(
-      appBar: AppBar(title: const Text('گرێبەستەکان')),
-      body: async.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('هەڵە: $e')),
-        data: (contracts) {
-          if (contracts.isEmpty) {
-            return const Center(child: Text('هیچ گرێبەستێک نییە'));
-          }
-          return ListView.separated(
-            padding: const EdgeInsets.all(12),
-            itemCount: contracts.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 8),
-            itemBuilder: (_, i) => _ContractCard(contract: contracts[i]),
-          );
-        },
-      ),
+    return async.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('هەڵە: $e')),
+      data: (all) {
+        final contracts = all.where((c) => c.type == type).toList();
+        if (contracts.isEmpty) {
+          return const Center(child: Text('هیچ گرێبەستێک نییە'));
+        }
+        return ListView.separated(
+          padding: const EdgeInsets.all(12),
+          itemCount: contracts.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          itemBuilder: (_, i) => _ContractCard(contract: contracts[i]),
+        );
+      },
     );
   }
 }
