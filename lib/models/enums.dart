@@ -22,8 +22,8 @@ enum UserRole {
 
 /// Currency used on a contract.
 enum Currency {
-  iqd('IQD', 'دینار'),
-  usd('USD', 'دۆلار');
+  iqd('IQD', 'دیناری عێراقی'),
+  usd('USD', 'دۆلاری ئەمریکی');
 
   const Currency(this.wire, this.label);
   final String wire;

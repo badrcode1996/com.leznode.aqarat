@@ -205,6 +205,7 @@ class ContractPdfService {
         pw.SizedBox(height: 10),
         _card('زانیاری دارایی', [
           _row('بری کرێ:', '${_money.format(c.rentAmount)} $cur'),
+          _row('وەرگرتنی کرێ:', 'هەر ${c.rentMonthly} مانگ جارێک'),
           _row('ماوەی بەکریگرتن:', '${c.rentalPeriodMonths} مانگ'),
           _row('بری پێشەکی:',
               '${_money.format(c.downPayment)} بۆ ${c.downPaymentMonths} مانگ'),
