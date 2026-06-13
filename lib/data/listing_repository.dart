@@ -20,15 +20,26 @@ class ListingRepository {
   CollectionReference<Map<String, dynamic>> _col(ListingKind kind) =>
       _db.collection(_collectionFor(kind));
 
-  /// The current tenant's own listings (private — full owner data visible).
-  Stream<List<PropertyListing>> watchMyListings(ListingKind kind) {
+  /// The current tenant's own listings (private — full owner data visible),
+  /// filtered by archived state. Archived filtering is client-side to avoid an
+  /// extra composite index.
+  Stream<List<PropertyListing>> watchMyListings(
+    ListingKind kind, {
+    bool archived = false,
+  }) {
     return _col(kind)
         .where('company_id', isEqualTo: _user.companyId)
         .orderBy('created_at', descending: true)
         .snapshots()
         .map((s) => s.docs
             .map((d) => PropertyListing.fromJson(d.id, d.data()))
+            .where((l) => l.isArchived == archived)
             .toList());
+  }
+
+  /// Marks a listing completed (archived) or restores it to active.
+  Future<void> setArchived(ListingKind kind, String id, bool archived) {
+    return _col(kind).doc(id).update({'is_archived': archived});
   }
 
   /// GLOBAL MARKET: public listings from ALL companies.
@@ -45,7 +56,9 @@ class ListingRepository {
         .orderBy('created_at', descending: true)
         .snapshots()
         .map((s) => s.docs
-            .map((d) => PropertyListing.fromJson(d.id, d.data()).publicView)
+            .map((d) => PropertyListing.fromJson(d.id, d.data()))
+            .where((l) => !l.isArchived) // archived listings leave the market
+            .map((l) => l.publicView)
             .toList());
   }
 
@@ -70,4 +83,12 @@ final globalMarketProvider =
 final myListingsProvider =
     StreamProvider.family<List<PropertyListing>, ListingKind>((ref, kind) {
   return ref.watch(listingRepositoryProvider).watchMyListings(kind);
+});
+
+/// The current tenant's ARCHIVED (completed) listings.
+final myArchivedListingsProvider =
+    StreamProvider.family<List<PropertyListing>, ListingKind>((ref, kind) {
+  return ref
+      .watch(listingRepositoryProvider)
+      .watchMyListings(kind, archived: true);
 });

@@ -8,6 +8,7 @@ import '../../data/listing_repository.dart';
 import '../../models/contract_model.dart';
 import '../../models/enums.dart';
 import '../../models/property_model.dart';
+import '../listings/my_listings_screen.dart';
 import 'widgets/property_card.dart';
 import 'widgets/request_card.dart';
 import 'widgets/stat_card.dart';
@@ -147,7 +148,13 @@ class DashboardScreen extends ConsumerWidget {
         ),
 
         // ---------- Active demands (real) ----------
-        _sectionTitle('داواکارییە چالاکەکان'),
+        _sectionTitle('داواکارییە چالاکەکان', onSeeAll: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (_) => const MyListingsScreen(initialIndex: 1)),
+          );
+        }),
         SliverToBoxAdapter(
           child: SizedBox(
             height: 150,
@@ -167,7 +174,13 @@ class DashboardScreen extends ConsumerWidget {
         ),
 
         // ---------- Recent offers (real) ----------
-        _sectionTitle('نوێترین موڵکەکان'),
+        _sectionTitle('نوێترین موڵکەکان', onSeeAll: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (_) => const MyListingsScreen(initialIndex: 0)),
+          );
+        }),
         if (offers == null)
           const SliverToBoxAdapter(
             child: Padding(
@@ -197,7 +210,8 @@ class DashboardScreen extends ConsumerWidget {
         ),
       );
 
-  Widget _sectionTitle(String title) => SliverToBoxAdapter(
+  Widget _sectionTitle(String title, {VoidCallback? onSeeAll}) =>
+      SliverToBoxAdapter(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 18, 16, 4),
           child: Row(
@@ -206,7 +220,9 @@ class DashboardScreen extends ConsumerWidget {
                   style: const TextStyle(
                       fontSize: 16, fontWeight: FontWeight.bold)),
               const Spacer(),
-              TextButton(onPressed: () {}, child: const Text('هەمووی')),
+              TextButton(
+                  onPressed: onSeeAll ?? () {},
+                  child: const Text('هەمووی')),
             ],
           ),
         ),

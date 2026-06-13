@@ -29,6 +29,7 @@ class PropertyListing {
     required this.agentName,
     required this.agentPhone,
     required this.createdAt,
+    this.isArchived = false,
   });
 
   final String id;
@@ -44,6 +45,9 @@ class PropertyListing {
   final PropertyType propertyType; // جۆری موڵک
   final num area; // ڕووبەر (م²)
   final bool isPublic;
+
+  /// True once the listing is completed → moved to the archive section.
+  final bool isArchived;
 
   // ----- DENORMALIZED public contact info (safe to expose) -----
   final String agentName;
@@ -67,6 +71,7 @@ class PropertyListing {
       propertyType: PropertyType.fromWire(json['property_type'] as String?),
       area: json['area'] as num? ?? 0,
       isPublic: json['is_public'] as bool? ?? false,
+      isArchived: json['is_archived'] as bool? ?? false,
       agentName: json['agent_name'] as String? ?? '',
       agentPhone: json['agent_phone'] as String? ?? '',
       createdAt:
@@ -84,6 +89,7 @@ class PropertyListing {
         'property_type': propertyType.wire,
         'area': area,
         'is_public': isPublic,
+        'is_archived': isArchived,
         'agent_name': agentName,
         'agent_phone': agentPhone,
         'created_at': Timestamp.fromDate(createdAt),
