@@ -277,7 +277,7 @@ class _CreateRentContractStepperState
                           decimal: true)),
                   _text(_gracePeriod, 'ماوەی ڕێپێدان'),
                   _text(_rentalPurpose, 'هۆکاری بەکری گرتن'),
-                  _text(_lateFee, 'بری دواکەوتن بۆ ڕۆژ',
+                  _text(_lateFee, 'بڕی دواکەوتن دوای تەواوبوونی ماوەی گرێبەستەکە',
                       keyboard: const TextInputType.numberWithOptions(
                           decimal: true)),
                   const Padding(
