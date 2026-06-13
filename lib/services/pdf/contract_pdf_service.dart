@@ -8,7 +8,6 @@ import 'package:printing/printing.dart';
 
 import '../../models/company_model.dart';
 import '../../models/contract_model.dart';
-import '../../models/enums.dart';
 
 /// On-device PDF generator for contracts.
 ///
@@ -64,9 +63,9 @@ class ContractPdfService {
         pageFormat: PdfPageFormat.a4,
         textDirection: pw.TextDirection.rtl,
         margin: const pw.EdgeInsets.all(32),
-        // The big title + company band appear ONLY on the first page.
-        header: (ctx) =>
-            ctx.pageNumber == 1 ? _header(contract, company, logo) : pw.SizedBox(),
+        // Company name + logo repeat on every page; the title is in the body
+        // (first line of page 1 only).
+        header: (ctx) => _header(company, logo),
         footer: (ctx) => _footer(ctx, company),
         build: (ctx) => switch (contract) {
           RentContract r => _rentContent(r, company),
@@ -95,29 +94,26 @@ class ContractPdfService {
 
   // ----------------------------- sections -----------------------------
 
-  static pw.Widget _header(
-    Contract contract,
-    Company? company,
-    pw.ImageProvider? logo,
-  ) {
-    final title = contract.type == ContractType.rent
-        ? 'گرێبەستی کرێ'
-        : 'گرێبەستی فرۆشتن';
+  /// Repeating page header: company name + logo on EVERY page.
+  static pw.Widget _header(Company? company, pw.ImageProvider? logo) {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.stretch,
       children: [
         if (company != null) _companyBand(company, logo),
-        if (company != null) pw.SizedBox(height: 6),
-        pw.Text(
-          title,
-          textAlign: pw.TextAlign.center,
-          style: pw.TextStyle(fontSize: 22, fontWeight: pw.FontWeight.bold),
-        ),
         pw.SizedBox(height: 6),
         pw.Divider(thickness: 1.2),
       ],
     );
   }
+
+  /// The big contract title — placed as the first line of page 1's body.
+  static pw.Widget _title(String text) => pw.Padding(
+        padding: const pw.EdgeInsets.only(bottom: 8),
+        child: pw.Text(text,
+            textAlign: pw.TextAlign.center,
+            style:
+                pw.TextStyle(fontSize: 22, fontWeight: pw.FontWeight.bold)),
+      );
 
   /// Branded company strip: company name in all 3 languages on the right
   /// (RTL start), logo on the left.
@@ -191,6 +187,7 @@ class ContractPdfService {
     final cur = s.currency.label;
     String m(num v) => _money.format(v);
     return [
+      _title('گرێبەستی فرۆشتن'),
       _card('زانیاری گرێبەست', [
         _row('ژمارەی گرێبەست:', '${s.contractNumber}'),
         _row('لایەنی یەکەم (فرۆشیار):', s.party1Name),
@@ -224,6 +221,7 @@ class ContractPdfService {
   // ----------------------------- RENT -----------------------------
   static List<pw.Widget> _rentContent(RentContract c, Company? company) {
     return [
+      _title('گرێبەستی کرێ'),
       _card('زانیاری گرێبەست', [
         _row('ژمارەی گرێبەست:', '${c.contractNumber}'),
         _row('لایەنی یەکەم (خاوەن موڵک):', c.party1Name),

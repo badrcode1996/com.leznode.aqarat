@@ -252,33 +252,22 @@ class _CreateRentContractStepperState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        flex: 2,
-                        child: _text(_rentAmount, 'بری کرێ',
-                            keyboard: const TextInputType.numberWithOptions(
-                                decimal: true)),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 12),
-                          child: DropdownButtonFormField<Currency>(
-                            initialValue: _currency,
-                            decoration:
-                                const InputDecoration(labelText: 'دراو'),
-                            items: Currency.values
-                                .map((c) => DropdownMenuItem(
-                                    value: c, child: Text(c.label)))
-                                .toList(),
-                            onChanged: (v) =>
-                                setState(() => _currency = v ?? Currency.iqd),
-                          ),
-                        ),
-                      ),
-                    ],
+                  _text(_rentAmount, 'بری کرێ',
+                      keyboard:
+                          const TextInputType.numberWithOptions(decimal: true)),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: DropdownButtonFormField<Currency>(
+                      isExpanded: true,
+                      initialValue: _currency,
+                      decoration: const InputDecoration(labelText: 'دراو'),
+                      items: Currency.values
+                          .map((c) =>
+                              DropdownMenuItem(value: c, child: Text(c.label)))
+                          .toList(),
+                      onChanged: (v) =>
+                          setState(() => _currency = v ?? Currency.iqd),
+                    ),
                   ),
                   _text(_rentalPeriod, 'ماوەی بەکریگرتن (بە مانگ)',
                       keyboard: TextInputType.number),
