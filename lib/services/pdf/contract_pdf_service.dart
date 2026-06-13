@@ -59,40 +59,21 @@ class ContractPdfService {
 
     final doc = pw.Document(theme: theme);
 
-    if (contract is RentContract) {
-      // Rent contract must fit on ONE page. FittedBox scales the whole layout
-      // down so the 27 clauses never overflow onto a second page.
-      doc.addPage(
-        pw.Page(
-          pageFormat: PdfPageFormat.a4,
-          textDirection: pw.TextDirection.rtl,
-          margin: const pw.EdgeInsets.all(22),
-          build: (ctx) => pw.FittedBox(
-            fit: pw.BoxFit.scaleDown,
-            alignment: pw.Alignment.topCenter,
-            child: pw.SizedBox(
-              width: PdfPageFormat.a4.availableDimension.x - 44,
-              child: pw.Column(
-                crossAxisAlignment: pw.CrossAxisAlignment.stretch,
-                mainAxisSize: pw.MainAxisSize.min,
-                children: _rentSinglePage(contract, company, logo),
-              ),
-            ),
-          ),
-        ),
-      );
-    } else {
-      doc.addPage(
-        pw.MultiPage(
-          pageFormat: PdfPageFormat.a4,
-          textDirection: pw.TextDirection.rtl,
-          margin: const pw.EdgeInsets.all(32),
-          header: (ctx) => _header(contract, company, logo),
-          footer: (ctx) => _footer(ctx, company),
-          build: (ctx) => _saleContent(contract as SaleContract),
-        ),
-      );
-    }
+    doc.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        textDirection: pw.TextDirection.rtl,
+        margin: const pw.EdgeInsets.all(32),
+        // The big title + company band appear ONLY on the first page.
+        header: (ctx) =>
+            ctx.pageNumber == 1 ? _header(contract, company, logo) : pw.SizedBox(),
+        footer: (ctx) => _footer(ctx, company),
+        build: (ctx) => switch (contract) {
+          RentContract r => _rentContent(r, company),
+          SaleContract s => _saleContent(s),
+        },
+      ),
+    );
 
     return doc.save();
   }
@@ -216,82 +197,36 @@ class ContractPdfService {
         _signatures(),
       ];
 
-  // ----------------------------- RENT (single page) -----------------------------
-  static List<pw.Widget> _rentSinglePage(
-    RentContract c,
-    Company? company,
-    pw.ImageProvider? logo,
-  ) {
-    pw.Widget infoRow(String label, String value) => pw.Padding(
-          padding: const pw.EdgeInsets.symmetric(vertical: 1),
-          child: pw.Row(children: [
-            pw.SizedBox(
-                width: 110,
-                child: pw.Text(label,
-                    style: pw.TextStyle(
-                        fontSize: 9, fontWeight: pw.FontWeight.bold))),
-            pw.Expanded(
-                child: pw.Text(value, style: const pw.TextStyle(fontSize: 9))),
-          ]),
-        );
-
-    final phones = company == null
-        ? ''
-        : [company.phone1, company.phone2].where((p) => p.isNotEmpty).join(' / ');
-    final address = company?.address ?? '';
-
+  // ----------------------------- RENT -----------------------------
+  static List<pw.Widget> _rentContent(RentContract c, Company? company) {
     return [
-      if (company != null) _companyBand(company, logo),
-      pw.SizedBox(height: 4),
-      pw.Text('گرێبەستی کرێ',
-          textAlign: pw.TextAlign.center,
-          style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
-      pw.Divider(thickness: 1),
-      // Info block.
-      infoRow('ژمارەی گرێبەست:', '${c.contractNumber}'),
-      infoRow('لایەنی یەکەم (خاوەن موڵک):', c.party1Name),
-      infoRow('لایەنی دووەم (کرێچی):', c.party2Name),
-      infoRow('جۆری موڵک:', c.propertyType),
-      infoRow('پڕۆژە / گەڕەک:', c.projectName),
-      infoRow('ژمارەی عەقار:', c.propertyNumber),
-      infoRow('ڕووبەر:', '${c.area} م²'),
-      pw.SizedBox(height: 6),
+      _card('زانیاری گرێبەست', [
+        _row('ژمارەی گرێبەست:', '${c.contractNumber}'),
+        _row('لایەنی یەکەم (خاوەن موڵک):', c.party1Name),
+        _row('لایەنی دووەم (کرێچی):', c.party2Name),
+        _row('جۆری موڵک:', c.propertyType),
+        _row('پڕۆژە / گەڕەک:', c.projectName),
+        _row('ژمارەی عەقار:', c.propertyNumber),
+        _row('ڕووبەر:', '${c.area} م²'),
+      ]),
+      pw.SizedBox(height: 12),
       pw.Text('هەردوو لایەن ڕێکەوتن لەسەر ئەم خاڵانەی خوارەوە (بەندەکان):',
-          style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
-      pw.SizedBox(height: 3),
+          style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 12)),
+      pw.SizedBox(height: 6),
       ..._rentClauses(c, company).asMap().entries.map(
             (e) => pw.Padding(
-              padding: const pw.EdgeInsets.only(bottom: 2),
+              padding: const pw.EdgeInsets.only(bottom: 6),
               child: pw.Text('${e.key + 1}- ${e.value}',
                   textAlign: pw.TextAlign.justify,
-                  style: const pw.TextStyle(fontSize: 8.5, lineSpacing: 1)),
+                  style: const pw.TextStyle(fontSize: 11, lineSpacing: 2)),
             ),
           ),
       if (c.notes.trim().isNotEmpty) ...[
-        pw.SizedBox(height: 4),
-        pw.Text('تێبینی: ${c.notes}',
-            style: const pw.TextStyle(fontSize: 8.5)),
+        pw.SizedBox(height: 8),
+        pw.Text('تێبینی: ${c.notes}', style: const pw.TextStyle(fontSize: 11)),
       ],
-      pw.SizedBox(height: 14),
+      pw.SizedBox(height: 24),
       _rentSignatures(c),
-      // Footer: phones (right) + address (left).
-      pw.SizedBox(height: 10),
-      pw.Divider(thickness: 0.6, color: PdfColors.grey400),
-      pw.Row(
-        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          if (phones.isNotEmpty)
-            pw.Expanded(
-                child: pw.Text('تەلەفۆن: $phones',
-                    style: const pw.TextStyle(fontSize: 8))),
-          if (address.isNotEmpty)
-            pw.Expanded(
-                child: pw.Text('ناونیشان: $address',
-                    textAlign: pw.TextAlign.left,
-                    style: const pw.TextStyle(fontSize: 8))),
-        ],
-      ),
     ];
   }
 
