@@ -77,7 +77,8 @@ class _ContractPreviewScreenState extends State<ContractPreviewScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snap.hasError || (snap.data?.isEmpty ?? true)) {
-            return _ErrorFallback(error: snap.error);
+            return _ErrorFallback(
+                error: snap.error, stack: snap.stackTrace);
           }
           final pages = snap.data!;
           return Container(
@@ -99,30 +100,38 @@ class _ContractPreviewScreenState extends State<ContractPreviewScreen> {
 }
 
 class _ErrorFallback extends StatelessWidget {
-  const _ErrorFallback({this.error});
+  const _ErrorFallback({this.error, this.stack});
   final Object? error;
+  final StackTrace? stack;
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.picture_as_pdf, size: 48, color: Colors.black38),
-            const SizedBox(height: 12),
-            const Text('پێشبینین نەکرایەوە. دەتوانیت پرینت یان هاوبەشی بکەیت.',
-                textAlign: TextAlign.center),
-            if (error != null) ...[
-              const SizedBox(height: 8),
-              SelectableText('$error',
-                  textAlign: TextAlign.center,
-                  style:
-                      const TextStyle(fontSize: 12, color: Colors.black45)),
-            ],
+    // Show the first few stack frames to pinpoint the source of the error.
+    final frames =
+        stack?.toString().split('\n').take(8).join('\n') ?? '';
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.picture_as_pdf, size: 48, color: Colors.black38),
+          const SizedBox(height: 12),
+          const Text('پێشبینین نەکرایەوە. دەتوانیت پرینت یان هاوبەشی بکەیت.',
+              textAlign: TextAlign.center),
+          if (error != null) ...[
+            const SizedBox(height: 8),
+            SelectableText('$error',
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 12, color: Colors.black54)),
           ],
-        ),
+          if (frames.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            SelectableText(frames,
+                textDirection: TextDirection.ltr,
+                style: const TextStyle(
+                    fontSize: 10, color: Colors.black45, fontFamily: 'monospace')),
+          ],
+        ],
       ),
     );
   }

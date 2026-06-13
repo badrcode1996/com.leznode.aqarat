@@ -23,11 +23,13 @@ class ContractPdfService {
   static final _money = NumberFormat.decimalPattern();
   static final _date = DateFormat('yyyy/MM/dd');
 
-  /// Loads the SPEDA fonts bundled in assets (once).
+  /// Loads the PDF fonts bundled in assets (once). Vazirmatn is used for the
+  /// PDF because it covers Kurdish/Arabic and subsets cleanly — the SPEDA file
+  /// crashes the pdf package's TTF subsetter. (The app UI still uses SPEDA.)
   static Future<void> _ensureFonts() async {
     if (_regular != null && _bold != null) return;
-    final reg = await rootBundle.load('assets/fonts/SPEDA.ttf');
-    final bold = await rootBundle.load('assets/fonts/SPEDA-Bold.ttf');
+    final reg = await rootBundle.load('assets/fonts/Vazirmatn-Regular.ttf');
+    final bold = await rootBundle.load('assets/fonts/Vazirmatn-Bold.ttf');
     _regular = pw.Font.ttf(reg);
     _bold = pw.Font.ttf(bold);
   }
@@ -52,9 +54,7 @@ class ContractPdfService {
     final theme = pw.ThemeData.withFont(
       base: _regular!,
       bold: _bold!,
-      // Fallback covers any glyph (Latin, digits, punctuation) the Kurdish
-      // SPEDA font lacks — a missing glyph can otherwise crash layout.
-      fontFallback: [_regular!, pw.Font.helvetica(), pw.Font.helveticaBold()],
+      fontFallback: [pw.Font.helvetica()],
     );
 
     final doc = pw.Document(theme: theme);
