@@ -246,15 +246,18 @@ class ContractPdfService {
     );
   }
 
-  static pw.Widget _saleBody(SaleContract c) => _card('وردەکاری دارایی', [
-        _row('کۆی نرخ:', _money.format(c.totalPrice)),
-        _row('پێشەکی:', _money.format(c.downPayment)),
-        _row('ماوە:', _money.format(c.remainingAmount)),
-        if (c.remainingDueDate != null)
-          _row('بەرواری ماوە:', _date.format(c.remainingDueDate!)),
-        _row('کۆمیشنی فرۆشیار:', _money.format(c.commissionSeller)),
-        _row('کۆمیشنی کڕیار:', _money.format(c.commissionBuyer)),
-      ]);
+  static pw.Widget _saleBody(SaleContract c) {
+    final cur = c.currency.label;
+    return _card('وردەکاری دارایی', [
+      _row('کۆی نرخ:', '${_money.format(c.totalPrice)} $cur'),
+      _row('پێشەکی:', '${_money.format(c.downPayment)} $cur'),
+      _row('ماوە:', '${_money.format(c.remainingAmount)} $cur'),
+      if (c.remainingDueDate != null)
+        _row('بەرواری ماوە:', _date.format(c.remainingDueDate!)),
+      _row('کۆمیشنی فرۆشیار:', '${_money.format(c.commissionSeller)} $cur'),
+      _row('کۆمیشنی کڕیار:', '${_money.format(c.commissionBuyer)} $cur'),
+    ]);
+  }
 
   /// STATIC hardcoded legal clauses mixed with the dynamic data above.
   static pw.Widget _legalClauses(Contract contract) {

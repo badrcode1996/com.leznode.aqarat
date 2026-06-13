@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../auth/session.dart';
 import '../../data/contract_repository.dart';
 import '../../models/contract_model.dart';
+import '../../models/enums.dart';
 
 /// 3-step Stepper for creating a SALE contract.
 ///
@@ -43,6 +44,7 @@ class _CreateSaleContractStepperState
   /// stop overwriting their value when the price changes.
   bool _sellerCommissionTouched = false;
 
+  Currency _currency = Currency.iqd;
   DateTime? _remainingDueDate;
 
   @override
@@ -98,6 +100,7 @@ class _CreateSaleContractStepperState
       clientMobile: _clientMobile.text.trim(),
       propertyTitle: _propertyTitle.text.trim(),
       createdAt: DateTime.now(),
+      currency: _currency,
       totalPrice: _price,
       downPayment: _down,
       remainingAmount: _remaining,
@@ -235,6 +238,20 @@ class _CreateSaleContractStepperState
                   prefixIcon: Icon(Icons.payments_outlined),
                 ),
                 validator: _positiveNumber,
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<Currency>(
+                initialValue: _currency,
+                decoration: const InputDecoration(
+                  labelText: 'دراو (دینار/دۆلار)',
+                  prefixIcon: Icon(Icons.currency_exchange),
+                ),
+                items: Currency.values
+                    .map((c) =>
+                        DropdownMenuItem(value: c, child: Text(c.label)))
+                    .toList(),
+                onChanged: (v) =>
+                    setState(() => _currency = v ?? Currency.iqd),
               ),
               TextFormField(
                 controller: _downPayment,

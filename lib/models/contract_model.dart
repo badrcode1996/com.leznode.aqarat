@@ -140,7 +140,8 @@ class RentContract extends Contract {
       propertyNumber: json['property_number'] as String? ?? '',
       area: json['area'] as num? ?? 0,
       rentAmount: json['rent_amount'] as num? ?? 0,
-      currency: Currency.fromWire(json['currency'] as String?),
+      currency: Currency.fromWire(
+          (json['dinar_dolar'] ?? json['currency']) as String?),
       rentalPeriodMonths: json['rental_period_months'] as int? ?? 0,
       downPayment: json['down_payment'] as num? ?? 0,
       downPaymentMonths: json['down_payment_months'] as int? ?? 0,
@@ -170,7 +171,7 @@ class RentContract extends Contract {
         'property_number': propertyNumber,
         'area': area,
         'rent_amount': rentAmount,
-        'currency': currency.wire,
+        'dinar_dolar': currency.wire,
         'rental_period_months': rentalPeriodMonths,
         'down_payment': downPayment,
         'down_payment_months': downPaymentMonths,
@@ -288,11 +289,13 @@ class SaleContract extends Contract {
     required this.remainingDueDate,
     required this.commissionSeller,
     required this.commissionBuyer,
+    this.currency = Currency.iqd,
   }) : super(type: ContractType.sale);
 
   final String clientName;
   final String clientMobile;
   final String propertyTitle;
+  final Currency currency; // دینار یان دۆلار
   final num totalPrice;
   final num downPayment;
   final num remainingAmount;
@@ -318,6 +321,7 @@ class SaleContract extends Contract {
       clientName: json['client_name'] as String? ?? '',
       clientMobile: json['client_mobile'] as String? ?? '',
       propertyTitle: json['property_title'] as String? ?? '',
+      currency: Currency.fromWire(json['dinar_dolar'] as String?),
       totalPrice: json['total_price'] as num? ?? 0,
       downPayment: json['down_payment'] as num? ?? 0,
       remainingAmount: json['remaining_amount'] as num? ?? 0,
@@ -333,6 +337,7 @@ class SaleContract extends Contract {
         'client_name': clientName,
         'client_mobile': clientMobile,
         'property_title': propertyTitle,
+        'dinar_dolar': currency.wire,
         'total_price': totalPrice,
         'down_payment': downPayment,
         'remaining_amount': remainingAmount,
