@@ -10,7 +10,7 @@ import 'models/enums.dart';
 import 'theme/app_theme.dart';
 import 'ui/admin/super_admin_panel.dart';
 import 'ui/auth/login_screen.dart';
-import 'ui/home/home_screen.dart';
+import 'ui/shell/main_shell.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -79,7 +79,7 @@ class _SessionGate extends ConsumerWidget {
       data: (user) {
         if (user == null) return const _NoAccessScreen();
         if (user.role == UserRole.superAdmin) return const SuperAdminPanel();
-        return const HomeScreen();
+        return const MainShell();
       },
     );
   }

@@ -33,6 +33,9 @@ dependencies:
   # Image picking (company logo upload)
   image_picker: ^1.1.2
 
+  # Charts (dashboard stat sparklines)
+  fl_chart: ^0.69.0
+
   # Utils
   intl: ^0.20.2
 
