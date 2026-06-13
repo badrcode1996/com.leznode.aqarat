@@ -111,7 +111,7 @@ class DashboardScreen extends ConsumerWidget {
         // ---------- Stats (real) ----------
         SliverToBoxAdapter(
           child: SizedBox(
-            height: 138,
+            height: 150,
             child: ListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.fromLTRB(16, 8, 4, 8),

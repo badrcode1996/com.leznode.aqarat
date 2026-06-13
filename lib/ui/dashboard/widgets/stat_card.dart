@@ -38,7 +38,7 @@ class StatCard extends StatelessWidget {
     return Container(
       width: width,
       margin: const EdgeInsetsDirectional.only(end: 12),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(16),
@@ -59,31 +59,41 @@ class StatCard extends StatelessWidget {
             ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(7),
                 decoration: BoxDecoration(
                   color: (highlight ? valueColor : accent)
                       .withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(icon,
-                    size: 20, color: highlight ? valueColor : accent),
+                    size: 18, color: highlight ? valueColor : accent),
               ),
-              const SizedBox(height: 14),
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: valueColor,
+              const SizedBox(height: 10),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: AlignmentDirectional.centerStart,
+                child: Text(
+                  value,
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: valueColor,
+                  ),
                 ),
               ),
               const SizedBox(height: 2),
               Text(
                 title,
-                style: const TextStyle(fontSize: 12.5, color: Colors.black54),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                    fontSize: 12,
+                    color: highlight ? valueColor : Colors.black54),
               ),
             ],
           ),

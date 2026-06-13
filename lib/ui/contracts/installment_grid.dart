@@ -53,7 +53,7 @@ class InstallmentGrid extends ConsumerWidget {
       itemCount: contract.installments.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 2.4,
+        childAspectRatio: 1.7,
         crossAxisSpacing: 8,
         mainAxisSpacing: 8,
       ),
@@ -69,17 +69,28 @@ class InstallmentGrid extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text('مانگی ${inst.monthNumber}',
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 13)),
+                  const SizedBox(height: 2),
                   Text(_date.format(inst.dueDate),
                       style:
-                          const TextStyle(fontSize: 12, color: Colors.black54)),
-                  const SizedBox(height: 4),
-                  Chip(
-                    label: Text(label, style: const TextStyle(fontSize: 12)),
-                    backgroundColor: color.withValues(alpha: 0.2),
-                    visualDensity: VisualDensity.compact,
+                          const TextStyle(fontSize: 11, color: Colors.black54)),
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(label,
+                        style: TextStyle(
+                            fontSize: 11,
+                            color: color,
+                            fontWeight: FontWeight.w500)),
                   ),
                 ],
               ),
