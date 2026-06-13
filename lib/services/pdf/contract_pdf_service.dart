@@ -52,6 +52,9 @@ class ContractPdfService {
     final theme = pw.ThemeData.withFont(
       base: _regular!,
       bold: _bold!,
+      // Fallback covers any glyph (Latin, digits, punctuation) the Kurdish
+      // SPEDA font lacks — a missing glyph can otherwise crash layout.
+      fontFallback: [_regular!, pw.Font.helvetica(), pw.Font.helveticaBold()],
     );
 
     final doc = pw.Document(theme: theme);
