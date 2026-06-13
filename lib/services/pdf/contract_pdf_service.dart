@@ -69,7 +69,7 @@ class ContractPdfService {
         footer: (ctx) => _footer(ctx, company),
         build: (ctx) => switch (contract) {
           RentContract r => _rentContent(r, company),
-          SaleContract s => _saleContent(s),
+          SaleContract s => _saleContent(s, company),
         },
       ),
     );
@@ -183,38 +183,60 @@ class ContractPdfService {
   }
 
   // ----------------------------- SALE -----------------------------
-  static List<pw.Widget> _saleContent(SaleContract s) {
-    final cur = s.currency.label;
-    String m(num v) => _money.format(v);
+  static List<pw.Widget> _saleContent(SaleContract s, Company? company) {
     return [
-      _title('گرێبەستی فرۆشتن'),
+      _title('گرێبەستی کڕین و فرۆشتن'),
       _card('زانیاری گرێبەست', [
         _row('ژمارەی گرێبەست:', '${s.contractNumber}'),
         _row('لایەنی یەکەم (فرۆشیار):', s.party1Name),
-        _row('ژمارەی مۆبایل:', s.party1Mobile),
         _row('لایەنی دووەم (کڕیار):', s.party2Name),
-        _row('ژمارەی مۆبایل:', s.party2Mobile),
         _row('جۆری موڵک:', s.propertyType),
         _row('پڕۆژە / گەڕەک:', s.projectName),
         _row('ژمارەی عەقار:', s.propertyNumber),
         _row('ڕووبەر:', '${s.area} م²'),
       ]),
       pw.SizedBox(height: 12),
-      _card('وردەکاری دارایی', [
-        _row('نرخی فرۆشتن:', '${m(s.totalPrice)} $cur'),
-        _row('پێشەکی:', '${m(s.downPayment)} $cur'),
-        _row('شێوازی پارەدان:', s.paymentMethod),
-        _row('بڕی دواکەوتن بۆ ڕۆژێک:', '${m(s.lateFeePerDay)} $cur'),
-        _row('بڕی پاشگەزبوونەوە:', '${m(s.withdrawalAmount)} $cur'),
-        _row('پارێزەر:', s.lawyer),
-        _row('ڕێکەوتی تەسلیم:', _date.format(s.deliveryDate)),
-      ]),
+      pw.Text('هەردوو لایەن ڕێکەوتن لەسەر ئەم خاڵانەی خوارەوە (بەندەکان):',
+          style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 12)),
+      pw.SizedBox(height: 6),
+      ..._saleClauses(s, company).asMap().entries.map(
+            (e) => pw.Padding(
+              padding: const pw.EdgeInsets.only(bottom: 6),
+              child: pw.Text('${e.key + 1}- ${e.value}',
+                  textAlign: pw.TextAlign.justify,
+                  style: const pw.TextStyle(fontSize: 11, lineSpacing: 2)),
+            ),
+          ),
       if (s.notes.trim().isNotEmpty) ...[
         pw.SizedBox(height: 8),
         pw.Text('تێبینی: ${s.notes}', style: const pw.TextStyle(fontSize: 11)),
       ],
-      pw.SizedBox(height: 30),
+      pw.SizedBox(height: 24),
       _partySignatures(s.party1Name, s.agentName, s.party2Name),
+    ];
+  }
+
+  /// The 14 sale clauses with placeholders filled. `companyname` uses the
+  /// company's Kurdish name; the late-delivery fee reuses lateFeePerDay.
+  static List<String> _saleClauses(SaleContract s, Company? company) {
+    final cn = company?.nameKu ?? 'کۆمپانیا';
+    final cur = s.currency.label;
+    String m(num v) => _money.format(v);
+    return [
+      'لایەنی یەکەم ${s.party1Name} ڕەزامەندە لەسەر فرۆشتنی ئەم موڵکەی سەرەوە بە لایەنی دووەم بە نرخی ${m(s.totalPrice)} $cur.',
+      'لایەنی دووەم ${s.party2Name} ڕەزامەندە لەسەر کڕینی ئەم موڵکەی سەرەوە بە نرخی ${m(s.totalPrice)} $cur.',
+      '$cn بڕی ${m(s.downPayment)} $cur وەردەگرێت وەکو پێشەکی لە جیاتی لایەنی یەکەم.',
+      'بڕی پارەی ماوە بەم شێوەی خوارەوە دەدرێت: ${s.paymentMethod}',
+      'لەسەر لایەنی یەکەم پێویستە ئەم موڵکە ڕادەستی لایەنی دووەم بکات لە ڕێکەوتی ${_date.format(s.deliveryDate)} دوای گەیشتنی بە شایستە داراییەکان.',
+      'ئەگەر لایەنی یەکەم لە بەرواری دیاریکراودا ئەم موڵکەی ڕادەستی لایەنی دووەم نەکرد ئەوا دەبێت پابەند بێت بە پێدانی بڕی ${m(s.lateFeePerDay)} $cur بۆ هەر ڕۆژ دواکەوتن.',
+      'ئەگەر هاتوو هەر لایەنێک بە هەر هۆیەک پاشەگەزبێتەوە لەم گرێبەستە دەبێت پابەندبێت بە پێدانی بڕی ${m(s.withdrawalAmount)} $cur بۆ لایەنەکەی تر بەبێ ئاگادار کردنەوەی لایەنی فەرمی.',
+      'ڕسووماتی فرۆشتن و گواستنەوە و جیاکردنەوە و یەخستن و ڕاستکردنەوە و باجی خانووبەرە لەسەر لایەنی یەکەمە بیدات بەپێی یاسا ئەگەر تاپۆ بوو، وە ئەگەر تاپۆ نەبوو لایەنی یەکەم پابەندە بە پێدانی بڕی پارەی بەناوکردنی خۆی.',
+      'ڕسووماتی کەشف و تۆماری عەقار دەکەوێتە سەر لایەنی دووەم بەگوێرەی یاسا ئەگەر تاپۆ بوو، وە ئەگەر تاپۆ نەبوو لایەنی دووەم پابەندە بە بڕی پارەی بەناوکردن.',
+      'لەسەر لایەنی یەکەم پێویستە دەسەڵات بدات بە پارێزەر ${s.lawyer} بە بریکارنامەی تایبەت بەم موڵکە لە فەرمانگەی دادنووس بە مەبەستی ڕایکردنی مامەڵەکان و بەناوکردنی لە بەڕیوبەرایەتی تۆماری خانووبەرە بۆ لایەنی دووەم.',
+      'لەسەر لایەنی یەکەم پێویستە قەرزی کارەبا و هەر خزمەتگوزاریەک لەسەر ئەم موڵکە هەبێت پاک بکاتەوە تا بەرواری ڕادەست کردنی موڵکەکە.',
+      'لەسەر لایەنی یەکەم پێویستە بڕی ٪١ لە نرخی ئەم موڵکەی سەرەوە بدات بە $cn لە بەرامبەر فرۆشتنی ئەم موڵکە.',
+      'لەسەر لایەنی دووەم پێویستە بڕی ٪١ لە نرخی ئەم موڵکەی سەرەوە بدات بە $cn لە بەرامبەر کڕینی ئەم موڵکە.',
+      'گەر لایەنی یەکەم دواکەوت لە پێدانی کلیل بە لایەنی دووەم لە ڕێکەوتی دیاریکراو ئەوا دەبێت بڕی ${m(s.lateFeePerDay)} $cur بدات بە لایەنی یەکەم بۆ هەر ڕۆژێک لە دواکەوتن.',
     ];
   }
 
