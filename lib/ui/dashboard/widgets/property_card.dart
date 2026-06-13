@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
-import '../../../models/enums.dart';
-import '../dummy_data.dart';
+import '../../../models/property_model.dart';
 
-/// Vertical list card for a recent property/offer.
+/// Vertical list card for a real property listing (the company's own offers).
 class PropertyCard extends StatelessWidget {
-  const PropertyCard({super.key, required this.offer});
+  const PropertyCard({super.key, required this.listing});
 
-  final PropertyOffer offer;
+  final PropertyListing listing;
+
+  static final _date = DateFormat('yyyy/MM/dd');
 
   @override
   Widget build(BuildContext context) {
-    final isRent = offer.type == ContractType.rent;
+    final accent = Theme.of(context).colorScheme.primary;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -30,15 +32,14 @@ class PropertyCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Placeholder image.
             Container(
               width: 84,
               height: 84,
               decoration: BoxDecoration(
-                color: offer.accent.withValues(alpha: 0.15),
+                color: accent.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(Icons.apartment, color: offer.accent, size: 34),
+              child: Icon(Icons.apartment, color: accent, size: 34),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -47,28 +48,21 @@ class PropertyCard extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      _typeChip(isRent),
+                      _chip(listing.isPublic),
                       const Spacer(),
-                      Text(
-                        offer.price,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                          color: isRent
-                              ? const Color(0xFF2E7D32)
-                              : const Color(0xFF1565C0),
-                        ),
-                      ),
+                      Text('${listing.area} م²',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                              color: accent)),
                     ],
                   ),
                   const SizedBox(height: 6),
-                  Text(
-                    offer.title,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 14.5),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  Text(listing.propertyType.label,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 14.5),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis),
                   const SizedBox(height: 2),
                   Row(
                     children: [
@@ -76,13 +70,11 @@ class PropertyCard extends StatelessWidget {
                           size: 14, color: Colors.black45),
                       const SizedBox(width: 3),
                       Expanded(
-                        child: Text(
-                          offer.location,
-                          style: const TextStyle(
-                              fontSize: 12.5, color: Colors.black54),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                        child: Text(listing.location.label,
+                            style: const TextStyle(
+                                fontSize: 12.5, color: Colors.black54),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis),
                       ),
                     ],
                   ),
@@ -92,11 +84,11 @@ class PropertyCard extends StatelessWidget {
                       const Icon(Icons.badge_outlined,
                           size: 14, color: Colors.black45),
                       const SizedBox(width: 4),
-                      Text(offer.agentName,
+                      Text(listing.agentName,
                           style: const TextStyle(
                               fontSize: 12, color: Colors.black54)),
                       const Spacer(),
-                      Text(offer.timeAgo,
+                      Text(_date.format(listing.createdAt),
                           style: const TextStyle(
                               fontSize: 11, color: Colors.black38)),
                     ],
@@ -110,19 +102,17 @@ class PropertyCard extends StatelessWidget {
     );
   }
 
-  Widget _typeChip(bool isRent) {
-    final color = isRent ? const Color(0xFF2E7D32) : const Color(0xFF1565C0);
+  Widget _chip(bool isPublic) {
+    final color = isPublic ? const Color(0xFF2E7D32) : const Color(0xFF6A6A6A);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(
-        isRent ? 'بۆ کرێ' : 'بۆ فرۆشتن',
-        style: TextStyle(
-            color: color, fontSize: 11.5, fontWeight: FontWeight.bold),
-      ),
+      child: Text(isPublic ? 'گشتی' : 'ناوخۆیی',
+          style: TextStyle(
+              color: color, fontSize: 11.5, fontWeight: FontWeight.bold)),
     );
   }
 }

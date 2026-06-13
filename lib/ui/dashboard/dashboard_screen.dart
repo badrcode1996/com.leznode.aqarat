@@ -1,50 +1,76 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../auth/session.dart';
-import 'dummy_data.dart';
+import '../../data/contract_repository.dart';
+import '../../data/listing_repository.dart';
+import '../../models/contract_model.dart';
+import '../../models/enums.dart';
 import 'widgets/property_card.dart';
 import 'widgets/request_card.dart';
 import 'widgets/stat_card.dart';
 
-/// Dashboard (Home tab) built with slivers.
+/// Dashboard (Home tab) built with slivers. All data is real (Firestore);
+/// sections show empty states until data exists.
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
+
+  static final _money = NumberFormat.decimalPattern();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
     final company = ref.watch(currentCompanyProvider).value;
+    final stats = ref.watch(companyStatsProvider).value;
+    final contracts = ref.watch(contractsStreamProvider).value ?? const [];
+    final offers = ref.watch(myListingsProvider(ListingKind.offer)).value;
+    final demands = ref.watch(myListingsProvider(ListingKind.demand)).value;
+
+    // Computed live from the contracts stream.
+    final now = DateTime.now();
+    final contractsThisMonth = contracts
+        .where((c) =>
+            c.createdAt.year == now.year && c.createdAt.month == now.month)
+        .length;
+    num overdue = 0;
+    for (final c in contracts) {
+      if (c is RentContract) {
+        for (final inst in c.installments) {
+          if (inst.status == PaymentStatus.pending &&
+              inst.dueDate.isBefore(now)) {
+            overdue += c.rentAmount;
+          }
+        }
+      }
+    }
 
     return CustomScrollView(
       slivers: [
-        // ---------- App bar ----------
         SliverAppBar(
           pinned: true,
           floating: true,
           elevation: 0,
           scrolledUnderElevation: 1,
+          toolbarHeight: 68,
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           leading: IconButton(
-            icon: const Badge(
-              smallSize: 8,
-              child: Icon(Icons.notifications_outlined),
-            ),
+            icon: const Icon(Icons.notifications_outlined),
             onPressed: () {},
           ),
           titleSpacing: 0,
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Text('بەخێربێیتەوە 👋',
-                  style: TextStyle(
-                      fontSize: 12, color: Colors.grey.shade600)),
-              Text(
-                user.displayName,
-                style: const TextStyle(
-                    fontSize: 16, fontWeight: FontWeight.bold),
-              ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+              Text(user.displayName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold)),
             ],
           ),
           actions: [
@@ -52,8 +78,10 @@ class DashboardScreen extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: CircleAvatar(
                 radius: 20,
-                backgroundColor:
-                    Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
+                backgroundColor: Theme.of(context)
+                    .colorScheme
+                    .primary
+                    .withValues(alpha: 0.12),
                 backgroundImage: (company?.logoUrl.isNotEmpty ?? false)
                     ? NetworkImage(company!.logoUrl)
                     : null,
@@ -64,81 +92,100 @@ class DashboardScreen extends ConsumerWidget {
                             ? user.displayName.characters.first
                             : '?',
                         style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.primary),
                       ),
               ),
             ),
           ],
         ),
 
-        // ---------- Stats ----------
+        // ---------- Stats (real) ----------
         SliverToBoxAdapter(
           child: SizedBox(
             height: 138,
             child: ListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.fromLTRB(16, 8, 4, 8),
-              children: const [
+              children: [
                 StatCard(
                   title: 'قاسەی نووسینگە',
-                  value: '\$42,500',
+                  value: _money.format(stats?.collectedRevenue ?? 0),
                   icon: Icons.account_balance_wallet_outlined,
-                  accent: Color(0xFF1565C0),
-                  sparkline: [3, 4, 3.5, 5, 4.5, 6, 5.8],
+                  accent: const Color(0xFF1565C0),
                 ),
                 StatCard(
                   title: 'گرێبەستەکانی ئەم مانگە',
-                  value: '18',
+                  value: '$contractsThisMonth',
                   icon: Icons.description_outlined,
-                  accent: Color(0xFF2E7D32),
-                  sparkline: [2, 3, 2.5, 4, 3, 5, 4.5],
+                  accent: const Color(0xFF2E7D32),
                 ),
                 StatCard(
                   title: 'پارەی دواکەوتوو',
-                  value: '\$3,200',
+                  value: _money.format(overdue),
                   icon: Icons.warning_amber_rounded,
-                  accent: Color(0xFFC62828),
+                  accent: const Color(0xFFC62828),
                   highlight: true,
                 ),
                 StatCard(
-                  title: 'کۆی موڵکەکان',
-                  value: '64',
-                  icon: Icons.apartment_outlined,
-                  accent: Color(0xFF6A1B9A),
+                  title: 'کۆی گرێبەستەکان',
+                  value: '${stats?.contractCount ?? 0}',
+                  icon: Icons.folder_outlined,
+                  accent: const Color(0xFF6A1B9A),
                 ),
               ],
             ),
           ),
         ),
 
-        // ---------- Active demands ----------
+        // ---------- Active demands (real) ----------
         _sectionTitle('داواکارییە چالاکەکان'),
         SliverToBoxAdapter(
           child: SizedBox(
             height: 132,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.fromLTRB(16, 4, 4, 4),
-              itemCount: dummyDemands.length,
-              itemBuilder: (_, i) => RequestCard(request: dummyDemands[i]),
-            ),
+            child: (demands == null)
+                ? const Center(child: CircularProgressIndicator())
+                : demands.isEmpty
+                    ? _emptyBox('هیچ داواکارییەک نییە')
+                    : ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.fromLTRB(16, 4, 4, 4),
+                        itemCount: demands.length,
+                        itemBuilder: (_, i) =>
+                            RequestCard(listing: demands[i]),
+                      ),
           ),
         ),
 
-        // ---------- Recent offers ----------
-        _sectionTitle('نوێترین موڵک و پێشکەشکراوەکان'),
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 90),
-          sliver: SliverList.builder(
-            itemCount: dummyOffers.length,
-            itemBuilder: (_, i) => PropertyCard(offer: dummyOffers[i]),
+        // ---------- Recent offers (real) ----------
+        _sectionTitle('نوێترین موڵکەکان'),
+        if (offers == null)
+          const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.all(24),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          )
+        else if (offers.isEmpty)
+          SliverToBoxAdapter(child: _emptyBox('هیچ موڵکێک نییە')),
+        if (offers != null && offers.isNotEmpty)
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 90),
+            sliver: SliverList.builder(
+              itemCount: offers.length,
+              itemBuilder: (_, i) => PropertyCard(listing: offers[i]),
+            ),
           ),
-        ),
       ],
     );
   }
+
+  Widget _emptyBox(String text) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(text, style: const TextStyle(color: Colors.black45)),
+        ),
+      );
 
   Widget _sectionTitle(String title) => SliverToBoxAdapter(
         child: Padding(

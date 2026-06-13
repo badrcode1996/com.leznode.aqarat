@@ -37,7 +37,6 @@ class _CreateRentContractStepperState
   final _propertyNumber = TextEditingController();
   final _area = TextEditingController();
   // Step 3 — financials / dates
-  final _voucherNumber = TextEditingController();
   final _rentAmount = TextEditingController();
   final _rentalPeriod = TextEditingController();
   final _downPayment = TextEditingController();
@@ -65,7 +64,6 @@ class _CreateRentContractStepperState
       _projectName,
       _propertyNumber,
       _area,
-      _voucherNumber,
       _rentAmount,
       _rentalPeriod,
       _downPayment,
@@ -90,12 +88,12 @@ class _CreateRentContractStepperState
 
     final user = ref.read(currentUserProvider);
     final freq = _i(_paymentFrequency) < 1 ? 1 : _i(_paymentFrequency);
+    final prepaid = _i(_downPaymentMonths).clamp(0, 12);
     final contract = RentContract(
       id: '',
       companyId: user.companyId,
       agentId: user.agentId,
       createdAt: DateTime.now(),
-      voucherNumber: _voucherNumber.text.trim(),
       party1Name: _party1Name.text.trim(),
       party1Mobile: _party1Mobile.text.trim(),
       party2Name: _party2Name.text.trim(),
@@ -106,9 +104,9 @@ class _CreateRentContractStepperState
       area: _n(_area),
       rentAmount: _n(_rentAmount),
       currency: _currency,
-      rentalPeriod: _rentalPeriod.text.trim(),
+      rentalPeriodMonths: _i(_rentalPeriod),
       downPayment: _n(_downPayment),
-      downPaymentMonths: _i(_downPaymentMonths),
+      downPaymentMonths: prepaid,
       startDate: _startDate,
       handoverDate: _handoverDate,
       paymentFrequencyMonths: freq,
@@ -116,7 +114,9 @@ class _CreateRentContractStepperState
       gracePeriod: _gracePeriod.text.trim(),
       rentalPurpose: _rentalPurpose.text.trim(),
       lateFeePerDay: _n(_lateFee),
-      installments: RentContract.buildSchedule(_startDate, everyMonths: freq),
+      // First `prepaid` installments are marked delivered-to-owner.
+      installments: RentContract.buildSchedule(_startDate,
+          everyMonths: freq, prepaidMonths: prepaid),
     );
 
     try {
@@ -220,7 +220,6 @@ class _CreateRentContractStepperState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _text(_voucherNumber, 'ژمارەی پسووله'),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -249,7 +248,8 @@ class _CreateRentContractStepperState
                       ),
                     ],
                   ),
-                  _text(_rentalPeriod, 'ماوەی بەکریگرتن'),
+                  _text(_rentalPeriod, 'ماوەی بەکریگرتن (بە مانگ)',
+                      keyboard: TextInputType.number),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

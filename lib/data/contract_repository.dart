@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../auth/session.dart';
+import '../models/company_stats_model.dart';
 import '../models/contract_model.dart';
 import '../models/enums.dart';
 
@@ -55,8 +56,17 @@ class ContractRepository {
 
     await _db.runTransaction((txn) async {
       final statsSnap = await txn.get(_statsDoc);
+      final stats = statsSnap.data();
 
-      txn.set(newRef, contract.toJson());
+      // Sequential, per-company, per-type contract number (starts at 1).
+      final counterKey = contract.type == ContractType.rent
+          ? 'rent_contract_count'
+          : 'sale_contract_count';
+      final currentCount = (stats?[counterKey] as int?) ?? 0;
+      final contractNumber = currentCount + 1;
+
+      final data = contract.toJson()..['contract_number'] = contractNumber;
+      txn.set(newRef, data);
 
       // Expected value added to the pipeline by this contract.
       final num expectedValue = switch (contract) {
@@ -176,4 +186,16 @@ final contractRepositoryProvider = Provider<ContractRepository>((ref) {
 /// Realtime contracts for the dashboard / list screens.
 final contractsStreamProvider = StreamProvider<List<Contract>>((ref) {
   return ref.watch(contractRepositoryProvider).watchContracts();
+});
+
+/// The current company's pre-aggregated stats doc (one read, kept live).
+final companyStatsProvider = StreamProvider<CompanyStats?>((ref) {
+  final db = ref.watch(firestoreProvider);
+  final user = ref.watch(currentUserProvider);
+  if (user.companyId.isEmpty) return Stream.value(null);
+  return db
+      .collection('company_stats')
+      .doc(user.companyId)
+      .snapshots()
+      .map((s) => s.exists ? CompanyStats.fromJson(s.id, s.data()!) : null);
 });

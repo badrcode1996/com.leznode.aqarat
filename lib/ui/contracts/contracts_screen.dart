@@ -41,14 +41,34 @@ class _ContractCard extends ConsumerWidget {
   const _ContractCard({required this.contract});
   final Contract contract;
 
+  Future<void> _run(
+    BuildContext context,
+    Future<void> Function() action,
+  ) async {
+    try {
+      await action();
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('پرینت سەرکەوتوو نەبوو: $e')));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isRent = contract.type == ContractType.rent;
     final company = ref.watch(currentCompanyProvider).value;
+    final typeLabel = isRent ? 'کرێ' : 'فرۆشتن';
     return Card(
       child: ListTile(
-        leading: Icon(isRent ? Icons.home_outlined : Icons.sell_outlined),
-        title: Text(contract.listTitle),
+        leading: CircleAvatar(
+          backgroundColor: (isRent ? Colors.green : Colors.blue)
+              .withValues(alpha: 0.12),
+          child: Text('#${contract.contractNumber}',
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+        ),
+        title: Text('${contract.listTitle} · $typeLabel'),
         subtitle: Text(contract.listSubtitle),
         trailing: Wrap(
           spacing: 4,
@@ -56,14 +76,14 @@ class _ContractCard extends ConsumerWidget {
             IconButton(
               tooltip: 'پرینت',
               icon: const Icon(Icons.print_outlined),
-              onPressed: () =>
-                  ContractPdfService.printContract(contract, company: company),
+              onPressed: () => _run(context,
+                  () => ContractPdfService.printContract(contract, company: company)),
             ),
             IconButton(
               tooltip: 'هاوبەشکردن',
               icon: const Icon(Icons.share_outlined),
-              onPressed: () =>
-                  ContractPdfService.shareContract(contract, company: company),
+              onPressed: () => _run(context,
+                  () => ContractPdfService.shareContract(contract, company: company)),
             ),
           ],
         ),

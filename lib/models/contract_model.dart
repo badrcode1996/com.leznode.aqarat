@@ -19,6 +19,7 @@ sealed class Contract {
     required this.agentId,
     required this.type,
     required this.createdAt,
+    this.contractNumber = 0,
   });
 
   final String id;
@@ -26,6 +27,10 @@ sealed class Contract {
   final String agentId;
   final ContractType type;
   final DateTime createdAt;
+
+  /// Sequential per-company, per-type number (rent and sale have independent
+  /// sequences). Assigned atomically by the repository at creation — 0 until then.
+  final int contractNumber;
 
   factory Contract.fromJson(String id, Map<String, dynamic> json) {
     switch (ContractType.fromWire(json['contract_type'] as String?)) {
@@ -40,6 +45,7 @@ sealed class Contract {
         'contract_type': type.wire,
         'company_id': companyId,
         'agent_id': agentId,
+        'contract_number': contractNumber,
         'created_at': Timestamp.fromDate(createdAt),
       };
 
@@ -57,7 +63,7 @@ class RentContract extends Contract {
     required super.companyId,
     required super.agentId,
     required super.createdAt,
-    required this.voucherNumber,
+    super.contractNumber,
     // Parties
     required this.party1Name,
     required this.party1Mobile,
@@ -71,7 +77,7 @@ class RentContract extends Contract {
     // Financials / dates
     required this.rentAmount,
     required this.currency,
-    required this.rentalPeriod,
+    required this.rentalPeriodMonths,
     required this.downPayment,
     required this.downPaymentMonths,
     required this.startDate,
@@ -83,8 +89,6 @@ class RentContract extends Contract {
     required this.lateFeePerDay,
     required this.installments,
   }) : super(type: ContractType.rent);
-
-  final String voucherNumber; // ژمارەی پسووله
 
   final String party1Name; // لایەنی یەکەم (خاوەن)
   final String party1Mobile;
@@ -98,9 +102,9 @@ class RentContract extends Contract {
 
   final num rentAmount; // بری کرێ (per installment period)
   final Currency currency; // دینار یان دۆلار
-  final String rentalPeriod; // ماوەی بەکریگرتن
+  final int rentalPeriodMonths; // ماوەی بەکریگرتن (بە مانگ)
   final num downPayment; // بری پێشەکی
-  final int downPaymentMonths; // بۆ ___ مانگ
+  final int downPaymentMonths; // بۆ ___ مانگ (first N installments prepaid)
   final DateTime startDate; // بەرواری بەکریگرتن
   final DateTime handoverDate; // بەرواری ڕادەستکردن
   final int paymentFrequencyMonths; // کرێدان چەند مانگ جارێک
@@ -126,7 +130,7 @@ class RentContract extends Contract {
       agentId: json['agent_id'] as String? ?? '',
       createdAt:
           (json['created_at'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      voucherNumber: json['voucher_number'] as String? ?? '',
+      contractNumber: json['contract_number'] as int? ?? 0,
       party1Name: json['party1_name'] as String? ?? '',
       party1Mobile: json['party1_mobile'] as String? ?? '',
       party2Name: json['party2_name'] as String? ?? '',
@@ -137,7 +141,7 @@ class RentContract extends Contract {
       area: json['area'] as num? ?? 0,
       rentAmount: json['rent_amount'] as num? ?? 0,
       currency: Currency.fromWire(json['currency'] as String?),
-      rentalPeriod: json['rental_period'] as String? ?? '',
+      rentalPeriodMonths: json['rental_period_months'] as int? ?? 0,
       downPayment: json['down_payment'] as num? ?? 0,
       downPaymentMonths: json['down_payment_months'] as int? ?? 0,
       startDate: (json['start_date'] as Timestamp?)?.toDate() ?? DateTime.now(),
@@ -157,7 +161,6 @@ class RentContract extends Contract {
   @override
   Map<String, dynamic> toJson() => {
         ...baseJson(),
-        'voucher_number': voucherNumber,
         'party1_name': party1Name,
         'party1_mobile': party1Mobile,
         'party2_name': party2Name,
@@ -168,7 +171,7 @@ class RentContract extends Contract {
         'area': area,
         'rent_amount': rentAmount,
         'currency': currency.wire,
-        'rental_period': rentalPeriod,
+        'rental_period_months': rentalPeriodMonths,
         'down_payment': downPayment,
         'down_payment_months': downPaymentMonths,
         'start_date': Timestamp.fromDate(startDate),
@@ -182,13 +185,22 @@ class RentContract extends Contract {
       };
 
   /// Builds a 12-period schedule from [start], spaced by [everyMonths].
-  static List<Installment> buildSchedule(DateTime start, {int everyMonths = 1}) =>
+  /// The first [prepaidMonths] installments are marked delivered-to-owner,
+  /// because the down payment already settled them.
+  static List<Installment> buildSchedule(
+    DateTime start, {
+    int everyMonths = 1,
+    int prepaidMonths = 0,
+  }) =>
       List.generate(
         12,
         (i) => Installment(
           monthNumber: i + 1,
-          dueDate: DateTime(start.year, start.month + i * everyMonths, start.day),
-          status: PaymentStatus.pending,
+          dueDate:
+              DateTime(start.year, start.month + i * everyMonths, start.day),
+          status: i < prepaidMonths
+              ? PaymentStatus.deliveredToOwner
+              : PaymentStatus.pending,
         ),
       );
 
@@ -201,7 +213,7 @@ class RentContract extends Contract {
         companyId: companyId,
         agentId: agentId,
         createdAt: createdAt,
-        voucherNumber: voucherNumber,
+        contractNumber: contractNumber,
         party1Name: party1Name,
         party1Mobile: party1Mobile,
         party2Name: party2Name,
@@ -212,7 +224,7 @@ class RentContract extends Contract {
         area: area,
         rentAmount: rentAmount,
         currency: currency,
-        rentalPeriod: rentalPeriod,
+        rentalPeriodMonths: rentalPeriodMonths,
         downPayment: downPayment,
         downPaymentMonths: downPaymentMonths,
         startDate: startDate,
@@ -266,6 +278,7 @@ class SaleContract extends Contract {
     required super.companyId,
     required super.agentId,
     required super.createdAt,
+    super.contractNumber,
     required this.clientName,
     required this.clientMobile,
     required this.propertyTitle,
@@ -301,6 +314,7 @@ class SaleContract extends Contract {
       agentId: json['agent_id'] as String? ?? '',
       createdAt:
           (json['created_at'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      contractNumber: json['contract_number'] as int? ?? 0,
       clientName: json['client_name'] as String? ?? '',
       clientMobile: json['client_mobile'] as String? ?? '',
       propertyTitle: json['property_title'] as String? ?? '',

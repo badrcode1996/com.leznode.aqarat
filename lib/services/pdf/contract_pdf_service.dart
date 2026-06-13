@@ -37,11 +37,13 @@ class ContractPdfService {
   static Future<Uint8List> build(Contract contract, {Company? company}) async {
     await _ensureFonts();
 
-    // Fetch the logo image once (failures degrade gracefully to no logo).
+    // Fetch the logo image once. A hanging/offline fetch must not block the
+    // print dialog forever, so we time out and degrade gracefully to no logo.
     pw.ImageProvider? logo;
     if (company != null && company.logoUrl.isNotEmpty) {
       try {
-        logo = await networkImage(company.logoUrl);
+        logo = await networkImage(company.logoUrl)
+            .timeout(const Duration(seconds: 6));
       } catch (_) {
         logo = null;
       }
@@ -167,7 +169,7 @@ class ContractPdfService {
   static pw.Widget _partiesSection(Contract contract) {
     if (contract is RentContract) {
       return _card('لایەنەکانی گرێبەست', [
-        _row('ژمارەی پسووله:', contract.voucherNumber),
+        _row('ژمارەی گرێبەست:', '${contract.contractNumber}'),
         _row('لایەنی یەکەم:', contract.party1Name),
         _row('ژمارەی مۆبایل:', contract.party1Mobile),
         _row('لایەنی دووەم:', contract.party2Name),
@@ -177,6 +179,7 @@ class ContractPdfService {
     }
     final s = contract as SaleContract;
     return _card('لایەنەکانی گرێبەست', [
+      _row('ژمارەی گرێبەست:', '${s.contractNumber}'),
       _row('ناوی موشتەری:', s.clientName),
       _row('مۆبایل:', s.clientMobile),
       _row('موڵک:', s.propertyTitle),
@@ -199,7 +202,7 @@ class ContractPdfService {
         pw.SizedBox(height: 10),
         _card('زانیاری دارایی', [
           _row('بری کرێ:', '${_money.format(c.rentAmount)} $cur'),
-          _row('ماوەی بەکریگرتن:', c.rentalPeriod),
+          _row('ماوەی بەکریگرتن:', '${c.rentalPeriodMonths} مانگ'),
           _row('بری پێشەکی:',
               '${_money.format(c.downPayment)} بۆ ${c.downPaymentMonths} مانگ'),
           _row('بەرواری بەکریگرتن:', _date.format(c.startDate)),

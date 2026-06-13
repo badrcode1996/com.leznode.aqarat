@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
-import '../dummy_data.dart';
+import '../../../models/property_model.dart';
 
-/// Compact card for an active client demand/request (horizontal list).
+/// Compact card for a real demand/request listing (the company's own demands).
 class RequestCard extends StatelessWidget {
-  const RequestCard({super.key, required this.request});
+  const RequestCard({super.key, required this.listing});
 
-  final DemandRequest request;
+  final PropertyListing listing;
 
   @override
   Widget build(BuildContext context) {
@@ -35,23 +35,21 @@ class RequestCard extends StatelessWidget {
               CircleAvatar(
                 radius: 16,
                 backgroundColor: scheme.primary.withValues(alpha: 0.12),
-                child: Icon(Icons.person_search,
-                    size: 18, color: scheme.primary),
+                child:
+                    Icon(Icons.person_search, size: 18, color: scheme.primary),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(
-                  request.clientName,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                  overflow: TextOverflow.ellipsis,
-                ),
+                child: Text(listing.ownerName,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    overflow: TextOverflow.ellipsis),
               ),
             ],
           ),
           const SizedBox(height: 10),
           Expanded(
             child: Text(
-              request.description,
+              '${listing.propertyType.label} لە ${listing.location.label}',
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontSize: 13, color: Colors.black87),
@@ -61,8 +59,8 @@ class RequestCard extends StatelessWidget {
           Wrap(
             spacing: 6,
             children: [
-              _miniChip(Icons.place_outlined, request.location),
-              _miniChip(Icons.payments_outlined, request.budget),
+              _miniChip(Icons.place_outlined, listing.location.label),
+              _miniChip(Icons.straighten, '${listing.area} م²'),
             ],
           ),
         ],
