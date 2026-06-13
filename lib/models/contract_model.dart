@@ -77,7 +77,6 @@ class RentContract extends Contract {
     // Financials / dates
     required this.rentAmount,
     required this.currency,
-    required this.rentMonthly,
     required this.rentalPeriodMonths,
     required this.downPayment,
     required this.downPaymentMonths,
@@ -103,7 +102,6 @@ class RentContract extends Contract {
 
   final num rentAmount; // بری کرێ (per installment period)
   final Currency currency; // دینار یان دۆلار
-  final int rentMonthly; // وەرگرتنی کرێ چەند مانگ جارێک
   final int rentalPeriodMonths; // ماوەی بەکریگرتن (بە مانگ)
   final num downPayment; // بری پێشەکی
   final int downPaymentMonths; // بۆ ___ مانگ (first N installments prepaid)
@@ -144,7 +142,6 @@ class RentContract extends Contract {
       rentAmount: json['rent_amount'] as num? ?? 0,
       currency: Currency.fromWire(
           (json['dinar_dolar'] ?? json['currency']) as String?),
-      rentMonthly: json['rent_monthly'] as int? ?? 0,
       rentalPeriodMonths: json['rental_period_months'] as int? ?? 0,
       downPayment: json['down_payment'] as num? ?? 0,
       downPaymentMonths: json['down_payment_months'] as int? ?? 0,
@@ -176,7 +173,6 @@ class RentContract extends Contract {
         'area': area,
         'rent_amount': rentAmount,
         'dinar_dolar': currency.wire,
-        'rent_monthly': rentMonthly,
         'rental_period_months': rentalPeriodMonths,
         'down_payment': downPayment,
         'down_payment_months': downPaymentMonths,
@@ -230,7 +226,6 @@ class RentContract extends Contract {
         area: area,
         rentAmount: rentAmount,
         currency: currency,
-        rentMonthly: rentMonthly,
         rentalPeriodMonths: rentalPeriodMonths,
         downPayment: downPayment,
         downPaymentMonths: downPaymentMonths,

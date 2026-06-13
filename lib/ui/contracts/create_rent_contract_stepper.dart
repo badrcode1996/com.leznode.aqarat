@@ -38,7 +38,6 @@ class _CreateRentContractStepperState
   final _area = TextEditingController();
   // Step 3 — financials / dates
   final _rentAmount = TextEditingController();
-  final _rentMonthly = TextEditingController();
   final _rentalPeriod = TextEditingController();
   final _downPayment = TextEditingController();
   final _downPaymentMonths = TextEditingController();
@@ -66,7 +65,6 @@ class _CreateRentContractStepperState
       _propertyNumber,
       _area,
       _rentAmount,
-      _rentMonthly,
       _rentalPeriod,
       _downPayment,
       _downPaymentMonths,
@@ -106,7 +104,6 @@ class _CreateRentContractStepperState
       area: _n(_area),
       rentAmount: _n(_rentAmount),
       currency: _currency,
-      rentMonthly: _i(_rentMonthly),
       rentalPeriodMonths: _i(_rentalPeriod),
       downPayment: _n(_downPayment),
       downPaymentMonths: prepaid,
@@ -251,8 +248,6 @@ class _CreateRentContractStepperState
                       ),
                     ],
                   ),
-                  _text(_rentMonthly, 'وەرگرتنی کرێ چەند مانگ جارێک',
-                      keyboard: TextInputType.number),
                   _text(_rentalPeriod, 'ماوەی بەکریگرتن (بە مانگ)',
                       keyboard: TextInputType.number),
                   Row(
