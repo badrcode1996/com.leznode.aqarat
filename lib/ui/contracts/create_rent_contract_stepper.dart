@@ -48,6 +48,7 @@ class _CreateRentContractStepperState
   final _lateFee = TextEditingController();
 
   Currency _currency = Currency.iqd;
+  String _notes = '';
   DateTime _startDate = DateTime.now();
   DateTime _handoverDate = DateTime.now().add(const Duration(days: 365));
 
@@ -117,6 +118,8 @@ class _CreateRentContractStepperState
       // First `prepaid` installments are marked delivered-to-owner.
       installments: RentContract.buildSchedule(_startDate,
           everyMonths: freq, prepaidMonths: prepaid),
+      notes: _notes.trim(),
+      agentName: user.displayName,
     );
 
     try {
@@ -135,6 +138,35 @@ class _CreateRentContractStepperState
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  Future<void> _editNotes() async {
+    final controller = TextEditingController(text: _notes);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('تێبینی'),
+        content: TextField(
+          controller: controller,
+          maxLines: 5,
+          minLines: 5,
+          maxLength: 500,
+          decoration: const InputDecoration(
+            hintText: 'تا ٥ لاین تێبینی بنووسە...',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('پاشگەزبوونەوە')),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, controller.text),
+              child: const Text('پاشەکەوت')),
+        ],
+      ),
+    );
+    if (result != null) setState(() => _notes = result);
   }
 
   void _onContinue() {
@@ -280,6 +312,14 @@ class _CreateRentContractStepperState
                   _text(_lateFee, 'بڕی دواکەوتن دوای تەواوبوونی ماوەی گرێبەستەکە',
                       keyboard: const TextInputType.numberWithOptions(
                           decimal: true)),
+                  const SizedBox(height: 4),
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.note_add_outlined),
+                    label: Text(_notes.isEmpty
+                        ? 'زیادکردنی تێبینی'
+                        : 'دەستکاری تێبینی ✓'),
+                    onPressed: _editNotes,
+                  ),
                   const Padding(
                     padding: EdgeInsets.only(top: 8),
                     child: Text('١٢ قیست بەشێوەی خۆکار دروست دەکرێن.',

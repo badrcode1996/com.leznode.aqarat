@@ -66,16 +66,10 @@ class ContractPdfService {
         margin: const pw.EdgeInsets.all(32),
         header: (ctx) => _header(contract, company, logo),
         footer: (ctx) => _footer(ctx),
-        build: (ctx) => [
-          _partiesSection(contract),
-          pw.SizedBox(height: 12),
-          if (contract is RentContract) _rentBody(contract),
-          if (contract is SaleContract) _saleBody(contract),
-          pw.SizedBox(height: 18),
-          _legalClauses(contract),
-          pw.SizedBox(height: 30),
-          _signatures(),
-        ],
+        build: (ctx) => switch (contract) {
+          RentContract r => _rentContent(r, company),
+          SaleContract s => _saleContent(s),
+        },
       ),
     );
 
@@ -123,39 +117,33 @@ class ContractPdfService {
     );
   }
 
-  /// Branded company strip: logo on one side, name + phones + address on the other.
+  /// Branded company strip: company name in all 3 languages on the right
+  /// (RTL start), logo on the left.
   static pw.Widget _companyBand(Company company, pw.ImageProvider? logo) {
-    final phones = [company.phone1, company.phone2]
-        .where((p) => p.isNotEmpty)
-        .join(' • ');
+    final names = [company.nameKu, company.nameAr, company.nameEn]
+        .where((n) => n.isNotEmpty)
+        .toList();
     return pw.Row(
       crossAxisAlignment: pw.CrossAxisAlignment.center,
       children: [
-        if (logo != null)
-          pw.Container(
-            width: 56,
-            height: 56,
-            margin: const pw.EdgeInsets.only(left: 10),
-            child: pw.Image(logo, fit: pw.BoxFit.contain),
-          ),
         pw.Expanded(
           child: pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              pw.Text(
-                company.displayName,
-                style:
-                    pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
-              ),
-              if (phones.isNotEmpty)
-                pw.Text('تەلەفۆن: $phones',
-                    style: const pw.TextStyle(fontSize: 10)),
-              if (company.address.isNotEmpty)
-                pw.Text('ناونیشان: ${company.address}',
-                    style: const pw.TextStyle(fontSize: 10)),
+              for (final n in names)
+                pw.Text(n,
+                    style: pw.TextStyle(
+                        fontSize: 14, fontWeight: pw.FontWeight.bold)),
             ],
           ),
         ),
+        if (logo != null)
+          pw.Container(
+            width: 56,
+            height: 56,
+            margin: const pw.EdgeInsets.only(right: 10),
+            child: pw.Image(logo, fit: pw.BoxFit.contain),
+          ),
       ],
     );
   }
@@ -169,85 +157,122 @@ class ContractPdfService {
         ),
       );
 
-  static pw.Widget _partiesSection(Contract contract) {
-    if (contract is RentContract) {
-      return _card('لایەنەکانی گرێبەست', [
-        _row('ژمارەی گرێبەست:', '${contract.contractNumber}'),
-        _row('لایەنی یەکەم:', contract.party1Name),
-        _row('ژمارەی مۆبایل:', contract.party1Mobile),
-        _row('لایەنی دووەم:', contract.party2Name),
-        _row('ژمارەی مۆبایل:', contract.party2Mobile),
-        _row('بەروار:', _date.format(contract.createdAt)),
-      ]);
-    }
-    final s = contract as SaleContract;
+  // ----------------------------- SALE -----------------------------
+  static List<pw.Widget> _saleContent(SaleContract s) => [
+        _partiesSection(s),
+        pw.SizedBox(height: 12),
+        _saleBody(s),
+        pw.SizedBox(height: 18),
+        _legalClauses(s),
+        pw.SizedBox(height: 30),
+        _signatures(),
+      ];
+
+  // ----------------------------- RENT -----------------------------
+  static List<pw.Widget> _rentContent(RentContract c, Company? company) {
+    return [
+      _card('زانیاری گرێبەست', [
+        _row('ژمارەی گرێبەست:', '${c.contractNumber}'),
+        _row('لایەنی یەکەم (خاوەن موڵک):', c.party1Name),
+        _row('لایەنی دووەم (کرێچی):', c.party2Name),
+        _row('جۆری موڵک:', c.propertyType),
+        _row('پڕۆژە / گەڕەک:', c.projectName),
+        _row('ژمارەی عەقار:', c.propertyNumber),
+        _row('ڕووبەر:', '${c.area} م²'),
+      ]),
+      pw.SizedBox(height: 12),
+      pw.Text('هەردوو لایەن ڕێکەوتن لەسەر ئەم خاڵانەی خوارەوە:',
+          style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 13)),
+      pw.SizedBox(height: 4),
+      pw.Text('بەندەکان:',
+          style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 12)),
+      pw.SizedBox(height: 6),
+      ..._rentClauses(c, company).asMap().entries.map(
+            (e) => pw.Padding(
+              padding: const pw.EdgeInsets.only(bottom: 6),
+              child: pw.Text('${e.key + 1}- ${e.value}',
+                  textAlign: pw.TextAlign.justify,
+                  style: const pw.TextStyle(fontSize: 11, lineSpacing: 2)),
+            ),
+          ),
+      if (c.notes.trim().isNotEmpty) ...[
+        pw.SizedBox(height: 8),
+        pw.Text('تێبینی: ${c.notes}',
+            style: const pw.TextStyle(fontSize: 11)),
+      ],
+      pw.SizedBox(height: 30),
+      _rentSignatures(c),
+    ];
+  }
+
+  /// The 27 rent clauses with placeholders filled. `companyname` uses the
+  /// company's Kurdish name.
+  static List<String> _rentClauses(RentContract c, Company? company) {
+    final cn = company?.nameKu ?? 'کۆمپانیا';
+    final cur = c.currency.label;
+    String m(num v) => _money.format(v);
+    return [
+      'لایەنی یەکەم ڕەزامەندە لەسەر بەکرێدانی ئەم موڵکەی سەرەوە بە لایەنی دووەم بۆ ماوەی (${c.rentalPeriodMonths}) مانگ.',
+      'هەردوو لایەن ڕەزامەندن لەسەر کرێی مانگانە بە بڕی ${m(c.rentAmount)} $cur.',
+      'ئەم گرێبەستە دەست پێدەکات لە بەرواری: ${_date.format(c.startDate)} تاکو ${_date.format(c.handoverDate)}.',
+      'لایەنی دووەم بڕی ${m(c.downPayment)} دەداتە لایەنی یەکەم وەک پێشەکی ${c.downPaymentMonths} مانگ و دوای پێشەکی کرێیەکە بەمشێوەیە دەدریێت: ${c.paymentFrequencyMonths} مانگ جارێک.',
+      'لایەنی دووەم لەسەریەتی بڕی ${m(c.guaranteeAmount)} وەک دڵنیایی دابنێ لای $cn، ئەم بڕە پارەیە دەگەڕێتەوە بۆ لایەنی دووەم دوای ڕادەستکردنی موڵکەکە بێ هیچ کەم و کوڕییەک.',
+      'لایەنی دووەم ئەم موڵکە بەکاردێنێت بۆ مەبەستی ${c.rentalPurpose}، بە پێچەوانەوە بۆ هەر مەبەستێکی تر پێویستە ئاگاداری $cn و ڕەزامەندی لایەنی یەکەم بە نوسراوێک وەربگرێت.',
+      'لایەنی دووەم بۆی نیە داوای کلیلی موڵکەکە بکات بۆ هەر مەبەستێک بێت تا ڕێپێدان لە لایەنی پەیوەندیدار یان ئاسایش وەرنەگرێت، گەر لە ماوەی ${c.gracePeriod} ڕۆژ نەیتوانی ڕێپێدان لە لایەنی پەیوەندیدار وەربگرێت گرێبەستەکە ڕاستەوخۆ هەڵدەوەشێتەوە و پارەکان دەگەڕێتەوە بۆ لایەنی دووەم.',
+      'لایەنی دووەم پێش ڕاخراوکردنی (تاثیث) موڵکەکە پێویستە لەسەر ئەستۆی خۆی قوفڵی دەرگا دەرەکیەکان بگۆڕێت، بەپێچەوانەوە هەر کێشەیەک ڕووبدات خۆی بەرپرسیارە لێی.',
+      'لایەنی دووەم پابەند دەبێت بە پێدانی کرێیەکە (٧) ڕۆژ پێش ڕێکەوتی دیاریکراو، وە ئەگەر (٧) ڕۆژ لە وادەی دیاریکراو دواکەوت ئەوا لایەنی دووەم بەرپرسیار دەبێت بەرامبەر یاسا.',
+      'دوای تەواوبوونی ماوەی گرێبەستەکە ئەگەر لایەنی دووەم پابەند نەبێ بە چۆڵکردنی یان نوێکردنەوەی ئەم گرێبەستە ئەوا کرێی موڵکەکە دەبێت ڕۆژانە بە بڕی ${m(c.lateFeePerDay)} بۆ هەر ڕۆژێک تا یەکلا دەبێتەوە.',
+      'خزمەتگوزاری پڕۆژە و شارەوانی و کارەبا و ئاو و هەر خزمەتگوزاریەکی تر هەبێت لە ماوەی ئەم گرێبەستە لە ئەستۆی لایەنی دووەمە.',
+      'ئەگەر لایەنی دووەم بیەوێت هەر جۆرە گۆڕانکاریەک لە دەرەوە یان ناوەوەی ئەم موڵکە بکات پێویستە بە ئاگاداری $cn و ڕەزامەندی لایەنی یەکەم بێت، وە بە نوسراوێک گۆڕانکاریەکان دیاری بکرێت و بۆی نیە داوای گەڕانەوەی تێچووی گۆڕانکاریەکان بکات لە لایەنی یەکەم دوای دەرچوون.',
+      'لایەنی دووەم بە هیچ شێوەیەک بۆی نیە ئەم موڵکە (هەمووی یان بەشێکی) بەکرێ بداتەوە لایەنی تر بە بێ ئاگادارکردنەوەی $cn و ڕەزامەندی لایەنی یەکەم.',
+      'ئەگەر لایەنی یەکەم موڵکەکەی فرۆشت ئەوا لایەنی دووەم بۆی هەیە لە ناو موڵکەکەی بمێنێتەوە تا کۆتایی وادەی گرێبەستەکە، وە خاوەنە نوێیەکەش پابەند دەبێت بە ناوەڕۆکی ئەم گرێبەستە.',
+      'ئەگەر لایەنی دووەم پێش کۆتایی هاتنی گرێبەستەکە زووتر دەرچوو لە موڵکەکە، $cn هاوکار دەبێ بۆ گێڕانەوەی (بەشێک یان هەموو) کرێی ماوەی چۆڵکردنی موڵکەکە، ئەگەر بەکرێدرایەوە لەلایەن $cn.',
+      '$cn هاوکار دەبێت (نەک بەرپرس) لە نێوان هەردوولایەن لە ماوەی گرێبەستەکە بۆ بەردەوام بوون و مانەوەیان و چارەسەرکردنی کێشە ئەگەر هەبوو.',
+      'ئەگەر موڵکەکە ڕاخراو بوو (مؤثث) لەسەر هەردوولا پێویستە کەل و پەلەکان ئەژمار بکەن (جرد) و وێنەی بگرن هاوپێچی گرێبەستەکە بکرێت بۆ بەرچاو ڕوونی هەردوولا، و لایەنی دووەم پێویستە پارێزگاری لە کەلوپەلەکان بکات و لەکاتی دەرچوونی وەک خۆی ڕادەستی لایەنی یەکەمی بکاتەوە، بەپێچەوانەوە لایەنی دووەم بەرپرسە لە چاککردنەوە یان گۆڕینی لەسەر ئەرکی خۆی.',
+      'لایەنی یەکەم لەسەریەتی پارەی کارەبای حکومی و ئەهلی و خزمەتگوزاریەکان بدات و ئەستۆی پاکی بکات پێش بەکرێدان و بەرپرسە لە چاککردنەوەی هەر کەم و کوڕیەک کە پەیوەندی بە ژێرخانی موڵکەکە بێت.',
+      'لەکاتی هاتنی کرێیەکە پێویستە لایەنی یەکەم بە زووترین کات بێتە $cn و کرێیەکە وەربگرێت، بە پێچەوانەوە پارەکە دەخرێتە ناو حساب بانکی $cn دواتر بە چەک بۆی سەرف دەکرێت.',
+      'هەریەک لە لایەنی یەکەم و دووەم پێویستە بڕی کرێی نیو مانگ بۆ هەر ساڵێک بدەن بە $cn لەجیاتی کرێی ڕێکخستنی ئەم گرێبەستە.',
+      'لایەنی دووەم لەسەریەتی (مانگێک) پێش وادەی کۆتایی هاتنی گرێبەستەکە، ئاگاداری $cn بکاتەوە ئەگەر نیازی نوێکردنەوە یان چۆڵکردنی موڵکەکەی هەبوو، بە پێچەوانەوە کرێی (مانگێک) دەکەوێتە ئەستۆی لایەنی دووەم.',
+      'لەکاتی چۆڵکردن لایەنی دووەم لەسەریەتی چۆن موڵکەکەی وەرگرتووە وەک خۆی بێ کەم و کوڕی ڕادەستی لایەنی یەکەم بکاتەوە، بە پێچەوانەوە بەرپرسە لە چاکردنەوەی کەم و کوڕیەکان بە زووترین کات و پابەندە بە پێدانی پارەی کارەبای نیشتیمانی لەگەڵ هاتنی پسوولەی کارەبا یان سەردانی فەرمانگەی کارەبای نیشتیمانی بکات و پابەندە بە پێدانی پارەی خزمەت گوزاری تا بەرواری چۆڵکردن.',
+      'دوای کۆتایی هاتنی وادەی گرێبەستەکە، ئەم گرێبەستە نوێ دەکرێتەوە بە نرخی ڕۆژ بە ڕەزامەندی هەردوولا بە نێوەندگیری $cn بۆ نرخ دانان و شێوازی کرێدانەکە، یان موڵکەکە چۆڵدەکرێت و ڕادەستی خاوەنەکەی دەکرێتەوە.',
+      'لە کاتی نوێکردنەوەی گرێبەستەکە هەر یەکێک لە دوولایەنەکە پابەند دەبێت بە پێدانی کرێی نیو مانگ بۆ یەک ساڵ بە $cn.',
+      'لەسەر لایەنی دووەم پێویستە موڵکەکە بۆ ئەو مەبەستە بەکاربهێنێت کە لەسەری ڕێکەوتوون، کە نەبێتە مایەی ئەزیەت و ئازار بۆ هاوسێیەکانی، بە پێچەوانەوە بەرپرسیار دەبێت بەرامبەر یاسا و گرێبەستەکە هەڵدەوەشێتەوە.',
+      'لەکاتی چارەسەر نەبوونی کێشەی نێوان دوو لایەنەکە (ئەگەر هەبوو) $cn بەرپرس نیە و کێشەکە دەبردرێتە دادگا بۆ چارەسەرکردنی بە شاهێدی کارمەندانی بەرپرس.',
+      'ئەگەر لایەنی یەکەم خۆی کڕیی وەرگرت لە کرێچی ئەوا $cn بەرپرس نیە لە هیچ جۆرە کێشەیەک.',
+    ];
+  }
+
+  static pw.Widget _rentSignatures(RentContract c) {
+    pw.Widget col(String label, String name) => pw.Expanded(
+          child: pw.Column(
+            children: [
+              pw.Text(label,
+                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+              pw.SizedBox(height: 18),
+              pw.Container(width: 120, height: 1, color: PdfColors.black),
+              pw.SizedBox(height: 4),
+              pw.Text(name, style: const pw.TextStyle(fontSize: 11)),
+            ],
+          ),
+        );
+    return pw.Row(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        col('لایەنی یەکەم', c.party1Name),
+        col('کارمەندی بەرپرس', c.agentName),
+        col('لایەنی دووەم', c.party2Name),
+      ],
+    );
+  }
+
+  static pw.Widget _partiesSection(SaleContract s) {
     return _card('لایەنەکانی گرێبەست', [
       _row('ژمارەی گرێبەست:', '${s.contractNumber}'),
       _row('ناوی موشتەری:', s.clientName),
       _row('مۆبایل:', s.clientMobile),
       _row('موڵک:', s.propertyTitle),
-      _row('بەروار:', _date.format(contract.createdAt)),
+      _row('بەروار:', _date.format(s.createdAt)),
     ]);
-  }
-
-  static pw.Widget _rentBody(RentContract c) {
-    final cur = c.currency.label;
-    return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.stretch,
-      children: [
-        _card('زانیاری موڵک', [
-          _row('جۆری موڵک:', c.propertyType),
-          _row('پڕۆژە/گەرەک:', c.projectName),
-          _row('ژمارەی عەقار:', c.propertyNumber),
-          _row('ڕووبەر:', '${c.area} م²'),
-          _row('هۆکاری بەکریگرتن:', c.rentalPurpose),
-        ]),
-        pw.SizedBox(height: 10),
-        _card('زانیاری دارایی', [
-          _row('بری کرێ:', '${_money.format(c.rentAmount)} $cur'),
-          _row('ماوەی بەکریگرتن:', '${c.rentalPeriodMonths} مانگ'),
-          _row('بری پێشەکی:',
-              '${_money.format(c.downPayment)} بۆ ${c.downPaymentMonths} مانگ'),
-          _row('بەرواری بەکریگرتن:', _date.format(c.startDate)),
-          _row('بەرواری ڕادەستکردن:', _date.format(c.handoverDate)),
-          _row('کرێدان:', 'هەر ${c.paymentFrequencyMonths} مانگ جارێک'),
-          _row('بری دڵنیایی:', _money.format(c.guaranteeAmount)),
-          _row('ماوەی ڕێپێدان:', c.gracePeriod),
-          _row('بڕی دواکەوتن دوای تەواوبوونی ماوەی گرێبەستەکە:',
-              _money.format(c.lateFeePerDay)),
-        ]),
-        pw.SizedBox(height: 10),
-        pw.Text('خشتەی قیستەکان',
-            style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-        pw.SizedBox(height: 6),
-        _installmentsTable(c),
-      ],
-    );
-  }
-
-  static pw.Widget _installmentsTable(RentContract c) {
-    String statusLabel(PaymentStatus s) => switch (s) {
-          PaymentStatus.pending => 'چاوەڕوان',
-          PaymentStatus.receivedFromTenant => 'وەرگیرا لە کرێچی',
-          PaymentStatus.deliveredToOwner => 'گەیەنرا بە خاوەن',
-        };
-
-    return pw.TableHelper.fromTextArray(
-      headerAlignment: pw.Alignment.center,
-      cellAlignment: pw.Alignment.center,
-      headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10),
-      cellStyle: const pw.TextStyle(fontSize: 10),
-      headerDecoration: const pw.BoxDecoration(color: PdfColors.grey300),
-      headers: ['مانگ', 'بەرواری دواخستن', 'دۆخ', 'بڕ'],
-      data: c.installments
-          .map((i) => [
-                '${i.monthNumber}',
-                _date.format(i.dueDate),
-                statusLabel(i.status),
-                _money.format(c.rentAmount),
-              ])
-          .toList(),
-    );
   }
 
   static pw.Widget _saleBody(SaleContract c) {

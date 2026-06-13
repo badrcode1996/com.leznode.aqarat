@@ -88,6 +88,8 @@ class RentContract extends Contract {
     required this.rentalPurpose,
     required this.lateFeePerDay,
     required this.installments,
+    this.notes = '',
+    this.agentName = '',
   }) : super(type: ContractType.rent);
 
   final String party1Name; // لایەنی یەکەم (خاوەن)
@@ -115,6 +117,9 @@ class RentContract extends Contract {
 
   /// Exactly 12 installments (array of maps, no per-month columns).
   final List<Installment> installments;
+
+  final String notes; // تێبینی (up to 5 lines)
+  final String agentName; // name of the user who created the contract
 
   @override
   String get listTitle => party2Name.isNotEmpty ? party2Name : party1Name;
@@ -157,6 +162,8 @@ class RentContract extends Contract {
       installments: rawList
           .map((e) => Installment.fromJson(e as Map<String, dynamic>))
           .toList(),
+      notes: json['notes'] as String? ?? '',
+      agentName: json['agent_name'] as String? ?? '',
     );
   }
 
@@ -184,6 +191,8 @@ class RentContract extends Contract {
         'rental_purpose': rentalPurpose,
         'late_fee_per_day': lateFeePerDay,
         'installments': installments.map((i) => i.toJson()).toList(),
+        'notes': notes,
+        'agent_name': agentName,
       };
 
   /// Builds a 12-period schedule from [start], spaced by [everyMonths].
@@ -237,6 +246,8 @@ class RentContract extends Contract {
         rentalPurpose: rentalPurpose,
         lateFeePerDay: lateFeePerDay,
         installments: installments ?? this.installments,
+        notes: notes,
+        agentName: agentName,
       );
 }
 
