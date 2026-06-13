@@ -187,15 +187,39 @@ class ContractPdfService {
   }
 
   // ----------------------------- SALE -----------------------------
-  static List<pw.Widget> _saleContent(SaleContract s) => [
-        _partiesSection(s),
-        pw.SizedBox(height: 12),
-        _saleBody(s),
-        pw.SizedBox(height: 18),
-        _legalClauses(s),
-        pw.SizedBox(height: 30),
-        _signatures(),
-      ];
+  static List<pw.Widget> _saleContent(SaleContract s) {
+    final cur = s.currency.label;
+    String m(num v) => _money.format(v);
+    return [
+      _card('زانیاری گرێبەست', [
+        _row('ژمارەی گرێبەست:', '${s.contractNumber}'),
+        _row('لایەنی یەکەم (فرۆشیار):', s.party1Name),
+        _row('ژمارەی مۆبایل:', s.party1Mobile),
+        _row('لایەنی دووەم (کڕیار):', s.party2Name),
+        _row('ژمارەی مۆبایل:', s.party2Mobile),
+        _row('جۆری موڵک:', s.propertyType),
+        _row('پڕۆژە / گەڕەک:', s.projectName),
+        _row('ژمارەی عەقار:', s.propertyNumber),
+        _row('ڕووبەر:', '${s.area} م²'),
+      ]),
+      pw.SizedBox(height: 12),
+      _card('وردەکاری دارایی', [
+        _row('نرخی فرۆشتن:', '${m(s.totalPrice)} $cur'),
+        _row('پێشەکی:', '${m(s.downPayment)} $cur'),
+        _row('شێوازی پارەدان:', s.paymentMethod),
+        _row('بڕی دواکەوتن بۆ ڕۆژێک:', '${m(s.lateFeePerDay)} $cur'),
+        _row('بڕی پاشگەزبوونەوە:', '${m(s.withdrawalAmount)} $cur'),
+        _row('پارێزەر:', s.lawyer),
+        _row('ڕێکەوتی تەسلیم:', _date.format(s.deliveryDate)),
+      ]),
+      if (s.notes.trim().isNotEmpty) ...[
+        pw.SizedBox(height: 8),
+        pw.Text('تێبینی: ${s.notes}', style: const pw.TextStyle(fontSize: 11)),
+      ],
+      pw.SizedBox(height: 30),
+      _partySignatures(s.party1Name, s.agentName, s.party2Name),
+    ];
+  }
 
   // ----------------------------- RENT -----------------------------
   static List<pw.Widget> _rentContent(RentContract c, Company? company) {
@@ -226,7 +250,7 @@ class ContractPdfService {
         pw.Text('تێبینی: ${c.notes}', style: const pw.TextStyle(fontSize: 11)),
       ],
       pw.SizedBox(height: 24),
-      _rentSignatures(c),
+      _partySignatures(c.party1Name, c.agentName, c.party2Name),
     ];
   }
 
@@ -267,7 +291,9 @@ class ContractPdfService {
     ];
   }
 
-  static pw.Widget _rentSignatures(RentContract c) {
+  /// 3-column signature row: party1 · responsible employee (agent) · party2.
+  static pw.Widget _partySignatures(
+      String party1, String agent, String party2) {
     pw.Widget col(String label, String name) => pw.Expanded(
           child: pw.Column(
             children: [
@@ -283,73 +309,12 @@ class ContractPdfService {
     return pw.Row(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
-        col('لایەنی یەکەم', c.party1Name),
-        col('کارمەندی بەرپرس', c.agentName),
-        col('لایەنی دووەم', c.party2Name),
+        col('لایەنی یەکەم', party1),
+        col('کارمەندی بەرپرس', agent),
+        col('لایەنی دووەم', party2),
       ],
     );
   }
-
-  static pw.Widget _partiesSection(SaleContract s) {
-    return _card('لایەنەکانی گرێبەست', [
-      _row('ژمارەی گرێبەست:', '${s.contractNumber}'),
-      _row('ناوی موشتەری:', s.clientName),
-      _row('مۆبایل:', s.clientMobile),
-      _row('موڵک:', s.propertyTitle),
-      _row('بەروار:', _date.format(s.createdAt)),
-    ]);
-  }
-
-  static pw.Widget _saleBody(SaleContract c) {
-    final cur = c.currency.label;
-    return _card('وردەکاری دارایی', [
-      _row('کۆی نرخ:', '${_money.format(c.totalPrice)} $cur'),
-      _row('پێشەکی:', '${_money.format(c.downPayment)} $cur'),
-      _row('ماوە:', '${_money.format(c.remainingAmount)} $cur'),
-      if (c.remainingDueDate != null)
-        _row('بەرواری ماوە:', _date.format(c.remainingDueDate!)),
-      _row('کۆمیشنی فرۆشیار:', '${_money.format(c.commissionSeller)} $cur'),
-      _row('کۆمیشنی کڕیار:', '${_money.format(c.commissionBuyer)} $cur'),
-    ]);
-  }
-
-  /// STATIC hardcoded legal clauses mixed with the dynamic data above.
-  static pw.Widget _legalClauses(Contract contract) {
-    final clauses = <String>[
-      'ئەم گرێبەستە بە ڕەزامەندی هەردوو لایەن ئەنجامدراوە و لەژێر یاساکانی هەرێم ڕێکدەخرێت.',
-      'هەر لایەنێک پابەندە بە جێبەجێکردنی ئەرکەکانی خۆی بەپێی مەرجەکانی ئەم گرێبەستە.',
-      if (contract is RentContract)
-        'کرێچی پابەندە بە پارەدانی قیستەکان لە کاتی دیاریکراودا؛ دواکەوتن مافی هەڵوەشاندنەوەی گرێبەست دەداتە خاوەن.'
-      else
-        'بڕی ماوە دەبێت لە بەرواری دیاریکراودا بدرێت، ئەگەرنا پێشەکییەکە بەپێی ڕێککەوتن مامەڵەی لەگەڵ دەکرێت.',
-      'هەرگۆڕانکارییەک لەسەر ئەم گرێبەست دەبێت بە نووسراو و واژووی هەردوو لایەن بێت.',
-    ];
-
-    return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.stretch,
-      children: [
-        pw.Text('مەرجە یاساییەکان',
-            style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 13)),
-        pw.SizedBox(height: 6),
-        ...List.generate(
-          clauses.length,
-          (i) => pw.Padding(
-            padding: const pw.EdgeInsets.only(bottom: 4),
-            child: pw.Text('${i + 1}. ${clauses[i]}',
-                style: const pw.TextStyle(fontSize: 11, lineSpacing: 2)),
-          ),
-        ),
-      ],
-    );
-  }
-
-  static pw.Widget _signatures() => pw.Row(
-        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-        children: [
-          _signatureBox('واژووی لایەنی یەکەم'),
-          _signatureBox('واژووی لایەنی دووەم'),
-        ],
-      );
 
   // ----------------------------- helpers -----------------------------
 
@@ -386,11 +351,4 @@ class ContractPdfService {
         ),
       );
 
-  static pw.Widget _signatureBox(String label) => pw.Column(
-        children: [
-          pw.Container(width: 160, height: 1, color: PdfColors.black),
-          pw.SizedBox(height: 4),
-          pw.Text(label, style: const pw.TextStyle(fontSize: 11)),
-        ],
-      );
 }

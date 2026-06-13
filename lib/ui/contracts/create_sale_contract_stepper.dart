@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../auth/session.dart';
 import '../../data/contract_repository.dart';
 import '../../models/contract_model.dart';
 import '../../models/enums.dart';
 
-/// 3-step Stepper for creating a SALE contract.
-///
-/// Step 1: Parties        (client name + mobile)
-/// Step 2: Property        (title / description)
-/// Step 3: Financials      (price → auto 1% commission, editable)
+/// 3-step Stepper for creating a SALE contract (فرۆشتن/کرین).
+/// Step 1: Parties (seller/buyer) · Step 2: Property · Step 3: Financials/dates
 class CreateSaleContractStepper extends ConsumerStatefulWidget {
   const CreateSaleContractStepper({super.key});
 
@@ -21,71 +19,60 @@ class CreateSaleContractStepper extends ConsumerStatefulWidget {
 
 class _CreateSaleContractStepperState
     extends ConsumerState<CreateSaleContractStepper> {
-  int _currentStep = 0;
+  int _step = 0;
   bool _saving = false;
 
-  // One form key per step so we validate only the active step.
   final _partiesKey = GlobalKey<FormState>();
   final _propertyKey = GlobalKey<FormState>();
   final _financialsKey = GlobalKey<FormState>();
 
-  // Step 1
-  final _clientName = TextEditingController();
-  final _clientMobile = TextEditingController();
-  // Step 2
-  final _propertyTitle = TextEditingController();
-  // Step 3
+  // Step 1 — parties
+  final _party1Name = TextEditingController(); // فرۆشیار
+  final _party1Mobile = TextEditingController();
+  final _party2Name = TextEditingController(); // کڕیار
+  final _party2Mobile = TextEditingController();
+  // Step 2 — property
+  final _propertyType = TextEditingController();
+  final _projectName = TextEditingController();
+  final _propertyNumber = TextEditingController();
+  final _area = TextEditingController();
+  // Step 3 — financials
   final _totalPrice = TextEditingController();
   final _downPayment = TextEditingController();
-  final _commissionSeller = TextEditingController();
-  final _commissionBuyer = TextEditingController();
-
-  /// True once the user manually edits the seller commission — after that we
-  /// stop overwriting their value when the price changes.
-  bool _sellerCommissionTouched = false;
+  final _paymentMethod = TextEditingController();
+  final _lateFee = TextEditingController();
+  final _withdrawal = TextEditingController();
+  final _lawyer = TextEditingController();
 
   Currency _currency = Currency.iqd;
-  DateTime? _remainingDueDate;
+  DateTime _deliveryDate = DateTime.now();
 
-  @override
-  void initState() {
-    super.initState();
-    // Recompute the suggested commission as the price is typed.
-    _totalPrice.addListener(_recalcCommission);
-  }
+  static final _date = DateFormat('yyyy/MM/dd');
 
   @override
   void dispose() {
     for (final c in [
-      _clientName,
-      _clientMobile,
-      _propertyTitle,
+      _party1Name,
+      _party1Mobile,
+      _party2Name,
+      _party2Mobile,
+      _propertyType,
+      _projectName,
+      _propertyNumber,
+      _area,
       _totalPrice,
       _downPayment,
-      _commissionSeller,
-      _commissionBuyer,
+      _paymentMethod,
+      _lateFee,
+      _withdrawal,
+      _lawyer,
     ]) {
       c.dispose();
     }
     super.dispose();
   }
 
-  num get _price => num.tryParse(_totalPrice.text.trim()) ?? 0;
-  num get _down => num.tryParse(_downPayment.text.trim()) ?? 0;
-  num get _remaining => (_price - _down).clamp(0, double.infinity);
-
-  /// Auto-fills seller commission at the 1% default — but only while the user
-  /// hasn't overridden it. Buyer commission is left fully manual.
-  void _recalcCommission() {
-    if (_sellerCommissionTouched) {
-      setState(() {}); // refresh the read-only "remaining" line.
-      return;
-    }
-    final suggested = _price * SaleContract.defaultCommissionRate;
-    _commissionSeller.text =
-        suggested == 0 ? '' : suggested.toStringAsFixed(2);
-    setState(() {});
-  }
+  num _n(TextEditingController c) => num.tryParse(c.text.trim()) ?? 0;
 
   Future<void> _submit() async {
     if (!_financialsKey.currentState!.validate()) return;
@@ -93,20 +80,27 @@ class _CreateSaleContractStepperState
 
     final user = ref.read(currentUserProvider);
     final contract = SaleContract(
-      id: '', // assigned by Firestore
+      id: '',
       companyId: user.companyId,
       agentId: user.agentId,
-      clientName: _clientName.text.trim(),
-      clientMobile: _clientMobile.text.trim(),
-      propertyTitle: _propertyTitle.text.trim(),
       createdAt: DateTime.now(),
+      party1Name: _party1Name.text.trim(),
+      party1Mobile: _party1Mobile.text.trim(),
+      party2Name: _party2Name.text.trim(),
+      party2Mobile: _party2Mobile.text.trim(),
+      propertyType: _propertyType.text.trim(),
+      projectName: _projectName.text.trim(),
+      propertyNumber: _propertyNumber.text.trim(),
+      area: _n(_area),
+      totalPrice: _n(_totalPrice),
+      downPayment: _n(_downPayment),
       currency: _currency,
-      totalPrice: _price,
-      downPayment: _down,
-      remainingAmount: _remaining,
-      remainingDueDate: _remainingDueDate,
-      commissionSeller: num.tryParse(_commissionSeller.text.trim()) ?? 0,
-      commissionBuyer: num.tryParse(_commissionBuyer.text.trim()) ?? 0,
+      paymentMethod: _paymentMethod.text.trim(),
+      lateFeePerDay: _n(_lateFee),
+      withdrawalAmount: _n(_withdrawal),
+      lawyer: _lawyer.text.trim(),
+      deliveryDate: _deliveryDate,
+      agentName: user.displayName,
     );
 
     try {
@@ -114,26 +108,24 @@ class _CreateSaleContractStepperState
           await ref.read(contractRepositoryProvider).createContract(contract);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Sale contract created ($id)')),
-        );
+            SnackBar(content: Text('گرێبەستی فرۆشتن دروستکرا ($id)')));
         Navigator.of(context).pop(id);
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Failed: $e')));
+            .showSnackBar(SnackBar(content: Text('سەرکەوتوو نەبوو: $e')));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
   }
 
-  void _onStepContinue() {
+  void _onContinue() {
     final keys = [_partiesKey, _propertyKey, _financialsKey];
-    if (!keys[_currentStep].currentState!.validate()) return;
-
-    if (_currentStep < 2) {
-      setState(() => _currentStep++);
+    if (!keys[_step].currentState!.validate()) return;
+    if (_step < 2) {
+      setState(() => _step++);
     } else {
       _submit();
     }
@@ -142,213 +134,160 @@ class _CreateSaleContractStepperState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('New Sale Contract')),
+      appBar: AppBar(title: const Text('گرێبەستی فرۆشتنی نوێ')),
       body: Stepper(
-        currentStep: _currentStep,
-        type: StepperType.vertical,
-        onStepContinue: _saving ? null : _onStepContinue,
-        onStepCancel: _currentStep == 0
-            ? null
-            : () => setState(() => _currentStep--),
-        onStepTapped: (i) => setState(() => _currentStep = i),
+        currentStep: _step,
+        onStepContinue: _saving ? null : _onContinue,
+        onStepCancel: _step == 0 ? null : () => setState(() => _step--),
+        onStepTapped: (i) => setState(() => _step = i),
         controlsBuilder: (context, details) => Padding(
           padding: const EdgeInsets.only(top: 16),
           child: Row(
             children: [
               FilledButton(
                 onPressed: details.onStepContinue,
-                child: Text(_currentStep == 2
-                    ? (_saving ? 'Saving…' : 'Create Contract')
-                    : 'Next'),
+                child: Text(_step == 2
+                    ? (_saving ? 'پاشەکەوتکردن…' : 'دروستکردن')
+                    : 'دواتر'),
               ),
               const SizedBox(width: 8),
-              if (_currentStep > 0)
+              if (_step > 0)
                 TextButton(
                   onPressed: details.onStepCancel,
-                  child: const Text('Back'),
+                  child: const Text('گەڕانەوە'),
                 ),
             ],
           ),
         ),
         steps: [
-          _partiesStep(),
-          _propertyStep(),
-          _financialsStep(),
+          Step(
+            title: const Text('لایەنەکان'),
+            isActive: _step >= 0,
+            state: _step > 0 ? StepState.complete : StepState.indexed,
+            content: Form(
+              key: _partiesKey,
+              child: Column(
+                children: [
+                  _text(_party1Name, 'لایەنی یەکەم (فرۆشیار)'),
+                  _text(_party1Mobile, 'ژمارەی مۆبایل',
+                      keyboard: TextInputType.phone),
+                  _text(_party2Name, 'لایەنی دووەم (کڕیار)'),
+                  _text(_party2Mobile, 'ژمارەی مۆبایل',
+                      keyboard: TextInputType.phone),
+                ],
+              ),
+            ),
+          ),
+          Step(
+            title: const Text('موڵک'),
+            isActive: _step >= 1,
+            state: _step > 1 ? StepState.complete : StepState.indexed,
+            content: Form(
+              key: _propertyKey,
+              child: Column(
+                children: [
+                  _text(_propertyType, 'جۆری موڵک'),
+                  _text(_projectName, 'پڕۆژە/گەڕەک'),
+                  _text(_propertyNumber, 'ژمارەی عەقار'),
+                  _text(_area, 'ڕووبەر (م²)',
+                      keyboard: const TextInputType.numberWithOptions(
+                          decimal: true)),
+                ],
+              ),
+            ),
+          ),
+          Step(
+            title: const Text('دارایی و بەروار'),
+            isActive: _step >= 2,
+            content: Form(
+              key: _financialsKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: _text(_totalPrice, 'نرخی فرۆشتن',
+                            keyboard: const TextInputType.numberWithOptions(
+                                decimal: true)),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 12),
+                          child: DropdownButtonFormField<Currency>(
+                            initialValue: _currency,
+                            decoration:
+                                const InputDecoration(labelText: 'دراو'),
+                            items: Currency.values
+                                .map((c) => DropdownMenuItem(
+                                    value: c, child: Text(c.label)))
+                                .toList(),
+                            onChanged: (v) =>
+                                setState(() => _currency = v ?? Currency.iqd),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  _text(_downPayment, 'پێشەکی',
+                      keyboard: const TextInputType.numberWithOptions(
+                          decimal: true)),
+                  _text(_paymentMethod, 'شێوازی پارەدان'),
+                  _text(_lateFee, 'پێدانی بڕی دواکەوتن بۆ ڕۆژێک',
+                      keyboard: const TextInputType.numberWithOptions(
+                          decimal: true)),
+                  _text(_withdrawal, 'بڕی پاشگەزبوونەوە',
+                      keyboard: const TextInputType.numberWithOptions(
+                          decimal: true)),
+                  _text(_lawyer, 'پارێزەر'),
+                  _datePicker('ڕێکەوتی تەسلیم', _deliveryDate,
+                      (d) => setState(() => _deliveryDate = d)),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  // --------------------------- Step 1: Parties ---------------------------
-  Step _partiesStep() => Step(
-        title: const Text('Parties'),
-        isActive: _currentStep >= 0,
-        state: _currentStep > 0 ? StepState.complete : StepState.indexed,
-        content: Form(
-          key: _partiesKey,
-          child: Column(
-            children: [
-              TextFormField(
-                controller: _clientName,
-                decoration: const InputDecoration(labelText: 'Client name'),
-                validator: _required,
-              ),
-              TextFormField(
-                controller: _clientMobile,
-                keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(labelText: 'Client mobile'),
-                validator: _required,
-              ),
-            ],
-          ),
+  Widget _text(TextEditingController c, String label,
+          {TextInputType? keyboard}) =>
+      Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: TextFormField(
+          controller: c,
+          keyboardType: keyboard,
+          decoration: InputDecoration(labelText: label),
+          validator: (v) =>
+              (v == null || v.trim().isEmpty) ? 'پێویستە' : null,
         ),
       );
 
-  // --------------------------- Step 2: Property ---------------------------
-  Step _propertyStep() => Step(
-        title: const Text('Property details'),
-        isActive: _currentStep >= 1,
-        state: _currentStep > 1 ? StepState.complete : StepState.indexed,
-        content: Form(
-          key: _propertyKey,
-          child: TextFormField(
-            controller: _propertyTitle,
-            decoration: const InputDecoration(
-              labelText: 'Property title / description',
+  Widget _datePicker(
+          String label, DateTime value, ValueChanged<DateTime> onPick) =>
+      Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          children: [
+            Expanded(child: Text('$label: ${_date.format(value)}')),
+            TextButton.icon(
+              icon: const Icon(Icons.calendar_today, size: 18),
+              label: const Text('بەروار'),
+              onPressed: () async {
+                final picked = await showDatePicker(
+                  context: context,
+                  initialDate: value,
+                  firstDate: DateTime(2020),
+                  lastDate: DateTime(2100),
+                );
+                if (picked != null) onPick(picked);
+              },
             ),
-            validator: _required,
-          ),
+          ],
         ),
       );
-
-  // ------------------------- Step 3: Financials -------------------------
-  Step _financialsStep() => Step(
-        title: const Text('Financials & Dates'),
-        isActive: _currentStep >= 2,
-        content: Form(
-          key: _financialsKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextFormField(
-                controller: _totalPrice,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(
-                  labelText: 'Total price',
-                  prefixIcon: Icon(Icons.payments_outlined),
-                ),
-                validator: _positiveNumber,
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<Currency>(
-                initialValue: _currency,
-                decoration: const InputDecoration(
-                  labelText: 'دراو (دینار/دۆلار)',
-                  prefixIcon: Icon(Icons.currency_exchange),
-                ),
-                items: Currency.values
-                    .map((c) =>
-                        DropdownMenuItem(value: c, child: Text(c.label)))
-                    .toList(),
-                onChanged: (v) =>
-                    setState(() => _currency = v ?? Currency.iqd),
-              ),
-              TextFormField(
-                controller: _downPayment,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(labelText: 'Down payment'),
-                onChanged: (_) => setState(() {}),
-                validator: _positiveNumber,
-              ),
-              const SizedBox(height: 8),
-              // Read-only computed remaining amount.
-              InputDecorator(
-                decoration: const InputDecoration(
-                  labelText: 'Remaining amount (auto)',
-                  border: OutlineInputBorder(),
-                ),
-                child: Text(_remaining.toStringAsFixed(2)),
-              ),
-              const SizedBox(height: 12),
-
-              // ---- Auto-calculated, but EDITABLE seller commission (1%) ----
-              TextFormField(
-                controller: _commissionSeller,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: InputDecoration(
-                  labelText: 'Seller commission',
-                  helperText: _sellerCommissionTouched
-                      ? 'Manual override'
-                      : 'Auto: 1% of total price — tap to edit',
-                  suffixIcon: _sellerCommissionTouched
-                      ? IconButton(
-                          tooltip: 'Reset to 1%',
-                          icon: const Icon(Icons.restart_alt),
-                          onPressed: () {
-                            _sellerCommissionTouched = false;
-                            _recalcCommission();
-                          },
-                        )
-                      : null,
-                ),
-                // First manual edit "locks" the auto-fill so we stop overwriting.
-                onChanged: (_) {
-                  if (!_sellerCommissionTouched) {
-                    setState(() => _sellerCommissionTouched = true);
-                  }
-                },
-                validator: _positiveNumber,
-              ),
-
-              TextFormField(
-                controller: _commissionBuyer,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(
-                  labelText: 'Buyer commission',
-                ),
-                validator: _positiveNumber,
-              ),
-              const SizedBox(height: 12),
-
-              // Remaining due date picker.
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(_remainingDueDate == null
-                        ? 'No remaining due date set'
-                        : 'Due: ${_remainingDueDate!.toString().split(' ').first}'),
-                  ),
-                  TextButton.icon(
-                    icon: const Icon(Icons.calendar_today),
-                    label: const Text('Pick date'),
-                    onPressed: () async {
-                      final now = DateTime.now();
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: now,
-                        firstDate: now,
-                        lastDate: DateTime(now.year + 10),
-                      );
-                      if (picked != null) {
-                        setState(() => _remainingDueDate = picked);
-                      }
-                    },
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      );
-
-  // ------------------------------ validators ------------------------------
-  String? _required(String? v) =>
-      (v == null || v.trim().isEmpty) ? 'Required' : null;
-
-  String? _positiveNumber(String? v) {
-    final n = num.tryParse((v ?? '').trim());
-    if (n == null) return 'Enter a number';
-    if (n < 0) return 'Cannot be negative';
-    return null;
-  }
 }

@@ -42,4 +42,34 @@ void main() {
     final bytes = await ContractPdfService.build(c);
     expect(bytes.isNotEmpty, true);
   });
+
+  test('sale contract PDF builds without throwing', () async {
+    final now = DateTime.now();
+    final s = SaleContract(
+      id: 'y',
+      companyId: 'c',
+      agentId: 'a',
+      createdAt: now,
+      contractNumber: 3,
+      party1Name: 'فرۆشیار',
+      party1Mobile: '0750',
+      party2Name: 'کڕیار',
+      party2Mobile: '0751',
+      propertyType: 'خانوو',
+      projectName: 'ئاشتی',
+      propertyNumber: '12',
+      area: 200,
+      totalPrice: 185000,
+      downPayment: 50000,
+      currency: Currency.usd,
+      paymentMethod: 'نەقد',
+      lateFeePerDay: 50,
+      withdrawalAmount: 5000,
+      lawyer: 'پارێزەر ئەحمەد',
+      deliveryDate: now,
+      agentName: 'کارمەند',
+    );
+    final bytes = await ContractPdfService.build(s);
+    expect(bytes.isNotEmpty, true);
+  });
 }

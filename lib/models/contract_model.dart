@@ -292,35 +292,56 @@ class SaleContract extends Contract {
     required super.agentId,
     required super.createdAt,
     super.contractNumber,
-    required this.clientName,
-    required this.clientMobile,
-    required this.propertyTitle,
-    required this.totalPrice,
-    required this.downPayment,
-    required this.remainingAmount,
-    required this.remainingDueDate,
-    required this.commissionSeller,
-    required this.commissionBuyer,
-    this.currency = Currency.iqd,
+    // Parties
+    required this.party1Name, // فرۆشیار (seller)
+    required this.party1Mobile,
+    required this.party2Name, // کڕیار (buyer)
+    required this.party2Mobile,
+    // Property
+    required this.propertyType,
+    required this.projectName,
+    required this.propertyNumber,
+    required this.area,
+    // Financials
+    required this.totalPrice, // نرخی فرۆشتن
+    required this.downPayment, // پێشەکی
+    required this.currency, // دینار یان دۆلار
+    required this.paymentMethod, // شێوازی پارەدان
+    required this.lateFeePerDay, // پێدانی بڕی دواکەوتن بۆ ڕۆژێک
+    required this.withdrawalAmount, // بڕی پاشگەزبوونەوە
+    required this.lawyer, // پارێزەر
+    required this.deliveryDate, // ڕێکەوتی تەسلیم
+    this.notes = '',
+    this.agentName = '',
   }) : super(type: ContractType.sale);
 
-  final String clientName;
-  final String clientMobile;
-  final String propertyTitle;
-  final Currency currency; // دینار یان دۆلار
+  final String party1Name;
+  final String party1Mobile;
+  final String party2Name;
+  final String party2Mobile;
+
+  final String propertyType;
+  final String projectName;
+  final String propertyNumber;
+  final num area;
+
   final num totalPrice;
   final num downPayment;
-  final num remainingAmount;
-  final DateTime? remainingDueDate;
-  final num commissionSeller; // editable; seller defaults to 1%
-  final num commissionBuyer;
+  final Currency currency;
+  final String paymentMethod;
+  final num lateFeePerDay;
+  final num withdrawalAmount;
+  final String lawyer;
+  final DateTime deliveryDate;
 
-  static const double defaultCommissionRate = 0.01;
+  final String notes;
+  final String agentName; // name of the user who created the contract
 
   @override
-  String get listTitle => clientName;
+  String get listTitle => party2Name.isNotEmpty ? party2Name : party1Name;
   @override
-  String get listSubtitle => propertyTitle;
+  String get listSubtitle =>
+      [projectName, propertyNumber].where((s) => s.isNotEmpty).join(' / ');
 
   factory SaleContract.fromJson(String id, Map<String, dynamic> json) {
     return SaleContract(
@@ -330,33 +351,48 @@ class SaleContract extends Contract {
       createdAt:
           (json['created_at'] as Timestamp?)?.toDate() ?? DateTime.now(),
       contractNumber: json['contract_number'] as int? ?? 0,
-      clientName: json['client_name'] as String? ?? '',
-      clientMobile: json['client_mobile'] as String? ?? '',
-      propertyTitle: json['property_title'] as String? ?? '',
-      currency: Currency.fromWire(json['dinar_dolar'] as String?),
+      party1Name: json['party1_name'] as String? ?? '',
+      party1Mobile: json['party1_mobile'] as String? ?? '',
+      party2Name: json['party2_name'] as String? ?? '',
+      party2Mobile: json['party2_mobile'] as String? ?? '',
+      propertyType: json['property_type'] as String? ?? '',
+      projectName: json['project_name'] as String? ?? '',
+      propertyNumber: json['property_number'] as String? ?? '',
+      area: json['area'] as num? ?? 0,
       totalPrice: json['total_price'] as num? ?? 0,
       downPayment: json['down_payment'] as num? ?? 0,
-      remainingAmount: json['remaining_amount'] as num? ?? 0,
-      remainingDueDate: (json['remaining_due_date'] as Timestamp?)?.toDate(),
-      commissionSeller: json['commission_seller'] as num? ?? 0,
-      commissionBuyer: json['commission_buyer'] as num? ?? 0,
+      currency: Currency.fromWire(json['dinar_dolar'] as String?),
+      paymentMethod: json['payment_method'] as String? ?? '',
+      lateFeePerDay: json['late_fee_per_day'] as num? ?? 0,
+      withdrawalAmount: json['withdrawal_amount'] as num? ?? 0,
+      lawyer: json['lawyer'] as String? ?? '',
+      deliveryDate:
+          (json['delivery_date'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      notes: json['notes'] as String? ?? '',
+      agentName: json['agent_name'] as String? ?? '',
     );
   }
 
   @override
   Map<String, dynamic> toJson() => {
         ...baseJson(),
-        'client_name': clientName,
-        'client_mobile': clientMobile,
-        'property_title': propertyTitle,
-        'dinar_dolar': currency.wire,
+        'party1_name': party1Name,
+        'party1_mobile': party1Mobile,
+        'party2_name': party2Name,
+        'party2_mobile': party2Mobile,
+        'property_type': propertyType,
+        'project_name': projectName,
+        'property_number': propertyNumber,
+        'area': area,
         'total_price': totalPrice,
         'down_payment': downPayment,
-        'remaining_amount': remainingAmount,
-        'remaining_due_date': remainingDueDate == null
-            ? null
-            : Timestamp.fromDate(remainingDueDate!),
-        'commission_seller': commissionSeller,
-        'commission_buyer': commissionBuyer,
+        'dinar_dolar': currency.wire,
+        'payment_method': paymentMethod,
+        'late_fee_per_day': lateFeePerDay,
+        'withdrawal_amount': withdrawalAmount,
+        'lawyer': lawyer,
+        'delivery_date': Timestamp.fromDate(deliveryDate),
+        'notes': notes,
+        'agent_name': agentName,
       };
 }
