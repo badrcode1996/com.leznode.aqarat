@@ -4,14 +4,12 @@ import 'package:intl/intl.dart';
 
 import '../../auth/session.dart';
 import '../../data/receipt_repository.dart';
-import '../../models/enums.dart';
 import '../../models/receipt_model.dart';
 import '../../services/pdf/receipt_pdf_service.dart';
 import 'create_receipt_screen.dart';
 import 'receipt_preview_screen.dart';
 
 const Color _primaryDarkBlue = Color(0xFF0F2C59);
-const Color _accentYellow = Color(0xFFF8B115);
 const Color _appBg = Color(0xFFF5F7FA);
 const Color _green = Color(0xFF10B981);
 
@@ -32,14 +30,6 @@ class ReceiptsScreen extends ConsumerWidget {
         centerTitle: true,
         elevation: 0,
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: _accentYellow,
-        foregroundColor: _primaryDarkBlue,
-        icon: const Icon(Icons.add),
-        label: const Text('پسولەی دەرەکی',
-            style: TextStyle(fontWeight: FontWeight.bold)),
-        onPressed: () => _chooseExternal(context),
-      ),
       body: async.when(
         loading: () =>
             const Center(child: CircularProgressIndicator(color: _primaryDarkBlue)),
@@ -55,52 +45,6 @@ class ReceiptsScreen extends ConsumerWidget {
             itemBuilder: (_, i) => _ReceiptCard(receipt: list[i]),
           );
         },
-      ),
-    );
-  }
-
-  void _chooseExternal(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (_) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 8),
-            ListTile(
-              leading: const CircleAvatar(
-                  backgroundColor: Color(0x1A10B981),
-                  child: Icon(Icons.south_west, color: _green)),
-              title: const Text('پسولەی پارە وەرگرتن'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => const CreateReceiptScreen(
-                            type: ReceiptType.externalReceive)));
-              },
-            ),
-            ListTile(
-              leading: CircleAvatar(
-                  backgroundColor: Colors.red.shade50,
-                  child: Icon(Icons.north_east, color: Colors.red.shade700)),
-              title: const Text('پسولەی پارەدان'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => const CreateReceiptScreen(
-                            type: ReceiptType.externalPay)));
-              },
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
       ),
     );
   }

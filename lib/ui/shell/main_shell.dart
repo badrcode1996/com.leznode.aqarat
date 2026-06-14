@@ -8,6 +8,7 @@ import '../contracts/create_sale_contract_stepper.dart';
 import '../dashboard/dashboard_screen.dart';
 import '../listings/create_listing_screen.dart';
 import '../market/market_screen.dart';
+import '../receipts/create_receipt_screen.dart';
 import '../receipts/receipts_screen.dart';
 
 // ڕەنگە سەرەکییەکان
@@ -55,6 +56,9 @@ class _MainShellState extends ConsumerState<MainShell> {
               _action(Icons.sell_outlined, 'گرێبەستی فرۆشتن', const Color(0xFF3B82F6), () => _push(const CreateSaleContractStepper())),
               _action(Icons.add_home_work_outlined, 'خستنەڕووی موڵک', const Color(0xFFF59E0B), () => _push(const CreateListingScreen(kind: ListingKind.offer))),
               _action(Icons.person_search_outlined, 'داواکاری موشتەری', const Color(0xFF8B5CF6), () => _push(const CreateListingScreen(kind: ListingKind.demand))),
+              const Divider(indent: 20, endIndent: 20, height: 8),
+              _action(Icons.south_west_rounded, 'پسولەی پارە وەرگرتن', const Color(0xFF10B981), () => _push(const CreateReceiptScreen(type: ReceiptType.externalReceive))),
+              _action(Icons.north_east_rounded, 'پسولەی پارەدان', const Color(0xFFEF4444), () => _push(const CreateReceiptScreen(type: ReceiptType.externalPay))),
               const SizedBox(height: 16),
             ],
           ),
