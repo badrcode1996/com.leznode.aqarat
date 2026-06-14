@@ -10,42 +10,79 @@ import 'create_receipt_screen.dart';
 import 'receipt_preview_screen.dart';
 
 const Color _primaryDarkBlue = Color(0xFF0F2C59);
+const Color _accentYellow = Color(0xFFF8B115);
 const Color _appBg = Color(0xFFF5F7FA);
 const Color _green = Color(0xFF10B981);
 
-/// Receipts tab: list all receipts + create external ones.
-class ReceiptsScreen extends ConsumerWidget {
+/// Receipts tab: two sub-tabs — rent receipts (کرێ) and external receipts
+/// (دەرەکی). Creation lives in the central Quick Actions sheet.
+class ReceiptsScreen extends StatelessWidget {
   const ReceiptsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        backgroundColor: _appBg,
+        appBar: AppBar(
+          title: const Text('پسولەکان',
+              style: TextStyle(fontWeight: FontWeight.bold)),
+          backgroundColor: _primaryDarkBlue,
+          foregroundColor: Colors.white,
+          centerTitle: true,
+          elevation: 0,
+          bottom: const TabBar(
+            indicatorColor: _accentYellow,
+            indicatorWeight: 4,
+            labelColor: _accentYellow,
+            unselectedLabelColor: Colors.white70,
+            labelStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            tabs: [
+              Tab(text: 'پسولەی کرێ'),
+              Tab(text: 'پسولەی دەرەکی'),
+            ],
+          ),
+        ),
+        body: const TabBarView(
+          children: [
+            _ReceiptsList(rent: true),
+            _ReceiptsList(rent: false),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// One receipts sub-list, filtered to rent or external receipts.
+class _ReceiptsList extends ConsumerWidget {
+  const _ReceiptsList({required this.rent});
+  final bool rent;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(receiptsStreamProvider);
-    return Scaffold(
-      backgroundColor: _appBg,
-      appBar: AppBar(
-        title: const Text('پسولەکان',
-            style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: _primaryDarkBlue,
-        foregroundColor: Colors.white,
-        centerTitle: true,
-        elevation: 0,
-      ),
-      body: async.when(
-        loading: () =>
-            const Center(child: CircularProgressIndicator(color: _primaryDarkBlue)),
-        error: (e, _) => Center(child: Text('هەڵە: $e')),
-        data: (list) {
-          if (list.isEmpty) {
-            return const Center(child: Text('هیچ پسولەیەک نییە'));
-          }
-          return ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 90),
-            itemCount: list.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 10),
-            itemBuilder: (_, i) => _ReceiptCard(receipt: list[i]),
+    return async.when(
+      loading: () =>
+          const Center(child: CircularProgressIndicator(color: _primaryDarkBlue)),
+      error: (e, _) => Center(child: Text('هەڵە: $e')),
+      data: (all) {
+        final list = all.where((r) => r.type.isRent == rent).toList();
+        if (list.isEmpty) {
+          return Center(
+            child: Text(rent ? 'هیچ پسولەیەکی کرێ نییە' : 'هیچ پسولەیەکی دەرەکی نییە',
+                style: const TextStyle(
+                    color: Colors.grey, fontWeight: FontWeight.bold)),
           );
-        },
-      ),
+        }
+        return ListView.separated(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 90),
+          itemCount: list.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 10),
+          itemBuilder: (_, i) => _ReceiptCard(receipt: list[i]),
+        );
+      },
     );
   }
 }
