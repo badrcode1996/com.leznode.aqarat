@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/session.dart';
 import '../../models/enums.dart';
+import '../lawyers/lawyers_screen.dart';
 
 // ڕەنگە سەرەکییەکان بۆ یەکپارچەیی دیزاینەکە
 const Color primaryDarkBlue = Color(0xFF0F2C59);
@@ -96,6 +97,34 @@ class SettingsScreen extends ConsumerWidget {
               ],
             ),
           ),
+
+          // بەشی بەڕێوەبردن — تەنها بۆ ئەدمین
+          if (user.isAdmin) ...[
+            const SizedBox(height: 20),
+            const Padding(
+              padding: EdgeInsets.only(left: 8, bottom: 8),
+              child: Text('بەڕێوەبردن',
+                  style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4))],
+              ),
+              child: ListTile(
+                leading: const Icon(Icons.gavel_rounded, color: primaryDarkBlue),
+                title: const Text('پارێزەران', style: TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: const Text('زیادکردن و دەستکاری لیستی پارێزەران',
+                    style: TextStyle(color: Colors.grey)),
+                trailing: const Icon(Icons.chevron_left_rounded, color: Colors.grey),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LawyersScreen()),
+                ),
+              ),
+            ),
+          ],
 
           const SizedBox(height: 20),
 

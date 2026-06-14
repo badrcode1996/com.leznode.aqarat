@@ -4,8 +4,10 @@ import 'package:intl/intl.dart';
 
 import '../../auth/session.dart';
 import '../../data/contract_repository.dart';
+import '../../data/lawyer_repository.dart';
 import '../../models/contract_model.dart';
 import '../../models/enums.dart';
+import '../../models/lawyer_model.dart';
 
 // ڕەنگە سەرەکییەکان بۆ یەکپارچەیی دیزاینەکە
 const Color primaryDarkBlue = Color(0xFF0F2C59);
@@ -212,6 +214,8 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
 
   @override
   Widget build(BuildContext context) {
+    // Keep the lawyer list warm so the picker is ready by step 3.
+    ref.watch(lawyersStreamProvider);
     return Scaffold(
       backgroundColor: appBackgroundColor,
       appBar: AppBar(
@@ -336,7 +340,7 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
                       _text(_paymentMethod, 'شێوازی پارەدان', icon: Icons.account_balance_wallet_outlined),
                       _text(_lateFee, 'پێدانی بڕی دواکەوتن بۆ ڕۆژێک', keyboard: const TextInputType.numberWithOptions(decimal: true), icon: Icons.warning_amber_rounded),
                       _text(_withdrawal, 'بڕی پاشگەزبوونەوە', keyboard: const TextInputType.numberWithOptions(decimal: true), icon: Icons.money_off_outlined),
-                      _text(_lawyer, 'پارێزەر', icon: Icons.gavel_rounded),
+                      _lawyerField(),
 
                       _datePicker('ڕێکەوتی تەسلیم', _deliveryDate, (d) => setState(() => _deliveryDate = d)),
                     ],
@@ -348,6 +352,97 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
         ),
       ),
     );
+  }
+
+  // خانەی پارێزەر: دەتوانرێت ناوێک لە لیستی کۆمپانیا هەڵبژێردرێت یان بە دەستی
+  // بنووسرێت. دوگمەی لای کۆتایی لیستی پارێزەران دەکاتەوە.
+  Widget _lawyerField() => Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: TextFormField(
+          controller: _lawyer,
+          decoration: modernInputDecoration(label: 'پارێزەر', icon: Icons.gavel_rounded)
+              .copyWith(
+            suffixIcon: IconButton(
+              tooltip: 'هەڵبژاردن لە لیست',
+              icon: const Icon(Icons.people_alt_outlined, color: primaryDarkBlue),
+              onPressed: _pickLawyer,
+            ),
+          ),
+          validator: (v) => (v == null || v.trim().isEmpty) ? 'پێویستە' : null,
+        ),
+      );
+
+  Future<void> _pickLawyer() async {
+    final lawyers = ref.read(lawyersStreamProvider).value ?? const <Lawyer>[];
+    final picked = await showModalBottomSheet<Lawyer>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (_) => SafeArea(
+        child: lawyers.isEmpty
+            ? const Padding(
+                padding: EdgeInsets.all(32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.gavel_rounded, size: 48, color: Colors.grey),
+                    SizedBox(height: 12),
+                    Text('هیچ پارێزەرێک زیاد نەکراوە',
+                        style: TextStyle(
+                            color: Colors.grey, fontWeight: FontWeight.bold)),
+                    SizedBox(height: 4),
+                    Text('لە ڕێکخستن > پارێزەران دەیانخەیتە سەر',
+                        style: TextStyle(color: Colors.grey, fontSize: 12)),
+                  ],
+                ),
+              )
+            : Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(20, 16, 20, 8),
+                    child: Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: Text('هەڵبژاردنی پارێزەر',
+                          style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: primaryDarkBlue)),
+                    ),
+                  ),
+                  Flexible(
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: lawyers.length,
+                      itemBuilder: (_, i) {
+                        final l = lawyers[i];
+                        return ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor:
+                                primaryDarkBlue.withValues(alpha: 0.1),
+                            backgroundImage: l.photoUrl.isNotEmpty
+                                ? NetworkImage(l.photoUrl)
+                                : null,
+                            child: l.photoUrl.isEmpty
+                                ? const Icon(Icons.gavel_rounded,
+                                    color: primaryDarkBlue, size: 20)
+                                : null,
+                          ),
+                          title: Text(l.name,
+                              style: const TextStyle(fontWeight: FontWeight.bold)),
+                          subtitle: l.phone.isEmpty ? null : Text(l.phone),
+                          onTap: () => Navigator.pop(context, l),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              ),
+      ),
+    );
+    if (picked != null) _lawyer.text = picked.name;
   }
 
   // فەنکشن بۆ دروستکردنی بۆشاییەکان

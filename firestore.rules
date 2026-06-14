@@ -73,6 +73,23 @@ service cloud.firestore {
       allow update, delete: if sameCompany(resource.data.company_id);
     }
 
+    // --- Receipts (وەصڵ): strictly company-scoped. Branch/agent narrowing is
+    //     done client-side; the tenant boundary is enforced here.
+    match /receipts/{id} {
+      allow read:   if isSuperAdmin() || sameCompany(resource.data.company_id);
+      allow create: if sameCompany(request.resource.data.company_id);
+      allow update, delete: if sameCompany(resource.data.company_id);
+    }
+
+    // --- Lawyers (پارێزەران): company-scoped directory managed by the company
+    //     admin (admin restriction enforced client-side). Agents read them to
+    //     pick a lawyer on the sale contract form.
+    match /lawyers/{id} {
+      allow read:   if isSuperAdmin() || sameCompany(resource.data.company_id);
+      allow create: if sameCompany(request.resource.data.company_id);
+      allow update, delete: if sameCompany(resource.data.company_id);
+    }
+
     // --- Listings: own company sees full data; any signed-in user can READ a
     //     public listing (Global Market). Owner fields are hidden in the UI,
     //     not the rules — see PublicListingView in the app.
