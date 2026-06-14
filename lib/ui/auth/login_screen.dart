@@ -79,12 +79,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   // --- بەشی سەرەوە (لۆگۆ و ناو) ---
-                  Icon(
-                    Icons.real_estate_agent_rounded,
-                    size: 80,
-                    color: accentYellow,
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.2),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Image.asset(
+                      'assets/images/app_logo.png',
+                      width: 96,
+                      height: 96,
+                      fit: BoxFit.contain,
+                    ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                   const Text(
                     'خانووبەرە',
                     style: TextStyle(

@@ -37,8 +37,52 @@ class InstallmentGrid extends ConsumerWidget {
     PaymentStatus.deliveredToOwner => ('گەیەنرا', const Color(0xFF10B981), Icons.done_all_rounded), // سەوزێکی مۆدێرن
   };
 
+  /// Asks the user for an optional note/code before a rent receipt is created.
+  /// Returns the entered text, or null if the user cancelled (abort the action).
+  Future<String?> _askNote(BuildContext context, bool isReceive) {
+    final controller = TextEditingController();
+    return showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(isReceive ? 'وەرگرتنی کرێ' : 'دانەوەی کرێ'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLines: 2,
+          decoration: const InputDecoration(
+            labelText: 'تێبینی / کۆد',
+            hintText: 'کۆد یان تێبینی بنووسە (ئارەزوومەندانە)',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('پاشگەزبوونەوە'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+            child: const Text('دروستکردنی وەصڵ'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _cycle(BuildContext context, WidgetRef ref, Installment inst) async {
     final newStatus = _next(inst.status);
+
+    // Auto-generate the matching rent receipt on the forward transitions; ask
+    // for an optional note/code first (cancel aborts the whole action).
+    final makesReceipt = newStatus == PaymentStatus.receivedFromTenant ||
+        newStatus == PaymentStatus.deliveredToOwner;
+    final isReceive = newStatus == PaymentStatus.receivedFromTenant;
+    String note = '';
+    if (makesReceipt) {
+      final entered = await _askNote(context, isReceive);
+      if (entered == null) return; // cancelled
+      note = entered;
+    }
+
     try {
       await ref.read(contractRepositoryProvider).updateInstallmentStatus(
         contractId: contract.id,
@@ -46,10 +90,7 @@ class InstallmentGrid extends ConsumerWidget {
         newStatus: newStatus,
       );
 
-      // Auto-generate the matching rent receipt on the forward transitions.
-      if (newStatus == PaymentStatus.receivedFromTenant ||
-          newStatus == PaymentStatus.deliveredToOwner) {
-        final isReceive = newStatus == PaymentStatus.receivedFromTenant;
+      if (makesReceipt) {
         final user = ref.read(currentUserProvider);
         final draft = Receipt(
           id: '',
@@ -64,7 +105,7 @@ class InstallmentGrid extends ConsumerWidget {
           amount: contract.rentAmount,
           currency: contract.currency,
           paymentPurpose: Receipt.rentPurpose(inst.dueDate),
-          note: '',
+          note: note,
           contractId: contract.id,
           monthNumber: inst.monthNumber,
           createdAt: DateTime.now(),
@@ -78,15 +119,11 @@ class InstallmentGrid extends ConsumerWidget {
               content: Text(
                   '${isReceive ? 'پسولەی وەرگرتنی کرێ' : 'پسولەی دانەوەی کرێ'} #${saved.receiptNumber} دروستکرا'),
               backgroundColor: const Color(0xFF10B981),
-              action: SnackBarAction(
-                label: 'بینین',
-                textColor: Colors.white,
-                onPressed: () =>
-                    ReceiptPdfService.printReceipt(saved, company: company),
-              ),
             ),
           );
         }
+        // Open the receipt PDF right away (same as external receipts).
+        await ReceiptPdfService.printReceipt(saved, company: company);
       }
     } catch (e) {
       if (context.mounted) {

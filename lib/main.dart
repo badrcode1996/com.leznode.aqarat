@@ -68,6 +68,17 @@ class _SessionGate extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // On sign-out, pop any pushed routes (Settings, create screens, …) back to
+    // the root. Otherwise a still-mounted pushed screen rebuilds against a null
+    // session and `currentUserProvider` throws — the red "No active session"
+    // error. authState turns null before the async session resolves, so this
+    // tears the routes down first.
+    ref.listen(authStateProvider, (prev, next) {
+      if (next.value == null) {
+        Navigator.of(context).popUntil((r) => r.isFirst);
+      }
+    });
+
     final authUser = ref.watch(authStateProvider).value;
     if (authUser == null) return const LoginScreen();
 
