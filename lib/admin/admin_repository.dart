@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -169,6 +170,15 @@ class AdminRepository {
     );
     await _db.collection('users').doc(uid).set(profile.toJson());
     return uid;
+  }
+
+  /// Changes a user's password via the `setUserPassword` Cloud Function
+  /// (direct password setting requires the Admin SDK). The function verifies
+  /// the caller is a Super Admin.
+  Future<void> setUserPassword(String uid, String newPassword) async {
+    final callable =
+        FirebaseFunctions.instance.httpsCallable('setUserPassword');
+    await callable.call<dynamic>({'uid': uid, 'newPassword': newPassword});
   }
 
   /// Creates another Super Admin (no company). Only an existing Super Admin can

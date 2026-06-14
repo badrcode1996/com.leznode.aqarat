@@ -530,14 +530,97 @@ class _CompanyUsersScreen extends ConsumerWidget {
                         : Icons.person),
                     title: Text(u.displayName),
                     subtitle: Text(u.email),
-                    trailing: Text(u.role == UserRole.companyAdmin
-                        ? 'ئەدمین'
-                        : 'گوماشتە'),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(u.role == UserRole.companyAdmin
+                            ? 'ئەدمین'
+                            : 'گوماشتە'),
+                        IconButton(
+                          tooltip: 'گۆڕینی وشەی نهێنی',
+                          icon: const Icon(Icons.key_outlined),
+                          onPressed: () =>
+                              _changePassword(context, ref, u.uid, u.displayName),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
             ],
           );
         },
+      ),
+    );
+  }
+
+  Future<void> _changePassword(
+      BuildContext context, WidgetRef ref, String uid, String name) async {
+    final controller = TextEditingController();
+    bool busy = false;
+    String? error;
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialog) => AlertDialog(
+          title: Text('وشەی نهێنی نوێ — $name'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: controller,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'وشەی نهێنی نوێ',
+                  hintText: 'لانیکەم ٦ پیت',
+                ),
+              ),
+              if (error != null) ...[
+                const SizedBox(height: 8),
+                Text(error!, style: const TextStyle(color: Colors.red)),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+                onPressed: busy ? null : () => Navigator.pop(ctx),
+                child: const Text('پاشگەزبوونەوە')),
+            FilledButton(
+              onPressed: busy
+                  ? null
+                  : () async {
+                      if (controller.text.length < 6) {
+                        setDialog(() => error = 'لانیکەم ٦ پیت');
+                        return;
+                      }
+                      setDialog(() {
+                        busy = true;
+                        error = null;
+                      });
+                      try {
+                        await ref
+                            .read(adminRepositoryProvider)
+                            .setUserPassword(uid, controller.text);
+                        if (ctx.mounted) Navigator.pop(ctx);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('وشەی نهێنی گۆڕا')));
+                        }
+                      } catch (e) {
+                        setDialog(() {
+                          busy = false;
+                          error = '$e';
+                        });
+                      }
+                    },
+              child: busy
+                  ? const SizedBox(
+                      height: 18,
+                      width: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Text('گۆڕین'),
+            ),
+          ],
+        ),
       ),
     );
   }
