@@ -8,15 +8,19 @@ import '../../models/enums.dart';
 import '../../models/receipt_model.dart';
 import '../../services/pdf/receipt_pdf_service.dart';
 
-const Color _primaryDarkBlue = Color(0xFF0F2C59);
 const Color _appBg = Color(0xFFF5F7FA);
 
-/// Create an external receipt (پسولەی دەرەکی): money received or paid.
+/// Create an external receipt (پسولەی دەرەکی) — or edit any existing receipt
+/// when [existing] is supplied (admin only). In edit mode the type is fixed by
+/// the receipt itself and the number/metadata are preserved.
 class CreateReceiptScreen extends ConsumerStatefulWidget {
-  const CreateReceiptScreen({super.key, required this.type});
+  const CreateReceiptScreen({super.key, required this.type, this.existing});
 
-  /// externalReceive or externalPay.
+  /// externalReceive or externalPay (ignored when [existing] is set).
   final ReceiptType type;
+
+  /// When non-null the screen edits this receipt instead of creating one.
+  final Receipt? existing;
 
   @override
   ConsumerState<CreateReceiptScreen> createState() =>
@@ -25,17 +29,22 @@ class CreateReceiptScreen extends ConsumerStatefulWidget {
 
 class _CreateReceiptScreenState extends ConsumerState<CreateReceiptScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _person = TextEditingController();
-  final _amount = TextEditingController();
-  final _purpose = TextEditingController();
-  final _note = TextEditingController();
+  late final _person = TextEditingController(text: _editing?.personName ?? '');
+  late final _amount =
+      TextEditingController(text: _editing?.amount.toString() ?? '');
+  late final _purpose =
+      TextEditingController(text: _editing?.paymentPurpose ?? '');
+  late final _note = TextEditingController(text: _editing?.note ?? '');
 
-  Currency _currency = Currency.iqd;
-  DateTime _date = DateTime.now();
+  late Currency _currency = _editing?.currency ?? Currency.iqd;
+  late DateTime _date = _editing?.date ?? DateTime.now();
   bool _busy = false;
   static final _df = DateFormat('yyyy/MM/dd');
 
-  bool get _isPay => widget.type.isPayment;
+  Receipt? get _editing => widget.existing;
+  bool get _isEdit => _editing != null;
+  ReceiptType get _type => _editing?.type ?? widget.type;
+  bool get _isPay => _type.isPayment;
 
   @override
   void dispose() {
@@ -50,30 +59,55 @@ class _CreateReceiptScreenState extends ConsumerState<CreateReceiptScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _busy = true);
     final user = ref.read(currentUserProvider);
-    final draft = Receipt(
-      id: '',
-      companyId: user.companyId,
-      agentId: user.agentId,
-      agentName: user.displayName,
-      branch: user.branch,
-      type: widget.type,
-      receiptNumber: 0,
-      date: _date,
-      personName: _person.text.trim(),
-      amount: num.tryParse(_amount.text.trim()) ?? 0,
-      currency: _currency,
-      paymentPurpose: _purpose.text.trim(),
-      note: _note.text.trim(),
-      contractId: '',
-      monthNumber: 0,
-      createdAt: DateTime.now(),
-    );
+    final repo = ref.read(receiptRepositoryProvider);
+    final company = ref.read(currentCompanyProvider).value;
     try {
-      final saved = await ref.read(receiptRepositoryProvider).createReceipt(draft);
-      final company = ref.read(currentCompanyProvider).value;
-      if (mounted) {
-        Navigator.pop(context);
-        await ReceiptPdfService.printReceipt(saved, company: company);
+      if (_isEdit) {
+        // Preserve immutable fields; overwrite only what the form edits.
+        final updated = Receipt(
+          id: _editing!.id,
+          companyId: _editing!.companyId,
+          agentId: _editing!.agentId,
+          agentName: _editing!.agentName,
+          branch: _editing!.branch,
+          type: _editing!.type,
+          receiptNumber: _editing!.receiptNumber,
+          date: _date,
+          personName: _person.text.trim(),
+          amount: num.tryParse(_amount.text.trim()) ?? 0,
+          currency: _currency,
+          paymentPurpose: _purpose.text.trim(),
+          note: _note.text.trim(),
+          contractId: _editing!.contractId,
+          monthNumber: _editing!.monthNumber,
+          createdAt: _editing!.createdAt,
+        );
+        await repo.updateReceipt(updated);
+        if (mounted) Navigator.pop(context);
+      } else {
+        final draft = Receipt(
+          id: '',
+          companyId: user.companyId,
+          agentId: user.agentId,
+          agentName: user.displayName,
+          branch: user.branch,
+          type: _type,
+          receiptNumber: 0,
+          date: _date,
+          personName: _person.text.trim(),
+          amount: num.tryParse(_amount.text.trim()) ?? 0,
+          currency: _currency,
+          paymentPurpose: _purpose.text.trim(),
+          note: _note.text.trim(),
+          contractId: '',
+          monthNumber: 0,
+          createdAt: DateTime.now(),
+        );
+        final saved = await repo.createReceipt(draft);
+        if (mounted) {
+          Navigator.pop(context);
+          await ReceiptPdfService.printReceipt(saved, company: company);
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -90,7 +124,9 @@ class _CreateReceiptScreenState extends ConsumerState<CreateReceiptScreen> {
     return Scaffold(
       backgroundColor: _appBg,
       appBar: AppBar(
-        title: Text(_isPay ? 'پسولەی پارەدان' : 'پسولەی پارە وەرگرتن'),
+        title: Text(_isEdit
+            ? 'دەستکاری پسولە #${_editing!.receiptNumber}'
+            : (_isPay ? 'پسولەی پارەدان' : 'پسولەی پارە وەرگرتن')),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -164,7 +200,7 @@ class _CreateReceiptScreenState extends ConsumerState<CreateReceiptScreen> {
                         width: 20,
                         child: CircularProgressIndicator(
                             color: Colors.white, strokeWidth: 2))
-                    : const Text('دروستکردن و پرینت'),
+                    : Text(_isEdit ? 'پاشەکەوتکردن' : 'دروستکردن و پرینت'),
               ),
             ],
           ),

@@ -104,6 +104,102 @@ class ContractRepository {
     return newRef.id;
   }
 
+  /// Expected pipeline value a contract contributes to `total_revenue`.
+  static num _expectedValue(Contract c) => switch (c) {
+        SaleContract s => s.totalPrice,
+        RentContract r => r.rentAmount * 12,
+      };
+
+  /// Revenue already collected from a contract (only rent installments marked
+  /// "received from tenant" count toward `collected_revenue`).
+  static num _collectedValue(Contract c) => switch (c) {
+        SaleContract _ => 0,
+        RentContract r => r.installments
+                .where((i) => i.status == PaymentStatus.receivedFromTenant)
+                .length *
+            r.rentAmount,
+      };
+
+  /// Edits an existing contract and rebalances the company_stats counters in
+  /// the SAME transaction: `total_revenue` shifts by the change in expected
+  /// value, `collected_revenue` by the change in received rent. The contract's
+  /// identity fields (number, type, branch, agent, creation date) are
+  /// preserved by the caller and never altered here.
+  Future<void> updateContract(Contract updated) async {
+    final ref = _contracts.doc(updated.id);
+
+    await _db.runTransaction((txn) async {
+      final snap = await txn.get(ref);
+      if (!snap.exists) throw StateError('Contract ${updated.id} not found.');
+      final data = snap.data()!;
+      if (data['company_id'] != _user.companyId) {
+        throw StateError('Cross-tenant write blocked.');
+      }
+      final old = Contract.fromJson(snap.id, data);
+
+      // Persist the edited document. Keep the immutable identity fields from
+      // the stored copy so a stale client object can't rewrite them.
+      final newData = updated.toJson()
+        ..['contract_number'] = data['contract_number']
+        ..['branch'] = data['branch']
+        ..['agent_id'] = data['agent_id']
+        ..['created_at'] = data['created_at'];
+      txn.set(ref, newData);
+
+      final revenueDelta = _expectedValue(updated) - _expectedValue(old);
+      final collectedDelta = _collectedValue(updated) - _collectedValue(old);
+      if (revenueDelta != 0 || collectedDelta != 0) {
+        txn.set(
+          _statsDoc,
+          {
+            'company_id': _user.companyId,
+            if (revenueDelta != 0)
+              'total_revenue': FieldValue.increment(revenueDelta),
+            if (collectedDelta != 0)
+              'collected_revenue': FieldValue.increment(collectedDelta),
+            'updated_at': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
+      }
+    });
+  }
+
+  /// Deletes a contract and reverses every company_stats counter its creation
+  /// incremented (contract_count, per-type count, total_revenue) plus any rent
+  /// already collected — all atomically.
+  Future<void> deleteContract(Contract contract) async {
+    final ref = _contracts.doc(contract.id);
+
+    await _db.runTransaction((txn) async {
+      final snap = await txn.get(ref);
+      if (!snap.exists) return; // already gone — nothing to reverse.
+      final data = snap.data()!;
+      if (data['company_id'] != _user.companyId) {
+        throw StateError('Cross-tenant write blocked.');
+      }
+      final stored = Contract.fromJson(snap.id, data);
+
+      txn.delete(ref);
+      txn.set(
+        _statsDoc,
+        {
+          'company_id': _user.companyId,
+          'contract_count': FieldValue.increment(-1),
+          'total_revenue': FieldValue.increment(-_expectedValue(stored)),
+          'collected_revenue':
+              FieldValue.increment(-_collectedValue(stored)),
+          if (stored.type == ContractType.rent)
+            'rent_contract_count': FieldValue.increment(-1)
+          else
+            'sale_contract_count': FieldValue.increment(-1),
+          'updated_at': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+    });
+  }
+
   /// Updates a single rent installment's `payment_status` and adjusts the
   /// company stats in the SAME transaction.
   ///

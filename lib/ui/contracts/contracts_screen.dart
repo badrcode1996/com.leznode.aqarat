@@ -8,6 +8,8 @@ import '../../models/contract_model.dart';
 import '../../models/enums.dart';
 import '../../services/pdf/contract_pdf_service.dart';
 import 'contract_preview_screen.dart';
+import 'create_rent_contract_stepper.dart';
+import 'create_sale_contract_stepper.dart';
 import 'installment_grid.dart';
 
 // ڕەنگە سەرەکییەکان بۆ یەکپارچەیی دیزاینەکە
@@ -147,10 +149,70 @@ class _ContractCard extends ConsumerWidget {
     }
   }
 
+  void _edit(BuildContext context) {
+    final c = contract;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => c is RentContract
+            ? CreateRentContractStepper(existing: c)
+            : CreateSaleContractStepper(existing: c as SaleContract),
+      ),
+    );
+  }
+
+  Future<void> _delete(BuildContext context, WidgetRef ref) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('سڕینەوەی گرێبەست',
+            style: TextStyle(
+                color: primaryDarkBlue, fontWeight: FontWeight.bold)),
+        content: Text(
+            'دڵنیایت لە سڕینەوەی گرێبەست #${contract.contractNumber} (${contract.listTitle})؟ ئەم کردارە ناگەڕێتەوە.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('پاشگەزبوونەوە',
+                style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red.shade700,
+                foregroundColor: Colors.white),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('سڕینەوە'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await ref.read(contractRepositoryProvider).deleteContract(contract);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('گرێبەست سڕایەوە'),
+              backgroundColor: Color(0xFF10B981)),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('هەڵە: $e'),
+              backgroundColor: Colors.red.shade700),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isRent = contract.type == ContractType.rent;
     final company = ref.watch(currentCompanyProvider).value;
+    final isAdmin = ref.watch(currentUserProvider).isAdmin;
     final typeLabel = isRent ? 'کرێ' : 'فرۆشتن';
 
     // ڕەنگکردنی جۆری گرێبەستەکە
@@ -278,6 +340,10 @@ class _ContractCard extends ConsumerWidget {
                           _run(context, () => ContractPdfService.printContract(contract, company: company));
                         } else if (v == 'share') {
                           _run(context, () => ContractPdfService.shareContract(contract, company: company));
+                        } else if (v == 'edit') {
+                          _edit(context);
+                        } else if (v == 'delete') {
+                          _delete(context, ref);
                         }
                       },
                       itemBuilder: (_) => [
@@ -311,6 +377,28 @@ class _ContractCard extends ConsumerWidget {
                             ],
                           ),
                         ),
+                        if (isAdmin) ...[
+                          const PopupMenuItem(
+                            value: 'edit',
+                            child: Row(
+                              children: [
+                                Icon(Icons.edit_outlined, color: primaryDarkBlue, size: 20),
+                                SizedBox(width: 12),
+                                Text('دەستکاری'),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: 'delete',
+                            child: Row(
+                              children: [
+                                Icon(Icons.delete_outline, color: Colors.red.shade700, size: 20),
+                                const SizedBox(width: 12),
+                                const Text('سڕینەوە'),
+                              ],
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ],

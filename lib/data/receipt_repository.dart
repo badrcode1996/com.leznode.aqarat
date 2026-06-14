@@ -46,6 +46,33 @@ class ReceiptRepository {
     return saved;
   }
 
+  /// Edits an existing receipt's mutable fields. The receipt number, type,
+  /// branch and creation metadata are immutable — only the user-entered fields
+  /// (person, amount, currency, purpose, note, date) are updated.
+  Future<void> updateReceipt(Receipt receipt) async {
+    if (receipt.companyId != _user.companyId) {
+      throw StateError('Cross-tenant write blocked.');
+    }
+    await _receipts.doc(receipt.id).update({
+      'person_name': receipt.personName,
+      'amount': receipt.amount,
+      'dinar_dolar': receipt.currency.wire,
+      'payment_purpose': receipt.paymentPurpose,
+      'note': receipt.note,
+      'date': Timestamp.fromDate(receipt.date),
+    });
+  }
+
+  /// Deletes a receipt. The per-type numbering counter is left untouched on
+  /// purpose: numbers are never reused, so a deleted receipt simply leaves a
+  /// gap in the sequence.
+  Future<void> deleteReceipt(Receipt receipt) async {
+    if (receipt.companyId != _user.companyId) {
+      throw StateError('Cross-tenant write blocked.');
+    }
+    await _receipts.doc(receipt.id).delete();
+  }
+
   /// Company receipts, newest first. Admins are scoped to their branch; plain
   /// users to their own. (Branch/agent filtering is client-side to avoid an
   /// extra composite index.)

@@ -54,9 +54,13 @@ ButtonStyle modernButtonStyle() {
   );
 }
 
-/// 3-step Stepper for creating a RENT contract
+/// 3-step Stepper for creating a RENT contract — or editing one when
+/// [existing] is supplied (admin only).
 class CreateRentContractStepper extends ConsumerStatefulWidget {
-  const CreateRentContractStepper({super.key});
+  const CreateRentContractStepper({super.key, this.existing});
+
+  /// When non-null the stepper edits this contract instead of creating one.
+  final RentContract? existing;
 
   @override
   ConsumerState<CreateRentContractStepper> createState() =>
@@ -99,6 +103,40 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
 
   static final _date = DateFormat('yyyy/MM/dd');
 
+  bool get _isEdit => widget.existing != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final e = widget.existing;
+    if (e == null) return;
+    _party1Name.text = e.party1Name;
+    _party1Mobile.text = e.party1Mobile;
+    _party2Name.text = e.party2Name;
+    _party2Mobile.text = e.party2Mobile;
+    _propertyType.text = e.propertyType;
+    _projectName.text = e.projectName;
+    _propertyNumber.text = e.propertyNumber;
+    _area.text = _numText(e.area);
+    _rentAmount.text = _numText(e.rentAmount);
+    _rentalPeriod.text = e.rentalPeriodMonths.toString();
+    _downPayment.text = _numText(e.downPayment);
+    _downPaymentMonths.text = e.downPaymentMonths.toString();
+    _paymentFrequency.text = e.paymentFrequencyMonths.toString();
+    _guarantee.text = _numText(e.guaranteeAmount);
+    _gracePeriod.text = e.gracePeriod;
+    _rentalPurpose.text = e.rentalPurpose;
+    _lateFee.text = _numText(e.lateFeePerDay);
+    _currency = e.currency;
+    _notes = e.notes;
+    _startDate = e.startDate;
+    _handoverDate = e.handoverDate;
+  }
+
+  /// Renders a num without a trailing ".0" so editing fields stay clean.
+  static String _numText(num v) =>
+      v == v.roundToDouble() ? v.toInt().toString() : v.toString();
+
   @override
   void dispose() {
     for (final c in [
@@ -120,13 +158,33 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
     setState(() => _saving = true);
 
     final user = ref.read(currentUserProvider);
+    final existing = widget.existing;
     final freq = _i(_paymentFrequency) < 1 ? 1 : _i(_paymentFrequency);
     final prepaid = _i(_downPaymentMonths).clamp(0, 12);
+
+    // Rebuild the schedule from the (possibly edited) dates/frequency, then
+    // carry over any payment statuses the admin had already recorded so an
+    // edit never wipes out collected-rent tracking.
+    final schedule =
+        RentContract.buildSchedule(_startDate, everyMonths: freq, prepaidMonths: prepaid);
+    final installments = existing == null
+        ? schedule
+        : schedule.map((inst) {
+            for (final old in existing.installments) {
+              if (old.monthNumber == inst.monthNumber) {
+                return inst.copyWith(status: old.status);
+              }
+            }
+            return inst;
+          }).toList();
+
     final contract = RentContract(
-      id: '',
-      companyId: user.companyId,
-      agentId: user.agentId,
-      createdAt: DateTime.now(),
+      id: existing?.id ?? '',
+      companyId: existing?.companyId ?? user.companyId,
+      agentId: existing?.agentId ?? user.agentId,
+      createdAt: existing?.createdAt ?? DateTime.now(),
+      contractNumber: existing?.contractNumber ?? 0,
+      branch: existing?.branch ?? '',
       party1Name: _party1Name.text.trim(),
       party1Mobile: _party1Mobile.text.trim(),
       party2Name: _party2Name.text.trim(),
@@ -147,13 +205,23 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
       gracePeriod: _gracePeriod.text.trim(),
       rentalPurpose: _rentalPurpose.text.trim(),
       lateFeePerDay: _n(_lateFee),
-      installments: RentContract.buildSchedule(_startDate, everyMonths: freq, prepaidMonths: prepaid),
+      installments: installments,
       notes: _notes.trim(),
-      agentName: user.displayName,
+      agentName: existing?.agentName ?? user.displayName,
     );
 
     try {
-      final id = await ref.read(contractRepositoryProvider).createContract(contract);
+      final repo = ref.read(contractRepositoryProvider);
+      if (existing != null) {
+        await repo.updateContract(contract);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('گرێبەستی کرێ نوێکرایەوە'), backgroundColor: Colors.green));
+          Navigator.of(context).pop(existing.id);
+        }
+        return;
+      }
+      final id = await repo.createContract(contract);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('گرێبەستی کرێ دروستکرا ($id)'), backgroundColor: Colors.green));
@@ -211,7 +279,7 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
     return Scaffold(
       backgroundColor: appBackgroundColor,
       appBar: AppBar(
-        title: const Text('گرێبەستی کرێی نوێ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        title: Text(_isEdit ? 'دەستکاری گرێبەستی کرێ' : 'گرێبەستی کرێی نوێ', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         backgroundColor: primaryDarkBlue,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -242,7 +310,7 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
                     child: _step == 2
                         ? (_saving
                         ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-                        : const Text('دروستکردن', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)))
+                        : Text(_isEdit ? 'پاشەکەوتکردن' : 'دروستکردن', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)))
                         : const Text('دواتر', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   ),
                 ),

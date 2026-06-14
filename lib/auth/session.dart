@@ -43,6 +43,11 @@ class SessionUser {
 
   /// Company admin limited to their own branch.
   bool get isBranchAdmin => role == UserRole.companyAdmin && branchAdmin;
+
+  /// May edit/delete contracts and receipts. Both company-wide and branch
+  /// admins qualify (a branch admin only ever sees their own branch's data).
+  /// Plain agents cannot.
+  bool get isAdmin => role == UserRole.companyAdmin;
 }
 
 // --------------------------------------------------------------------------

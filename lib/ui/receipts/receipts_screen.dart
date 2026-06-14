@@ -8,6 +8,7 @@ import '../../models/enums.dart';
 import '../../models/receipt_model.dart';
 import '../../services/pdf/receipt_pdf_service.dart';
 import 'create_receipt_screen.dart';
+import 'receipt_preview_screen.dart';
 
 const Color _primaryDarkBlue = Color(0xFF0F2C59);
 const Color _accentYellow = Color(0xFFF8B115);
@@ -112,10 +113,67 @@ class _ReceiptCard extends ConsumerWidget {
   static final _df = DateFormat('yyyy/MM/dd');
   static final _money = NumberFormat.decimalPattern();
 
+  Future<void> _edit(BuildContext context) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            CreateReceiptScreen(type: receipt.type, existing: receipt),
+      ),
+    );
+  }
+
+  Future<void> _delete(BuildContext context, WidgetRef ref) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('سڕینەوەی پسولە',
+            style: TextStyle(
+                color: _primaryDarkBlue, fontWeight: FontWeight.bold)),
+        content: Text(
+            'دڵنیایت لە سڕینەوەی پسولە #${receipt.receiptNumber}؟ ئەم کردارە ناگەڕێتەوە.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('پاشگەزبوونەوە',
+                style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red.shade700,
+                foregroundColor: Colors.white),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('سڕینەوە'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await ref.read(receiptRepositoryProvider).deleteReceipt(receipt);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('پسولە سڕایەوە'), backgroundColor: _green),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('هەڵە: $e'),
+              backgroundColor: Colors.red.shade700),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isPay = receipt.type.isPayment;
     final color = isPay ? Colors.red.shade700 : _green;
+    final isAdmin = ref.watch(currentUserProvider).isAdmin;
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -129,6 +187,16 @@ class _ReceiptCard extends ConsumerWidget {
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        onTap: () {
+          final company = ref.read(currentCompanyProvider).value;
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) =>
+                  ReceiptPreviewScreen(receipt: receipt, company: company),
+            ),
+          );
+        },
         leading: CircleAvatar(
           backgroundColor: color.withValues(alpha: 0.12),
           child: Icon(isPay ? Icons.north_east : Icons.south_west, color: color),
@@ -139,13 +207,55 @@ class _ReceiptCard extends ConsumerWidget {
         subtitle: Text(
             '${receipt.personName} · ${_money.format(receipt.amount)} ${receipt.currency.label}\n${_df.format(receipt.date)}'),
         isThreeLine: true,
-        trailing: IconButton(
-          tooltip: 'پرینت',
-          icon: const Icon(Icons.print_outlined, color: _primaryDarkBlue),
-          onPressed: () {
-            final company = ref.read(currentCompanyProvider).value;
-            ReceiptPdfService.printReceipt(receipt, company: company);
-          },
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              tooltip: 'پرینت',
+              icon: const Icon(Icons.print_outlined, color: _primaryDarkBlue),
+              onPressed: () {
+                final company = ref.read(currentCompanyProvider).value;
+                ReceiptPdfService.printReceipt(receipt, company: company);
+              },
+            ),
+            if (isAdmin)
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert_rounded, color: Colors.grey),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                onSelected: (v) {
+                  if (v == 'edit') {
+                    _edit(context);
+                  } else if (v == 'delete') {
+                    _delete(context, ref);
+                  }
+                },
+                itemBuilder: (_) => [
+                  const PopupMenuItem(
+                    value: 'edit',
+                    child: Row(
+                      children: [
+                        Icon(Icons.edit_outlined,
+                            color: _primaryDarkBlue, size: 20),
+                        SizedBox(width: 12),
+                        Text('دەستکاری'),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        Icon(Icons.delete_outline,
+                            color: Colors.red.shade700, size: 20),
+                        const SizedBox(width: 12),
+                        const Text('سڕینەوە'),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+          ],
         ),
       ),
     );

@@ -54,9 +54,13 @@ ButtonStyle modernButtonStyle() {
   );
 }
 
-/// 3-step Stepper for creating a SALE contract (فرۆشتن/کڕین).
+/// 3-step Stepper for creating a SALE contract (فرۆشتن/کڕین) — or editing one
+/// when [existing] is supplied (admin only).
 class CreateSaleContractStepper extends ConsumerStatefulWidget {
-  const CreateSaleContractStepper({super.key});
+  const CreateSaleContractStepper({super.key, this.existing});
+
+  /// When non-null the stepper edits this contract instead of creating one.
+  final SaleContract? existing;
 
   @override
   ConsumerState<CreateSaleContractStepper> createState() =>
@@ -94,6 +98,35 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
 
   static final _date = DateFormat('yyyy/MM/dd');
 
+  bool get _isEdit => widget.existing != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final e = widget.existing;
+    if (e == null) return;
+    _party1Name.text = e.party1Name;
+    _party1Mobile.text = e.party1Mobile;
+    _party2Name.text = e.party2Name;
+    _party2Mobile.text = e.party2Mobile;
+    _propertyType.text = e.propertyType;
+    _projectName.text = e.projectName;
+    _propertyNumber.text = e.propertyNumber;
+    _area.text = _numText(e.area);
+    _totalPrice.text = _numText(e.totalPrice);
+    _downPayment.text = _numText(e.downPayment);
+    _paymentMethod.text = e.paymentMethod;
+    _lateFee.text = _numText(e.lateFeePerDay);
+    _withdrawal.text = _numText(e.withdrawalAmount);
+    _lawyer.text = e.lawyer;
+    _currency = e.currency;
+    _deliveryDate = e.deliveryDate;
+  }
+
+  /// Renders a num without a trailing ".0" so editing fields stay clean.
+  static String _numText(num v) =>
+      v == v.roundToDouble() ? v.toInt().toString() : v.toString();
+
   @override
   void dispose() {
     for (final c in [
@@ -113,11 +146,14 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
     setState(() => _saving = true);
 
     final user = ref.read(currentUserProvider);
+    final existing = widget.existing;
     final contract = SaleContract(
-      id: '',
-      companyId: user.companyId,
-      agentId: user.agentId,
-      createdAt: DateTime.now(),
+      id: existing?.id ?? '',
+      companyId: existing?.companyId ?? user.companyId,
+      agentId: existing?.agentId ?? user.agentId,
+      createdAt: existing?.createdAt ?? DateTime.now(),
+      contractNumber: existing?.contractNumber ?? 0,
+      branch: existing?.branch ?? '',
       party1Name: _party1Name.text.trim(),
       party1Mobile: _party1Mobile.text.trim(),
       party2Name: _party2Name.text.trim(),
@@ -134,11 +170,21 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
       withdrawalAmount: _n(_withdrawal),
       lawyer: _lawyer.text.trim(),
       deliveryDate: _deliveryDate,
-      agentName: user.displayName,
+      agentName: existing?.agentName ?? user.displayName,
     );
 
     try {
-      final id = await ref.read(contractRepositoryProvider).createContract(contract);
+      final repo = ref.read(contractRepositoryProvider);
+      if (existing != null) {
+        await repo.updateContract(contract);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('گرێبەستی فرۆشتن نوێکرایەوە'), backgroundColor: Colors.green));
+          Navigator.of(context).pop(existing.id);
+        }
+        return;
+      }
+      final id = await repo.createContract(contract);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('گرێبەستی فرۆشتن دروستکرا ($id)'), backgroundColor: Colors.green));
@@ -169,7 +215,7 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
     return Scaffold(
       backgroundColor: appBackgroundColor,
       appBar: AppBar(
-        title: const Text('گرێبەستی فرۆشتنی نوێ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        title: Text(_isEdit ? 'دەستکاری گرێبەستی فرۆشتن' : 'گرێبەستی فرۆشتنی نوێ', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         backgroundColor: primaryDarkBlue,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -200,7 +246,7 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
                     child: _step == 2
                         ? (_saving
                         ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-                        : const Text('دروستکردن', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)))
+                        : Text(_isEdit ? 'پاشەکەوتکردن' : 'دروستکردن', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)))
                         : const Text('دواتر', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   ),
                 ),
