@@ -9,9 +9,15 @@ import '../../models/contract_model.dart';
 import '../../models/enums.dart';
 import '../../models/property_model.dart';
 import '../listings/my_listings_screen.dart';
+import '../settings/settings_screen.dart';
 import 'widgets/property_card.dart';
 import 'widgets/request_card.dart';
 import 'widgets/stat_card.dart';
+
+// ڕەنگە سەرەکییەکان بۆ یەکپارچەیی دیزاینەکە
+const Color primaryDarkBlue = Color(0xFF0F2C59);
+const Color accentYellow = Color(0xFFF8B115);
+const Color appBackgroundColor = Color(0xFFF5F7FA);
 
 /// Dashboard (Home tab) built with slivers. All data is real (Firestore);
 /// sections show empty states until data exists.
@@ -39,192 +45,244 @@ class DashboardScreen extends ConsumerWidget {
     // Computed live from the contracts stream.
     final now = DateTime.now();
     final contractsThisMonth = contracts
-        .where((c) =>
-            c.createdAt.year == now.year && c.createdAt.month == now.month)
+        .where((c) => c.createdAt.year == now.year && c.createdAt.month == now.month)
         .length;
     num overdue = 0;
     for (final c in contracts) {
       if (c is RentContract) {
         for (final inst in c.installments) {
-          if (inst.status == PaymentStatus.pending &&
-              inst.dueDate.isBefore(now)) {
+          if (inst.status == PaymentStatus.pending && inst.dueDate.isBefore(now)) {
             overdue += c.rentAmount;
           }
         }
       }
     }
 
-    return CustomScrollView(
-      slivers: [
-        SliverAppBar(
-          pinned: true,
-          floating: true,
-          elevation: 0,
-          scrolledUnderElevation: 1,
-          toolbarHeight: 68,
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          leading: IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {},
-          ),
-          titleSpacing: 0,
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('بەخێربێیتەوە 👋',
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
-              Text(user.displayName,
+    return Scaffold(
+      backgroundColor: appBackgroundColor,
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            pinned: true,
+            floating: true,
+            elevation: 0,
+            scrolledUnderElevation: 4,
+            toolbarHeight: 76,
+            backgroundColor: primaryDarkBlue,
+            shadowColor: Colors.black.withValues(alpha: 0.3),
+            leading: IconButton(
+              icon: const Icon(Icons.notifications_active_outlined, color: accentYellow, size: 28),
+              onPressed: () {
+                // نۆتیفیکەیشنەکان
+              },
+            ),
+            titleSpacing: 0,
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'بەخێربێیتەوە 👋',
+                  style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.8)),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  user.displayName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold)),
-            ],
-          ),
-          actions: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: CircleAvatar(
-                radius: 20,
-                backgroundColor: Theme.of(context)
-                    .colorScheme
-                    .primary
-                    .withValues(alpha: 0.12),
-                backgroundImage: (company?.logoUrl.isNotEmpty ?? false)
-                    ? NetworkImage(company!.logoUrl)
-                    : null,
-                child: (company?.logoUrl.isNotEmpty ?? false)
-                    ? null
-                    : Text(
-                        user.displayName.isNotEmpty
-                            ? user.displayName.characters.first
-                            : '?',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.primary),
-                      ),
-              ),
-            ),
-          ],
-        ),
-
-        // ---------- Stats (real) ----------
-        SliverToBoxAdapter(
-          child: SizedBox(
-            height: 150,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.fromLTRB(16, 8, 4, 8),
-              children: [
-                StatCard(
-                  title: 'قاسەی نووسینگە',
-                  value: _money.format(stats?.collectedRevenue ?? 0),
-                  icon: Icons.account_balance_wallet_outlined,
-                  accent: const Color(0xFF1565C0),
-                ),
-                StatCard(
-                  title: 'گرێبەستەکانی ئەم مانگە',
-                  value: '$contractsThisMonth',
-                  icon: Icons.description_outlined,
-                  accent: const Color(0xFF2E7D32),
-                ),
-                StatCard(
-                  title: 'پارەی دواکەوتوو',
-                  value: _money.format(overdue),
-                  icon: Icons.warning_amber_rounded,
-                  accent: const Color(0xFFC62828),
-                  highlight: true,
-                ),
-                StatCard(
-                  title: 'کۆی گرێبەستەکان',
-                  value: '${stats?.contractCount ?? 0}',
-                  icon: Icons.folder_outlined,
-                  accent: const Color(0xFF6A1B9A),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 0.5),
                 ),
               ],
             ),
+            actions: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: GestureDetector(
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                  ),
+                  child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: const BoxDecoration(
+                    color: accentYellow,
+                    shape: BoxShape.circle,
+                  ),
+                  child: CircleAvatar(
+                    radius: 22,
+                    backgroundColor: Colors.white,
+                    backgroundImage: (company?.logoUrl.isNotEmpty ?? false) ? NetworkImage(company!.logoUrl) : null,
+                    child: (company?.logoUrl.isNotEmpty ?? false)
+                        ? null
+                        : Text(
+                      user.displayName.isNotEmpty ? user.displayName.characters.first : '?',
+                      style: const TextStyle(fontWeight: FontWeight.bold, color: primaryDarkBlue, fontSize: 18),
+                    ),
+                  ),
+                ),
+                ),
+              ),
+            ],
           ),
-        ),
 
-        // ---------- Active demands (real) ----------
-        _sectionTitle('داواکارییە چالاکەکان', onSeeAll: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (_) => const MyListingsScreen(initialIndex: 1)),
-          );
-        }),
-        SliverToBoxAdapter(
-          child: SizedBox(
-            height: 150,
-            child: (demands == null)
-                ? const Center(child: CircularProgressIndicator())
-                : demands.isEmpty
-                    ? _emptyBox('هیچ داواکارییەک نییە')
-                    : ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.fromLTRB(16, 4, 4, 4),
-                        itemCount: demands.length,
-                        itemBuilder: (_, i) => RequestCard(
-                            listing: demands[i],
-                            matched: demandMatched(demands[i])),
-                      ),
-          ),
-        ),
-
-        // ---------- Recent offers (real) ----------
-        _sectionTitle('نوێترین موڵکەکان', onSeeAll: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (_) => const MyListingsScreen(initialIndex: 0)),
-          );
-        }),
-        if (offers == null)
-          const SliverToBoxAdapter(
+          // ---------- Stats (real) ----------
+          SliverToBoxAdapter(
             child: Padding(
-              padding: EdgeInsets.all(24),
-              child: Center(child: CircularProgressIndicator()),
-            ),
-          )
-        else if (offers.isEmpty)
-          SliverToBoxAdapter(child: _emptyBox('هیچ موڵکێک نییە')),
-        if (offers != null && offers.isNotEmpty)
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 90),
-            sliver: SliverList.builder(
-              itemCount: offers.length,
-              itemBuilder: (_, i) => PropertyCard(
-                  listing: offers[i], matched: offerMatched(offers[i])),
+              padding: const EdgeInsets.only(top: 16),
+              child: SizedBox(
+                height: 140,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  physics: const BouncingScrollPhysics(),
+                  children: [
+                    StatCard(
+                      title: 'قاسەی نووسینگە',
+                      value: _money.format(stats?.collectedRevenue ?? 0),
+                      icon: Icons.account_balance_wallet_rounded,
+                      accent: primaryDarkBlue, // ڕەنگی مۆدێرن بۆ قاسە
+                    ),
+                    const SizedBox(width: 12),
+                    StatCard(
+                      title: 'گرێبەستەکانی ئەم مانگە',
+                      value: '$contractsThisMonth',
+                      icon: Icons.description_rounded,
+                      accent: const Color(0xFF10B981), // سەوزی کاڵ
+                    ),
+                    const SizedBox(width: 12),
+                    StatCard(
+                      title: 'پارەی دواکەوتوو',
+                      value: _money.format(overdue),
+                      icon: Icons.warning_rounded,
+                      accent: const Color(0xFFEF4444), // سووری کاڵ
+                      highlight: true,
+                    ),
+                    const SizedBox(width: 12),
+                    StatCard(
+                      title: 'کۆی گرێبەستەکان',
+                      value: '${stats?.contractCount ?? 0}',
+                      icon: Icons.folder_copy_rounded,
+                      accent: accentYellow,
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
-      ],
+
+          // ---------- Active demands (real) ----------
+          _sectionTitle('داواکارییە چالاکەکان', icon: Icons.person_search_rounded, onSeeAll: () {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const MyListingsScreen(initialIndex: 1)));
+          }),
+          SliverToBoxAdapter(
+            child: SizedBox(
+              height: 160,
+              child: (demands == null)
+                  ? const Center(child: CircularProgressIndicator(color: primaryDarkBlue))
+                  : demands.isEmpty
+                  ? _emptyBox('هیچ داواکارییەکی نوێ نییە', Icons.search_off_rounded)
+                  : ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                physics: const BouncingScrollPhysics(),
+                itemCount: demands.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                itemBuilder: (_, i) => RequestCard(listing: demands[i], matched: demandMatched(demands[i])),
+              ),
+            ),
+          ),
+
+          // ---------- Recent offers (real) ----------
+          _sectionTitle('نوێترین موڵکەکان', icon: Icons.real_estate_agent_rounded, onSeeAll: () {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const MyListingsScreen(initialIndex: 0)));
+          }),
+          if (offers == null)
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.all(40),
+                child: Center(child: CircularProgressIndicator(color: primaryDarkBlue)),
+              ),
+            )
+          else if (offers.isEmpty)
+            SliverToBoxAdapter(child: _emptyBox('هێشتا هیچ موڵکێک داخڵ نەکراوە', Icons.maps_home_work_outlined)),
+          if (offers != null && offers.isNotEmpty)
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 100), // بۆشایی خوارەوە بۆ ئەوەی دوگمەی FAB دای نەپۆشێت
+              sliver: SliverList.separated(
+                itemCount: offers.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (_, i) => PropertyCard(listing: offers[i], matched: offerMatched(offers[i])),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
-  Widget _emptyBox(String text) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Text(text, style: const TextStyle(color: Colors.black45)),
-        ),
-      );
-
-  Widget _sectionTitle(String title, {VoidCallback? onSeeAll}) =>
-      SliverToBoxAdapter(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 18, 16, 4),
-          child: Row(
-            children: [
-              Text(title,
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold)),
-              const Spacer(),
-              TextButton(
-                  onPressed: onSeeAll ?? () {},
-                  child: const Text('هەمووی')),
-            ],
+  // دیزاینی مۆدێرن بۆ ئەو کاتانەی داتا نییە
+  Widget _emptyBox(String text, IconData icon) => Center(
+    child: Container(
+      margin: const EdgeInsets.all(8),
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.shade200, width: 1.5),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 42, color: Colors.grey.shade400),
+          const SizedBox(height: 12),
+          Text(
+            text,
+            style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.bold, fontSize: 14),
           ),
-        ),
-      );
+        ],
+      ),
+    ),
+  );
+
+  // دیزاینی مۆدێرن بۆ ناونیشانی بەشەکان
+  Widget _sectionTitle(String title, {required IconData icon, VoidCallback? onSeeAll}) => SliverToBoxAdapter(
+    child: Padding(
+      padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: accentYellow.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: accentYellow, size: 20),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: primaryDarkBlue),
+          ),
+          const Spacer(),
+          TextButton(
+            onPressed: onSeeAll ?? () {},
+            style: TextButton.styleFrom(
+              foregroundColor: primaryDarkBlue,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: const [
+                Text('هەمووی', style: TextStyle(fontWeight: FontWeight.bold)),
+                SizedBox(width: 4),
+                Icon(Icons.arrow_forward_ios_rounded, size: 12),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }

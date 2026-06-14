@@ -16,6 +16,7 @@ class SessionUser {
     required this.role,
     required this.displayName,
     required this.phone,
+    this.branch = '',
   });
 
   final String uid;
@@ -25,6 +26,9 @@ class SessionUser {
 
   /// The signed-in user's own phone (their Global Market contact number).
   final String phone;
+
+  /// The branch (لق) this user belongs to.
+  final String branch;
 
   String get agentId => uid;
 
@@ -84,6 +88,7 @@ final sessionProvider = FutureProvider<SessionUser?>((ref) async {
     role: role,
     displayName: data['display_name'] as String? ?? user.email ?? '',
     phone: data['phone'] as String? ?? '',
+    branch: data['branch'] as String? ?? '',
   );
 });
 

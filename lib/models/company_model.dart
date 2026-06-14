@@ -20,6 +20,7 @@ class Company {
     required this.logoUrl,
     required this.ownerUid,
     required this.createdAt,
+    this.branches = const [],
   });
 
   final String id;
@@ -32,6 +33,7 @@ class Company {
   final String logoUrl; // Firebase Storage download URL
   final String ownerUid; // the Company Admin who created it
   final DateTime createdAt;
+  final List<String> branches; // لقەکان — branch names defined by Super Admin
 
   /// Preferred label for the UI: Kurdish first, then Arabic, then English.
   String get displayName =>
@@ -49,6 +51,9 @@ class Company {
         ownerUid: json['owner_uid'] as String? ?? '',
         createdAt:
             (json['created_at'] as Timestamp?)?.toDate() ?? DateTime.now(),
+        branches: (json['branches'] as List<dynamic>? ?? const [])
+            .map((e) => e.toString())
+            .toList(),
       );
 
   Map<String, dynamic> toJson() => {
@@ -61,6 +66,7 @@ class Company {
         'logo_url': logoUrl,
         'owner_uid': ownerUid,
         'created_at': Timestamp.fromDate(createdAt),
+        'branches': branches,
       };
 
   /// Turns an English company name into a safe, readable Firestore document id.

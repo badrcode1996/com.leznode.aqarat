@@ -15,6 +15,7 @@ class AppUser {
     required this.email,
     required this.phone,
     required this.createdAt,
+    this.branch = '',
   });
 
   final String uid;
@@ -27,6 +28,7 @@ class AppUser {
   /// and used as the click-to-call contact.
   final String phone;
   final DateTime createdAt;
+  final String branch; // لق — the branch this user belongs to
 
   factory AppUser.fromJson(String uid, Map<String, dynamic> json) => AppUser(
         uid: uid,
@@ -37,6 +39,7 @@ class AppUser {
         phone: json['phone'] as String? ?? '',
         createdAt:
             (json['created_at'] as Timestamp?)?.toDate() ?? DateTime.now(),
+        branch: json['branch'] as String? ?? '',
       );
 
   Map<String, dynamic> toJson() => {
@@ -46,5 +49,6 @@ class AppUser {
         'email': email,
         'phone': phone,
         'created_at': Timestamp.fromDate(createdAt),
+        'branch': branch,
       };
 }

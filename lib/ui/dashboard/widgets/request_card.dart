@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../../../models/property_model.dart';
 
+// ڕەنگە سەرەکییەکان بۆ یەکپارچەیی دیزاینەکە
+const Color primaryDarkBlue = Color(0xFF0F2C59);
+const Color accentYellow = Color(0xFFF8B115);
+const Color modernGreen = Color(0xFF10B981);
+const Color inputFillColor = Color(0xFFF3F4F6);
+
 /// Compact card for a real demand/request listing (the company's own demands).
 class RequestCard extends StatelessWidget {
   const RequestCard({super.key, required this.listing, this.matched = false});
@@ -11,29 +17,29 @@ class RequestCard extends StatelessWidget {
   /// True when a matching offer exists → highlighted green.
   final bool matched;
 
-  static const _green = Color(0xFF2E7D32);
-
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final accent = matched ? _green : scheme.primary;
+    // ڕێکخستنی ڕەنگەکان بەپێی ئەوەی موڵکێکی گونجاوی بۆ هەیە یان نا
+    final Color accentColor = matched ? modernGreen : primaryDarkBlue;
+    final Color bgColor = matched ? modernGreen.withValues(alpha: 0.06) : Colors.white;
+    final Color borderColor = matched ? modernGreen.withValues(alpha: 0.3) : Colors.grey.shade200;
+
     return Container(
-      width: 250,
-      margin: const EdgeInsetsDirectional.only(end: 12),
-      padding: const EdgeInsets.all(14),
+      width: 260,
+      margin: const EdgeInsetsDirectional.only(end: 16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: matched ? _green.withValues(alpha: 0.06) : Colors.white,
+        color: bgColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: matched
-              ? _green.withValues(alpha: 0.5)
-              : Colors.black.withValues(alpha: 0.06),
+          color: borderColor,
+          width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
-            offset: const Offset(0, 3),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -42,37 +48,70 @@ class RequestCard extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
+          // ڕیزی سەرەوە: ئایکۆن، ناوی موشتەری، و تاگی (گونجاوە)
           Row(
             children: [
-              CircleAvatar(
-                radius: 16,
-                backgroundColor: accent.withValues(alpha: 0.12),
-                child: Icon(Icons.person_search, size: 18, color: accent),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(Icons.person_search_rounded, size: 20, color: accentColor),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               Expanded(
-                child: Text(listing.ownerName,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                    overflow: TextOverflow.ellipsis),
+                child: Text(
+                  listing.ownerName,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: primaryDarkBlue),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
               ),
-              if (matched)
-                const Icon(Icons.handshake, size: 16, color: _green),
+              if (matched) ...[
+                const SizedBox(width: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: modernGreen.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.handshake_rounded, size: 12, color: modernGreen),
+                      SizedBox(width: 4),
+                      Text(
+                        'گونجاوە',
+                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: modernGreen),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
           ),
-          const SizedBox(height: 8),
+
+          const SizedBox(height: 12),
+
+          // زانیاری داواکارییەکە
           Text(
-            '${listing.propertyType.label} لە ${listing.projectName}',
+            'بەدوای ${listing.propertyType.label} دەگەڕێت',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 13, color: Colors.black87),
+            style: TextStyle(fontSize: 13, color: Colors.grey.shade700, fontWeight: FontWeight.w600),
           ),
-          const SizedBox(height: 8),
+
+          const SizedBox(height: 12),
+
+          // تاگە بچووکەکان بۆ گەڕەک و ڕووبەر
           Row(
             children: [
-              Flexible(
-                  child: _miniChip(Icons.place_outlined, listing.projectName)),
-              const SizedBox(width: 6),
-              _miniChip(Icons.straighten, '${listing.area} م²'),
+              Expanded(
+                child: _miniChip(Icons.location_on_outlined, listing.projectName),
+              ),
+              const SizedBox(width: 8),
+              _miniChip(Icons.square_foot_rounded, '${listing.area} م²'),
             ],
           ),
         ],
@@ -80,24 +119,27 @@ class RequestCard extends StatelessWidget {
     );
   }
 
+  // دیزاینی مۆدێرن بۆ تاگە بچووکەکان
   Widget _miniChip(IconData icon, String label) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(8),
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+    decoration: BoxDecoration(
+      color: inputFillColor,
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: Colors.grey.shade600),
+        const SizedBox(width: 4),
+        Flexible(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey.shade800),
+          ),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 13, color: Colors.black54),
-            const SizedBox(width: 4),
-            Flexible(
-              child: Text(label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 11)),
-            ),
-          ],
-        ),
-      );
+      ],
+    ),
+  );
 }

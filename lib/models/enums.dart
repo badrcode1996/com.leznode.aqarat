@@ -20,6 +20,31 @@ enum UserRole {
       );
 }
 
+/// The four receipt (وەصڵ) kinds. `isPayment` flips the person label to
+/// "Paid To" (صرف); `isRent` ties the receipt to a rent contract installment.
+enum ReceiptType {
+  externalReceive('external_receive', 'پسولەی پارە وەرگرتن', 'وصل قبض',
+      'RECEIPT VOUCHER'),
+  externalPay('external_pay', 'پسولەی پارەدان', 'وصل صرف', 'PAYMENT VOUCHER'),
+  rentReceive('rent_receive', 'پسولەی وەرگرتنی کرێ', 'وصل قبض الإيجار',
+      'RENT RECEIPT'),
+  rentPay('rent_pay', 'پسولەی دانەوەی کرێ', 'وصل صرف الإيجار', 'RENT PAYMENT');
+
+  const ReceiptType(this.wire, this.titleKu, this.titleAr, this.titleEn);
+  final String wire;
+  final String titleKu;
+  final String titleAr;
+  final String titleEn;
+
+  bool get isPayment => this == externalPay || this == rentPay;
+  bool get isRent => this == rentReceive || this == rentPay;
+
+  static ReceiptType fromWire(String? value) => ReceiptType.values.firstWhere(
+        (t) => t.wire == value,
+        orElse: () => ReceiptType.externalReceive,
+      );
+}
+
 /// Currency used on a contract.
 enum Currency {
   iqd('IQD', 'دیناری عێراقی'),

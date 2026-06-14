@@ -8,7 +8,11 @@ import '../contracts/create_sale_contract_stepper.dart';
 import '../dashboard/dashboard_screen.dart';
 import '../listings/create_listing_screen.dart';
 import '../market/market_screen.dart';
-import '../settings/settings_screen.dart';
+import '../receipts/receipts_screen.dart';
+
+// ڕەنگە سەرەکییەکان
+const Color primaryDarkBlue = Color(0xFF0F2C59);
+const Color accentYellow = Color(0xFFF8B115);
 
 /// Main app shell: 4-tab bottom navigation with a centered docked FAB.
 class MainShell extends ConsumerStatefulWidget {
@@ -24,41 +28,36 @@ class _MainShellState extends ConsumerState<MainShell> {
   static const _tabs = [
     DashboardScreen(),
     ContractsScreen(),
+    ReceiptsScreen(),
     MarketScreen(),
-    SettingsScreen(),
   ];
 
   void _openQuickActions() {
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (_) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(20, 4, 20, 8),
-              child: Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: Text('کردارە خێراکان',
-                    style: TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold)),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                child: Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Text('کردارە خێراکان', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: primaryDarkBlue)),
+                ),
               ),
-            ),
-            _action(Icons.home_outlined, 'گرێبەستی کرێ', const Color(0xFF2E7D32),
-                () => _push(const CreateRentContractStepper())),
-            _action(Icons.sell_outlined, 'گرێبەستی فرۆشتن',
-                const Color(0xFF1565C0),
-                () => _push(const CreateSaleContractStepper())),
-            _action(Icons.add_home_work_outlined, 'خستنەڕووی موڵک',
-                const Color(0xFFEF6C00),
-                () => _push(const CreateListingScreen(kind: ListingKind.offer))),
-            _action(Icons.person_search_outlined, 'داواکاری موشتەری',
-                const Color(0xFF6A1B9A),
-                () => _push(
-                    const CreateListingScreen(kind: ListingKind.demand))),
-            const SizedBox(height: 8),
-          ],
+              _action(Icons.home_work_outlined, 'گرێبەستی کرێ', const Color(0xFF10B981), () => _push(const CreateRentContractStepper())),
+              _action(Icons.sell_outlined, 'گرێبەستی فرۆشتن', const Color(0xFF3B82F6), () => _push(const CreateSaleContractStepper())),
+              _action(Icons.add_home_work_outlined, 'خستنەڕووی موڵک', const Color(0xFFF59E0B), () => _push(const CreateListingScreen(kind: ListingKind.offer))),
+              _action(Icons.person_search_outlined, 'داواکاری موشتەری', const Color(0xFF8B5CF6), () => _push(const CreateListingScreen(kind: ListingKind.demand))),
+              const SizedBox(height: 16),
+            ],
+          ),
         ),
       ),
     );
@@ -66,11 +65,12 @@ class _MainShellState extends ConsumerState<MainShell> {
 
   Widget _action(IconData icon, String label, Color color, VoidCallback onTap) {
     return ListTile(
-      leading: CircleAvatar(
-        backgroundColor: color.withValues(alpha: 0.12),
-        child: Icon(icon, color: color),
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+        child: Icon(icon, color: color, size: 24),
       ),
-      title: Text(label),
+      title: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
       onTap: () {
         Navigator.pop(context);
         onTap();
@@ -78,10 +78,7 @@ class _MainShellState extends ConsumerState<MainShell> {
     );
   }
 
-  void _push(Widget screen) => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => screen),
-      );
+  void _push(Widget screen) => Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
 
   @override
   Widget build(BuildContext context) {
@@ -91,22 +88,25 @@ class _MainShellState extends ConsumerState<MainShell> {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: FloatingActionButton(
         onPressed: _openQuickActions,
+        backgroundColor: accentYellow,
+        foregroundColor: primaryDarkBlue,
+        elevation: 4,
         shape: const CircleBorder(),
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.add, size: 30),
       ),
       bottomNavigationBar: BottomAppBar(
-        height: 64,
+        height: 70,
         shape: const CircularNotchedRectangle(),
-        notchMargin: 8,
+        notchMargin: 10,
+        color: Colors.white,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _navItem(0, Icons.home_outlined, Icons.home, 'سەرەکی'),
-            _navItem(1, Icons.description_outlined, Icons.description,
-                'گرێبەست'),
-            const SizedBox(width: 48), // notch gap for the FAB
-            _navItem(2, Icons.public_outlined, Icons.public, 'بازاڕ'),
-            _navItem(3, Icons.settings_outlined, Icons.settings, 'ڕێکخستن'),
+            _navItem(0, Icons.home_outlined, Icons.home_rounded, 'سەرەکی'),
+            _navItem(1, Icons.description_outlined, Icons.description_rounded, 'گرێبەست'),
+            const SizedBox(width: 40), // notch gap
+            _navItem(2, Icons.receipt_long_outlined, Icons.receipt_long, 'پسولە'),
+            _navItem(3, Icons.public_outlined, Icons.public_rounded, 'بازاڕ'),
           ],
         ),
       ),
@@ -115,20 +115,23 @@ class _MainShellState extends ConsumerState<MainShell> {
 
   Widget _navItem(int index, IconData icon, IconData active, String label) {
     final selected = _index == index;
-    final color = selected
-        ? Theme.of(context).colorScheme.primary
-        : Colors.grey.shade600;
     return Expanded(
       child: InkWell(
         onTap: () => setState(() => _index = index),
         borderRadius: BorderRadius.circular(12),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(selected ? active : icon, size: 22, color: color),
+            Icon(selected ? active : icon, size: 24, color: selected ? primaryDarkBlue : Colors.grey.shade500),
             const SizedBox(height: 2),
-            Text(label, style: TextStyle(fontSize: 10.5, color: color)),
+            Text(
+                label,
+                style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                    color: selected ? primaryDarkBlue : Colors.grey.shade500
+                )
+            ),
           ],
         ),
       ),

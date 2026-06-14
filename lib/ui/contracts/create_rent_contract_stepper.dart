@@ -7,8 +7,54 @@ import '../../data/contract_repository.dart';
 import '../../models/contract_model.dart';
 import '../../models/enums.dart';
 
-/// 3-step Stepper for creating a RENT contract — mirrors the paper form.
-/// Step 1: Parties · Step 2: Property · Step 3: Financials/Dates
+// ڕەنگە سەرەکییەکان بۆ یەکپارچەیی دیزاینەکە
+const Color primaryDarkBlue = Color(0xFF0F2C59);
+const Color accentYellow = Color(0xFFF8B115);
+const Color appBackgroundColor = Color(0xFFF5F7FA);
+const Color inputFillColor = Color(0xFFF3F4F6);
+
+// فەنکشن بۆ دیزاینی فۆڕمەکان
+InputDecoration modernInputDecoration({required String label, IconData? icon}) {
+  return InputDecoration(
+    labelText: label,
+    labelStyle: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+    prefixIcon: icon != null ? Icon(icon, color: primaryDarkBlue, size: 22) : null,
+    filled: true,
+    fillColor: inputFillColor,
+    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: BorderSide.none,
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: BorderSide(color: Colors.grey.shade200, width: 1),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: const BorderSide(color: accentYellow, width: 2),
+    ),
+    errorBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: BorderSide(color: Colors.red.shade300, width: 1),
+    ),
+  );
+}
+
+// فەنکشن بۆ دیزاینی دوگمە سەرەکییەکان
+ButtonStyle modernButtonStyle() {
+  return ElevatedButton.styleFrom(
+    backgroundColor: primaryDarkBlue,
+    foregroundColor: Colors.white,
+    padding: const EdgeInsets.symmetric(vertical: 16),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(16),
+    ),
+    elevation: 2,
+  );
+}
+
+/// 3-step Stepper for creating a RENT contract
 class CreateRentContractStepper extends ConsumerStatefulWidget {
   const CreateRentContractStepper({super.key});
 
@@ -17,8 +63,7 @@ class CreateRentContractStepper extends ConsumerStatefulWidget {
       _CreateRentContractStepperState();
 }
 
-class _CreateRentContractStepperState
-    extends ConsumerState<CreateRentContractStepper> {
+class _CreateRentContractStepperState extends ConsumerState<CreateRentContractStepper> {
   int _step = 0;
   bool _saving = false;
 
@@ -57,23 +102,10 @@ class _CreateRentContractStepperState
   @override
   void dispose() {
     for (final c in [
-      _party1Name,
-      _party1Mobile,
-      _party2Name,
-      _party2Mobile,
-      _propertyType,
-      _projectName,
-      _propertyNumber,
-      _area,
-      _rentAmount,
-      _rentalPeriod,
-      _downPayment,
-      _downPaymentMonths,
-      _paymentFrequency,
-      _guarantee,
-      _gracePeriod,
-      _rentalPurpose,
-      _lateFee,
+      _party1Name, _party1Mobile, _party2Name, _party2Mobile, _propertyType,
+      _projectName, _propertyNumber, _area, _rentAmount, _rentalPeriod,
+      _downPayment, _downPaymentMonths, _paymentFrequency, _guarantee,
+      _gracePeriod, _rentalPurpose, _lateFee,
     ]) {
       c.dispose();
     }
@@ -115,25 +147,22 @@ class _CreateRentContractStepperState
       gracePeriod: _gracePeriod.text.trim(),
       rentalPurpose: _rentalPurpose.text.trim(),
       lateFeePerDay: _n(_lateFee),
-      // First `prepaid` installments are marked delivered-to-owner.
-      installments: RentContract.buildSchedule(_startDate,
-          everyMonths: freq, prepaidMonths: prepaid),
+      installments: RentContract.buildSchedule(_startDate, everyMonths: freq, prepaidMonths: prepaid),
       notes: _notes.trim(),
       agentName: user.displayName,
     );
 
     try {
-      final id =
-          await ref.read(contractRepositoryProvider).createContract(contract);
+      final id = await ref.read(contractRepositoryProvider).createContract(contract);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('گرێبەستی کرێ دروستکرا ($id)')));
+            SnackBar(content: Text('گرێبەستی کرێ دروستکرا ($id)'), backgroundColor: Colors.green));
         Navigator.of(context).pop(id);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('سەرکەوتوو نەبوو: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('سەرکەوتوو نەبوو: $e'), backgroundColor: Colors.red.shade700));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -145,24 +174,22 @@ class _CreateRentContractStepperState
     final result = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('تێبینی'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('تێبینی', style: TextStyle(color: primaryDarkBlue, fontWeight: FontWeight.bold)),
         content: TextField(
           controller: controller,
           maxLines: 5,
           minLines: 5,
           maxLength: 500,
-          decoration: const InputDecoration(
-            hintText: 'تا ٥ لاین تێبینی بنووسە...',
-            border: OutlineInputBorder(),
-          ),
+          decoration: modernInputDecoration(label: 'تا ٥ لاین تێبینی بنووسە...'),
         ),
         actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('پاشگەزبوونەوە')),
-          FilledButton(
-              onPressed: () => Navigator.pop(ctx, controller.text),
-              child: const Text('پاشەکەوت')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('پاشگەزبوونەوە', style: TextStyle(color: Colors.grey))),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: primaryDarkBlue, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+            onPressed: () => Navigator.pop(ctx, controller.text),
+            child: const Text('پاشەکەوت', style: TextStyle(color: Colors.white)),
+          ),
         ],
       ),
     );
@@ -182,181 +209,247 @@ class _CreateRentContractStepperState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('گرێبەستی کرێی نوێ')),
-      body: Stepper(
-        currentStep: _step,
-        onStepContinue: _saving ? null : _onContinue,
-        onStepCancel: _step == 0 ? null : () => setState(() => _step--),
-        onStepTapped: (i) => setState(() => _step = i),
-        controlsBuilder: (context, details) => Padding(
-          padding: const EdgeInsets.only(top: 16),
-          child: Row(
-            children: [
-              FilledButton(
-                onPressed: details.onStepContinue,
-                child: Text(_step == 2
-                    ? (_saving ? 'پاشەکەوتکردن…' : 'دروستکردن')
-                    : 'دواتر'),
-              ),
-              const SizedBox(width: 8),
-              if (_step > 0)
-                TextButton(
-                  onPressed: details.onStepCancel,
-                  child: const Text('گەڕانەوە'),
-                ),
-            ],
+      backgroundColor: appBackgroundColor,
+      appBar: AppBar(
+        title: const Text('گرێبەستی کرێی نوێ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        backgroundColor: primaryDarkBlue,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+      ),
+      body: Theme(
+        // ڕێکخستنی ڕەنگی Stepper
+        data: Theme.of(context).copyWith(
+          colorScheme: const ColorScheme.light(
+            primary: primaryDarkBlue, // ڕەنگی هەنگاوە چالاکەکان
           ),
         ),
-        steps: [
-          Step(
-            title: const Text('لایەنەکان'),
-            isActive: _step >= 0,
-            state: _step > 0 ? StepState.complete : StepState.indexed,
-            content: Form(
-              key: _partiesKey,
-              child: Column(
-                children: [
-                  _text(_party1Name, 'لایەنی یەکەم'),
-                  _text(_party1Mobile, 'ژمارەی مۆبایل',
-                      keyboard: TextInputType.phone),
-                  _text(_party2Name, 'لایەنی دووەم'),
-                  _text(_party2Mobile, 'ژمارەی مۆبایل',
-                      keyboard: TextInputType.phone),
-                ],
-              ),
-            ),
-          ),
-          Step(
-            title: const Text('موڵک'),
-            isActive: _step >= 1,
-            state: _step > 1 ? StepState.complete : StepState.indexed,
-            content: Form(
-              key: _propertyKey,
-              child: Column(
-                children: [
-                  _text(_propertyType, 'جۆری موڵک'),
-                  _text(_projectName, 'پڕۆژە/گەرەک'),
-                  _text(_propertyNumber, 'ژمارەی عەقار'),
-                  _text(_area, 'ڕووبەر (م²)',
-                      keyboard: const TextInputType.numberWithOptions(
-                          decimal: true)),
-                ],
-              ),
-            ),
-          ),
-          Step(
-            title: const Text('دارایی و بەروار'),
-            isActive: _step >= 2,
-            content: Form(
-              key: _financialsKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _text(_rentAmount, 'بری کرێ',
-                      keyboard:
-                          const TextInputType.numberWithOptions(decimal: true)),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: DropdownButtonFormField<Currency>(
-                      isExpanded: true,
-                      initialValue: _currency,
-                      decoration: const InputDecoration(labelText: 'دراو'),
-                      items: Currency.values
-                          .map((c) =>
-                              DropdownMenuItem(value: c, child: Text(c.label)))
-                          .toList(),
-                      onChanged: (v) =>
-                          setState(() => _currency = v ?? Currency.iqd),
+        child: Stepper(
+          currentStep: _step,
+          type: StepperType.vertical,
+          physics: const BouncingScrollPhysics(),
+          onStepContinue: _saving ? null : _onContinue,
+          onStepCancel: _step == 0 ? null : () => setState(() => _step--),
+          onStepTapped: (i) => setState(() => _step = i),
+          controlsBuilder: (context, details) => Padding(
+            padding: const EdgeInsets.only(top: 24, bottom: 24),
+            child: Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    style: modernButtonStyle(),
+                    onPressed: details.onStepContinue,
+                    child: _step == 2
+                        ? (_saving
+                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
+                        : const Text('دروستکردن', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)))
+                        : const Text('دواتر', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                if (_step > 0)
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: primaryDarkBlue,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        side: const BorderSide(color: primaryDarkBlue, width: 1.5),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
+                      onPressed: details.onStepCancel,
+                      child: const Text('گەڕانەوە', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
                   ),
-                  _text(_rentalPeriod, 'ماوەی بەکریگرتن (بە مانگ)',
-                      keyboard: TextInputType.number),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              ],
+            ),
+          ),
+          steps: [
+            Step(
+              title: const Text('لایەنەکان', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              isActive: _step >= 0,
+              state: _step > 0 ? StepState.complete : StepState.indexed,
+              content: Form(
+                key: _partiesKey,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: Column(
                     children: [
-                      Expanded(
-                        flex: 2,
-                        child: _text(_downPayment, 'بری پێشەکی',
-                            keyboard: const TextInputType.numberWithOptions(
-                                decimal: true)),
+                      _text(_party1Name, 'لایەنی یەکەم', icon: Icons.person_outline),
+                      _text(_party1Mobile, 'ژمارەی مۆبایل (لایەنی یەکەم)', keyboard: TextInputType.phone, icon: Icons.phone_iphone),
+                      const Divider(height: 32),
+                      _text(_party2Name, 'لایەنی دووەم', icon: Icons.person_outline),
+                      _text(_party2Mobile, 'ژمارەی مۆبایل (لایەنی دووەم)', keyboard: TextInputType.phone, icon: Icons.phone_iphone),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Step(
+              title: const Text('موڵک', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              isActive: _step >= 1,
+              state: _step > 1 ? StepState.complete : StepState.indexed,
+              content: Form(
+                key: _propertyKey,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: Column(
+                    children: [
+                      _text(_propertyType, 'جۆری موڵک (بۆ نموونە: خانوو)', icon: Icons.home_work_outlined),
+                      _text(_projectName, 'پڕۆژە / گەرەک', icon: Icons.location_city_outlined),
+                      _text(_propertyNumber, 'ژمارەی عەقار', icon: Icons.numbers),
+                      _text(_area, 'ڕووبەر (م²)', keyboard: const TextInputType.numberWithOptions(decimal: true), icon: Icons.square_foot),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Step(
+              title: const Text('دارایی و بەروار', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              isActive: _step >= 2,
+              content: Form(
+                key: _financialsKey,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _text(_rentAmount, 'بڕی کرێ', keyboard: const TextInputType.numberWithOptions(decimal: true), icon: Icons.payments_outlined),
+
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: DropdownButtonFormField<Currency>(
+                          isExpanded: true,
+                          initialValue: _currency,
+                          decoration: modernInputDecoration(label: 'جۆری دراو', icon: Icons.money),
+                          items: Currency.values
+                              .map((c) => DropdownMenuItem(value: c, child: Text(c.label, style: const TextStyle(fontWeight: FontWeight.bold))))
+                              .toList(),
+                          onChanged: (v) => setState(() => _currency = v ?? Currency.iqd),
+                        ),
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _text(_downPaymentMonths, 'بۆ چەند مانگ',
-                            keyboard: TextInputType.number),
+
+                      _text(_rentalPeriod, 'ماوەی بەکرێگرتن (بە مانگ)', keyboard: TextInputType.number, icon: Icons.calendar_month_outlined),
+
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            flex: 3,
+                            child: _text(_downPayment, 'بڕی پێشەکی', keyboard: const TextInputType.numberWithOptions(decimal: true), icon: Icons.monetization_on_outlined),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            flex: 2,
+                            child: _text(_downPaymentMonths, 'بۆ چەند مانگ', keyboard: TextInputType.number),
+                          ),
+                        ],
+                      ),
+
+                      _datePicker('بەرواری بەکرێگرتن', _startDate, (d) => setState(() => _startDate = d)),
+                      _datePicker('بەرواری ڕادەستکردن', _handoverDate, (d) => setState(() => _handoverDate = d)),
+
+                      _text(_paymentFrequency, 'کرێدان چەند مانگ جارێکە؟', keyboard: TextInputType.number, icon: Icons.update),
+                      _text(_guarantee, 'بڕی دڵنیایی (الضمان)', keyboard: const TextInputType.numberWithOptions(decimal: true), icon: Icons.security),
+                      _text(_gracePeriod, 'ماوەی ڕێپێدان (السماح)', icon: Icons.timer_outlined),
+                      _text(_rentalPurpose, 'هۆکاری بەکرێگرتن', icon: Icons.info_outline),
+                      _text(_lateFee, 'بڕی غەرامەی دواکەوتن بە ڕۆژ', keyboard: const TextInputType.numberWithOptions(decimal: true), icon: Icons.warning_amber_rounded),
+
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.note_alt_outlined, color: primaryDarkBlue),
+                                const SizedBox(width: 8),
+                                Text('تێبینییەکان', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey.shade800)),
+                                const Spacer(),
+                                TextButton(
+                                  onPressed: _editNotes,
+                                  style: TextButton.styleFrom(foregroundColor: primaryDarkBlue),
+                                  child: Text(_notes.isEmpty ? 'زیادکردن' : 'دەستکاری'),
+                                ),
+                              ],
+                            ),
+                            if (_notes.isNotEmpty) ...[
+                              const Divider(),
+                              Text(_notes, style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
+                            ]
+                          ],
+                        ),
+                      ),
+
+                      const Padding(
+                        padding: EdgeInsets.only(top: 16),
+                        child: Row(
+                          children: [
+                            Icon(Icons.info, size: 16, color: accentYellow),
+                            SizedBox(width: 8),
+                            Text('١٢ قیست بە شێوەی خۆکار دروست دەکرێن.', style: TextStyle(color: Colors.black54, fontSize: 12, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
                       ),
                     ],
                   ),
-                  _datePicker('بەرواری بەکریگرتن', _startDate,
-                      (d) => setState(() => _startDate = d)),
-                  _datePicker('بەرواری ڕادەستکردن', _handoverDate,
-                      (d) => setState(() => _handoverDate = d)),
-                  _text(_paymentFrequency, 'کرێدان چەند مانگ جارێک',
-                      keyboard: TextInputType.number),
-                  _text(_guarantee, 'بری دڵنیایی',
-                      keyboard: const TextInputType.numberWithOptions(
-                          decimal: true)),
-                  _text(_gracePeriod, 'ماوەی ڕێپێدان'),
-                  _text(_rentalPurpose, 'هۆکاری بەکری گرتن'),
-                  _text(_lateFee, 'بڕی دواکەوتن دوای تەواوبوونی ماوەی گرێبەستەکە',
-                      keyboard: const TextInputType.numberWithOptions(
-                          decimal: true)),
-                  const SizedBox(height: 4),
-                  OutlinedButton.icon(
-                    icon: const Icon(Icons.note_add_outlined),
-                    label: Text(_notes.isEmpty
-                        ? 'زیادکردنی تێبینی'
-                        : 'دەستکاری تێبینی ✓'),
-                    onPressed: _editNotes,
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.only(top: 8),
-                    child: Text('١٢ قیست بەشێوەی خۆکار دروست دەکرێن.',
-                        style:
-                            TextStyle(color: Colors.black54, fontSize: 12)),
-                  ),
-                ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _text(TextEditingController c, String label,
-          {TextInputType? keyboard}) =>
+  // فەنکشن بۆ دروستکردنی بۆشاییەکان
+  Widget _text(TextEditingController c, String label, {TextInputType? keyboard, IconData? icon}) =>
       Padding(
-        padding: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.only(bottom: 16),
         child: TextFormField(
           controller: c,
           keyboardType: keyboard,
-          decoration: InputDecoration(labelText: label),
-          validator: (v) =>
-              (v == null || v.trim().isEmpty) ? 'پێویستە' : null,
+          decoration: modernInputDecoration(label: label, icon: icon),
+          validator: (v) => (v == null || v.trim().isEmpty) ? 'پێویستە' : null,
         ),
       );
 
+  // فەنکشن بۆ هەڵبژاردنی بەروار بە دیزاینێکی مۆدێرن
   Widget _datePicker(String label, DateTime value, ValueChanged<DateTime> onPick) =>
       Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          children: [
-            Expanded(child: Text('$label: ${_date.format(value)}')),
-            TextButton.icon(
-              icon: const Icon(Icons.calendar_today, size: 18),
-              label: const Text('بەروار'),
-              onPressed: () async {
-                final picked = await showDatePicker(
-                  context: context,
-                  initialDate: value,
-                  firstDate: DateTime(2020),
-                  lastDate: DateTime(2100),
+        padding: const EdgeInsets.only(bottom: 16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () async {
+            final picked = await showDatePicker(
+              context: context,
+              initialDate: value,
+              firstDate: DateTime(2020),
+              lastDate: DateTime(2100),
+              builder: (context, child) {
+                return Theme(
+                  data: Theme.of(context).copyWith(
+                    colorScheme: const ColorScheme.light(
+                      primary: primaryDarkBlue, // ڕەنگی سەرەوەی ساڵنامەکە
+                      onPrimary: Colors.white,
+                      onSurface: primaryDarkBlue,
+                    ),
+                  ),
+                  child: child!,
                 );
-                if (picked != null) onPick(picked);
               },
-            ),
-          ],
+            );
+            if (picked != null) onPick(picked);
+          },
+          child: InputDecorator(
+            decoration: modernInputDecoration(label: label, icon: Icons.calendar_today_rounded),
+            child: Text(_date.format(value), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87)),
+          ),
         ),
       );
 }
