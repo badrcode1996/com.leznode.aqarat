@@ -156,8 +156,7 @@ class ReceiptPdfService {
         _field('بڕی پارە / مبلغ وقدره', 'Amount',
             '${_money.format(r.amount)} ${r.currency.label}'),
         _field('لەبڕی / وذلك لقاء', 'Payment Purpose', r.paymentPurpose),
-        _field('تێبینی / ملاحظة', 'Note', r.note,
-            labelColor: _red, minLines: 2),
+        _field('تێبینی / ملاحظة', 'Note', r.note, labelColor: _red),
 
         pw.Spacer(),
 
@@ -245,14 +244,13 @@ class ReceiptPdfService {
   // ---------------- field row ----------------
 
   /// One labelled field: Kurdish/Arabic label on the right, the value on a
-  /// dotted line in the middle, and the English label on the left.
+  /// single dotted line in the middle, and the English label on the left.
   static pw.Widget _field(
     String kuAr,
     String en,
     String value, {
     bool showEn = true,
     PdfColor labelColor = _darkBlue,
-    int minLines = 1,
   }) =>
       pw.Padding(
         padding: const pw.EdgeInsets.symmetric(vertical: 5),
@@ -269,13 +267,9 @@ class ReceiptPdfService {
               child: pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.stretch,
                 children: [
-                  for (var i = 0; i < minLines; i++) ...[
-                    if (i > 0) pw.SizedBox(height: 10),
-                    pw.Text(i == 0 ? value : '',
-                        style: const pw.TextStyle(fontSize: 10)),
-                    pw.SizedBox(height: 2),
-                    _dottedLine(),
-                  ],
+                  pw.Text(value, style: const pw.TextStyle(fontSize: 10)),
+                  pw.SizedBox(height: 2),
+                  _dottedLine(),
                 ],
               ),
             ),
