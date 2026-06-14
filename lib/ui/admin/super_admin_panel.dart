@@ -346,6 +346,7 @@ class _CreateCompanyScreenState extends ConsumerState<_CreateCompanyScreen> {
   final _phone1 = TextEditingController();
   final _phone2 = TextEditingController();
   final _address = TextEditingController();
+  final _branches = TextEditingController(); // لقەکان بە کۆما جیادەکرێنەوە
   // Admin account
   final _adminName = TextEditingController();
   final _adminEmail = TextEditingController();
@@ -364,7 +365,7 @@ class _CreateCompanyScreenState extends ConsumerState<_CreateCompanyScreen> {
 
   @override
   void dispose() {
-    for (final c in [_nameKu, _nameAr, _nameEn, _phone1, _phone2, _address, _adminName, _adminEmail, _adminPassword, _adminPhone, _userName, _userEmail, _userPassword, _userPhone]) {
+    for (final c in [_nameKu, _nameAr, _nameEn, _phone1, _phone2, _address, _branches, _adminName, _adminEmail, _adminPassword, _adminPhone, _userName, _userEmail, _userPassword, _userPhone]) {
       c.dispose();
     }
     super.dispose();
@@ -408,6 +409,7 @@ class _CreateCompanyScreenState extends ConsumerState<_CreateCompanyScreen> {
         userEmail: _userEmail.text,
         userPassword: _userPassword.text,
         userPhone: _userPhone.text,
+        branches: _branches.text.split(','),
       );
       if (mounted) Navigator.pop(context);
     } catch (e) {
@@ -463,6 +465,8 @@ class _CreateCompanyScreenState extends ConsumerState<_CreateCompanyScreen> {
                   TextFormField(controller: _phone2, keyboardType: TextInputType.phone, textDirection: TextDirection.ltr, decoration: modernInputDecoration(label: 'ژمارەی دووەم', icon: Icons.phone), validator: _req),
                   const SizedBox(height: 12),
                   TextFormField(controller: _address, decoration: modernInputDecoration(label: 'ناونیشانی کۆمپانیا', icon: Icons.location_on_outlined), validator: _req),
+                  const SizedBox(height: 16),
+                  TextFormField(controller: _branches, decoration: modernInputDecoration(label: 'لقەکان (بە کۆما جیابکەرەوە)', icon: Icons.account_tree_outlined)),
                 ],
               ),
               const SizedBox(height: 20),
@@ -554,7 +558,13 @@ class _CompanyUsersScreen extends ConsumerWidget {
     final users = ref.watch(companyUsersProvider(company.id));
     return Scaffold(
       backgroundColor: appBackgroundColor,
-      appBar: modernAppBar(company.displayName),
+      appBar: modernAppBar(company.displayName, actions: [
+        IconButton(
+          tooltip: 'بەڕێوەبردنی لقەکان',
+          icon: const Icon(Icons.account_tree_outlined, color: accentYellow),
+          onPressed: () => _editBranches(context, ref),
+        ),
+      ]),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: accentYellow,
         foregroundColor: primaryDarkBlue,
@@ -562,7 +572,7 @@ class _CompanyUsersScreen extends ConsumerWidget {
         label: const Text('بەکارهێنەری نوێ', style: TextStyle(fontWeight: FontWeight.bold)),
         onPressed: () => Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => _AddUserScreen(companyId: company.id)),
+          MaterialPageRoute(builder: (_) => _AddUserScreen(company: company)),
         ),
       ),
       body: users.when(
@@ -619,6 +629,58 @@ class _CompanyUsersScreen extends ConsumerWidget {
         },
       ),
     );
+  }
+
+  Future<void> _editBranches(BuildContext context, WidgetRef ref) async {
+    final controller =
+        TextEditingController(text: company.branches.join('، '));
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('لقەکان',
+            style: TextStyle(
+                color: primaryDarkBlue, fontWeight: FontWeight.bold)),
+        content: TextField(
+          controller: controller,
+          maxLines: 3,
+          decoration:
+              modernInputDecoration(label: 'لقەکان بە کۆما جیابکەرەوە'),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('پاشگەزبوونەوە',
+                  style: TextStyle(color: Colors.grey))),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+                backgroundColor: primaryDarkBlue,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10))),
+            onPressed: () => Navigator.pop(ctx, controller.text),
+            child: const Text('پاشەکەوت',
+                style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    if (result != null) {
+      try {
+        await ref
+            .read(adminRepositoryProvider)
+            .setBranches(company.id, result.split('،').expand((p) => p.split(',')).toList());
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('لقەکان نوێکرانەوە')));
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('هەڵە: $e'), backgroundColor: Colors.red.shade700));
+        }
+      }
+    }
   }
 
   Future<void> _changePassword(BuildContext context, WidgetRef ref, String uid, String name) async {
@@ -688,8 +750,8 @@ class _CompanyUsersScreen extends ConsumerWidget {
 
 /// Add an agent/admin to a company.
 class _AddUserScreen extends ConsumerStatefulWidget {
-  const _AddUserScreen({required this.companyId});
-  final String companyId;
+  const _AddUserScreen({required this.company});
+  final Company company;
 
   @override
   ConsumerState<_AddUserScreen> createState() => _AddUserScreenState();
@@ -702,8 +764,18 @@ class _AddUserScreenState extends ConsumerState<_AddUserScreen> {
   final _password = TextEditingController();
   final _phone = TextEditingController();
   UserRole _role = UserRole.agent;
+  String? _branch;
+  bool _branchAdmin = false;
   bool _busy = false;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _branch = widget.company.branches.isNotEmpty
+        ? widget.company.branches.first
+        : null;
+  }
 
   @override
   void dispose() {
@@ -722,12 +794,14 @@ class _AddUserScreenState extends ConsumerState<_AddUserScreen> {
     });
     try {
       await ref.read(adminRepositoryProvider).addUserToCompany(
-        companyId: widget.companyId,
+        companyId: widget.company.id,
         name: _name.text,
         email: _email.text,
         password: _password.text,
         phone: _phone.text,
         role: _role,
+        branch: _branch ?? '',
+        branchAdmin: _branchAdmin,
       );
       if (mounted) Navigator.pop(context);
     } catch (e) {
@@ -769,7 +843,44 @@ class _AddUserScreenState extends ConsumerState<_AddUserScreen> {
                   selected: {_role},
                   onSelectionChanged: (s) => setState(() => _role = s.first),
                 ),
-                const SizedBox(height: 24),
+                if (_role == UserRole.companyAdmin) ...[
+                  const SizedBox(height: 12),
+                  SegmentedButton<bool>(
+                    style: SegmentedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        selectedForegroundColor: Colors.white,
+                        selectedBackgroundColor: accentYellow),
+                    segments: const [
+                      ButtonSegment(
+                          value: false,
+                          label: Text('ئادمینی گشتی'),
+                          icon: Icon(Icons.public)),
+                      ButtonSegment(
+                          value: true,
+                          label: Text('ئادمینی لق'),
+                          icon: Icon(Icons.account_tree_outlined)),
+                    ],
+                    selected: {_branchAdmin},
+                    onSelectionChanged: (s) =>
+                        setState(() => _branchAdmin = s.first),
+                  ),
+                ],
+                const SizedBox(height: 16),
+                if (widget.company.branches.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: DropdownButtonFormField<String>(
+                      isExpanded: true,
+                      initialValue: _branch,
+                      decoration: modernInputDecoration(
+                          label: 'لق', icon: Icons.account_tree_outlined),
+                      items: widget.company.branches
+                          .map((b) =>
+                              DropdownMenuItem(value: b, child: Text(b)))
+                          .toList(),
+                      onChanged: (v) => setState(() => _branch = v),
+                    ),
+                  ),
                 TextFormField(controller: _name, decoration: modernInputDecoration(label: 'ناوی تەواو', icon: Icons.badge_outlined), validator: (v) => (v == null || v.trim().isEmpty) ? 'پێویستە' : null),
                 const SizedBox(height: 16),
                 TextFormField(controller: _phone, keyboardType: TextInputType.phone, textDirection: TextDirection.ltr, decoration: modernInputDecoration(label: 'ژمارەی مۆبایل (گشتی)', icon: Icons.phone_iphone), validator: (v) => (v == null || v.trim().isEmpty) ? 'پێویستە' : null),

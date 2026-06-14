@@ -81,6 +81,7 @@ class AdminRepository {
     required String userEmail,
     required String userPassword,
     required String userPhone,
+    List<String> branches = const [],
   }) async {
     final companyId = Company.slugify(companyNameEn);
     if (companyId.isEmpty) {
@@ -111,7 +112,9 @@ class AdminRepository {
       logoUrl: logoUrl,
       ownerUid: adminUid,
       createdAt: now,
+      branches: branches.map((b) => b.trim()).where((b) => b.isNotEmpty).toList(),
     );
+    final firstBranch = company.branches.isNotEmpty ? company.branches.first : '';
     final admin = AppUser(
       uid: adminUid,
       companyId: companyId,
@@ -120,6 +123,8 @@ class AdminRepository {
       email: adminEmail.trim(),
       phone: adminPhone.trim(),
       createdAt: now,
+      branch: firstBranch,
+      branchAdmin: false, // initial admin is company-wide
     );
     final user = AppUser(
       uid: userUid,
@@ -129,6 +134,7 @@ class AdminRepository {
       email: userEmail.trim(),
       phone: userPhone.trim(),
       createdAt: now,
+      branch: firstBranch,
     );
 
     final batch = _db.batch();
@@ -157,6 +163,8 @@ class AdminRepository {
     required String password,
     required String phone,
     required UserRole role,
+    String branch = '',
+    bool branchAdmin = false,
   }) async {
     final uid = await _createAuthUser(email, password);
     final profile = AppUser(
@@ -167,9 +175,18 @@ class AdminRepository {
       email: email.trim(),
       phone: phone.trim(),
       createdAt: DateTime.now(),
+      branch: branch,
+      branchAdmin: role == UserRole.companyAdmin && branchAdmin,
     );
     await _db.collection('users').doc(uid).set(profile.toJson());
     return uid;
+  }
+
+  /// Replaces the company's branch (لق) list.
+  Future<void> setBranches(String companyId, List<String> branches) {
+    return _db.collection('companies').doc(companyId).update({
+      'branches': branches.map((b) => b.trim()).where((b) => b.isNotEmpty).toList(),
+    });
   }
 
   /// Changes a user's password via the `setUserPassword` Cloud Function

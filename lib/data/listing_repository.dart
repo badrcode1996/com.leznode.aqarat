@@ -34,6 +34,7 @@ class ListingRepository {
         .map((s) => s.docs
             .map((d) => PropertyListing.fromJson(d.id, d.data()))
             .where((l) => l.isArchived == archived)
+            .where((l) => !_user.isBranchAdmin || l.branch == _user.branch)
             .toList());
   }
 

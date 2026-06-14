@@ -57,10 +57,10 @@ class ReceiptRepository {
         .map((s) {
       var list = s.docs.map((d) => Receipt.fromJson(d.id, d.data())).toList();
       if (type != null) list = list.where((r) => r.type == type).toList();
-      if (_user.role == UserRole.companyAdmin) {
-        list = list.where((r) => r.branch == _user.branch).toList();
-      } else if (_user.role == UserRole.agent) {
+      if (_user.role == UserRole.agent) {
         list = list.where((r) => r.agentId == _user.agentId).toList();
+      } else if (_user.isBranchAdmin) {
+        list = list.where((r) => r.branch == _user.branch).toList();
       }
       return list;
     });

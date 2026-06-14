@@ -108,6 +108,7 @@ class _CreateListingScreenState extends ConsumerState<CreateListingScreen> {
       agentName: user.displayName,
       agentPhone: user.phone,
       createdAt: DateTime.now(),
+      branch: user.branch,
     );
     try {
       await ref.read(listingRepositoryProvider).create(listing);

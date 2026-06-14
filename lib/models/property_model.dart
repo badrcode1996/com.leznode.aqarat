@@ -30,6 +30,7 @@ class PropertyListing {
     required this.agentPhone,
     required this.createdAt,
     this.isArchived = false,
+    this.branch = '',
   });
 
   final String id;
@@ -48,6 +49,9 @@ class PropertyListing {
 
   /// True once the listing is completed → moved to the archive section.
   final bool isArchived;
+
+  /// Branch (لق) of the creating user — for branch-scoped admins.
+  final String branch;
 
   // ----- DENORMALIZED public contact info (safe to expose) -----
   final String agentName;
@@ -72,6 +76,7 @@ class PropertyListing {
       area: json['area'] as num? ?? 0,
       isPublic: json['is_public'] as bool? ?? false,
       isArchived: json['is_archived'] as bool? ?? false,
+      branch: json['branch'] as String? ?? '',
       agentName: json['agent_name'] as String? ?? '',
       agentPhone: json['agent_phone'] as String? ?? '',
       createdAt:
@@ -90,6 +95,7 @@ class PropertyListing {
         'area': area,
         'is_public': isPublic,
         'is_archived': isArchived,
+        'branch': branch,
         'agent_name': agentName,
         'agent_phone': agentPhone,
         'created_at': Timestamp.fromDate(createdAt),

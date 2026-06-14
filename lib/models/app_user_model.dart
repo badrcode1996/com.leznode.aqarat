@@ -16,6 +16,7 @@ class AppUser {
     required this.phone,
     required this.createdAt,
     this.branch = '',
+    this.branchAdmin = false,
   });
 
   final String uid;
@@ -30,6 +31,10 @@ class AppUser {
   final DateTime createdAt;
   final String branch; // لق — the branch this user belongs to
 
+  /// For a company admin: true = scoped to their branch (ئادمینی لق),
+  /// false = sees all company data (ئادمینی گشتی). Ignored for other roles.
+  final bool branchAdmin;
+
   factory AppUser.fromJson(String uid, Map<String, dynamic> json) => AppUser(
         uid: uid,
         companyId: json['company_id'] as String? ?? '',
@@ -40,6 +45,7 @@ class AppUser {
         createdAt:
             (json['created_at'] as Timestamp?)?.toDate() ?? DateTime.now(),
         branch: json['branch'] as String? ?? '',
+        branchAdmin: json['branch_admin'] as bool? ?? false,
       );
 
   Map<String, dynamic> toJson() => {
@@ -50,5 +56,6 @@ class AppUser {
         'phone': phone,
         'created_at': Timestamp.fromDate(createdAt),
         'branch': branch,
+        'branch_admin': branchAdmin,
       };
 }

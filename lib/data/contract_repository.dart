@@ -27,26 +27,32 @@ class ContractRepository {
   Query<Map<String, dynamic>> _scopedQuery() {
     var query = _contracts.where('company_id', isEqualTo: _user.companyId);
 
-    // Company/Super Admin see all agents; a plain Agent sees only their own.
-    if (!_user.isCompanyWide) {
+    // A plain Agent sees only their own. Company-wide admins see all; branch
+    // admins are filtered by branch client-side (see _applyBranch).
+    if (_user.role == UserRole.agent) {
       query = query.where('agent_id', isEqualTo: _user.agentId);
     }
     return query.orderBy('created_at', descending: true);
   }
 
+  /// Branch admins only see their branch's contracts.
+  List<Contract> _applyBranch(List<Contract> list) => _user.isBranchAdmin
+      ? list.where((c) => c.branch == _user.branch).toList()
+      : list;
+
   /// Live stream of contracts for the current tenant/role.
   Stream<List<Contract>> watchContracts() {
     return _scopedQuery().snapshots().map(
-          (snap) => snap.docs
-              .map((d) => Contract.fromJson(d.id, d.data()))
-              .toList(),
+          (snap) => _applyBranch(
+              snap.docs.map((d) => Contract.fromJson(d.id, d.data())).toList()),
         );
   }
 
   /// One-shot fetch (cheaper than a stream for non-realtime screens).
   Future<List<Contract>> fetchContracts() async {
     final snap = await _scopedQuery().get();
-    return snap.docs.map((d) => Contract.fromJson(d.id, d.data())).toList();
+    return _applyBranch(
+        snap.docs.map((d) => Contract.fromJson(d.id, d.data())).toList());
   }
 
   /// Creates a contract AND increments the company_stats counters in ONE
@@ -65,7 +71,9 @@ class ContractRepository {
       final currentCount = (stats?[counterKey] as int?) ?? 0;
       final contractNumber = currentCount + 1;
 
-      final data = contract.toJson()..['contract_number'] = contractNumber;
+      final data = contract.toJson()
+        ..['contract_number'] = contractNumber
+        ..['branch'] = _user.branch; // denormalize creator's branch
       txn.set(newRef, data);
 
       // Expected value added to the pipeline by this contract.

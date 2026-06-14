@@ -20,6 +20,7 @@ sealed class Contract {
     required this.type,
     required this.createdAt,
     this.contractNumber = 0,
+    this.branch = '',
   });
 
   final String id;
@@ -31,6 +32,9 @@ sealed class Contract {
   /// Sequential per-company, per-type number (rent and sale have independent
   /// sequences). Assigned atomically by the repository at creation — 0 until then.
   final int contractNumber;
+
+  /// Branch (لق) of the creating user — denormalized for branch-scoped admins.
+  final String branch;
 
   factory Contract.fromJson(String id, Map<String, dynamic> json) {
     switch (ContractType.fromWire(json['contract_type'] as String?)) {
@@ -46,6 +50,7 @@ sealed class Contract {
         'company_id': companyId,
         'agent_id': agentId,
         'contract_number': contractNumber,
+        'branch': branch,
         'created_at': Timestamp.fromDate(createdAt),
       };
 
@@ -64,6 +69,7 @@ class RentContract extends Contract {
     required super.agentId,
     required super.createdAt,
     super.contractNumber,
+    super.branch,
     // Parties
     required this.party1Name,
     required this.party1Mobile,
@@ -136,6 +142,7 @@ class RentContract extends Contract {
       createdAt:
           (json['created_at'] as Timestamp?)?.toDate() ?? DateTime.now(),
       contractNumber: json['contract_number'] as int? ?? 0,
+      branch: json['branch'] as String? ?? '',
       party1Name: json['party1_name'] as String? ?? '',
       party1Mobile: json['party1_mobile'] as String? ?? '',
       party2Name: json['party2_name'] as String? ?? '',
@@ -225,6 +232,7 @@ class RentContract extends Contract {
         agentId: agentId,
         createdAt: createdAt,
         contractNumber: contractNumber,
+        branch: branch,
         party1Name: party1Name,
         party1Mobile: party1Mobile,
         party2Name: party2Name,
@@ -292,6 +300,7 @@ class SaleContract extends Contract {
     required super.agentId,
     required super.createdAt,
     super.contractNumber,
+    super.branch,
     // Parties
     required this.party1Name, // فرۆشیار (seller)
     required this.party1Mobile,
@@ -351,6 +360,7 @@ class SaleContract extends Contract {
       createdAt:
           (json['created_at'] as Timestamp?)?.toDate() ?? DateTime.now(),
       contractNumber: json['contract_number'] as int? ?? 0,
+      branch: json['branch'] as String? ?? '',
       party1Name: json['party1_name'] as String? ?? '',
       party1Mobile: json['party1_mobile'] as String? ?? '',
       party2Name: json['party2_name'] as String? ?? '',

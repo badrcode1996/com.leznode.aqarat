@@ -17,6 +17,7 @@ class SessionUser {
     required this.displayName,
     required this.phone,
     this.branch = '',
+    this.branchAdmin = false,
   });
 
   final String uid;
@@ -30,10 +31,18 @@ class SessionUser {
   /// The branch (لق) this user belongs to.
   final String branch;
 
+  /// Company admin scoped to their branch (ئادمینی لق) when true.
+  final bool branchAdmin;
+
   String get agentId => uid;
 
+  /// Sees ALL company data: super admin, or a company-wide admin (not branch).
   bool get isCompanyWide =>
-      role == UserRole.companyAdmin || role == UserRole.superAdmin;
+      role == UserRole.superAdmin ||
+      (role == UserRole.companyAdmin && !branchAdmin);
+
+  /// Company admin limited to their own branch.
+  bool get isBranchAdmin => role == UserRole.companyAdmin && branchAdmin;
 }
 
 // --------------------------------------------------------------------------
@@ -89,6 +98,7 @@ final sessionProvider = FutureProvider<SessionUser?>((ref) async {
     displayName: data['display_name'] as String? ?? user.email ?? '',
     phone: data['phone'] as String? ?? '',
     branch: data['branch'] as String? ?? '',
+    branchAdmin: data['branch_admin'] as bool? ?? false,
   );
 });
 
