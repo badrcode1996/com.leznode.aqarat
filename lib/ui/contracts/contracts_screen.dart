@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/session.dart';
 import '../../data/contract_repository.dart';
+import '../../data/template_repository.dart';
 import '../../models/company_model.dart';
 import '../../models/contract_model.dart';
+import '../../models/contract_template_model.dart';
 import '../../models/enums.dart';
 import '../../services/pdf/contract_pdf_service.dart';
 import 'contract_preview_screen.dart';
@@ -125,11 +127,13 @@ class _ContractCard extends ConsumerWidget {
   const _ContractCard({required this.contract});
   final Contract contract;
 
-  void _openPreview(BuildContext context, Company? company) {
+  void _openPreview(
+      BuildContext context, Company? company, ContractTemplate? template) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => ContractPreviewScreen(contract: contract, company: company),
+        builder: (_) => ContractPreviewScreen(
+            contract: contract, company: company, template: template),
       ),
     );
   }
@@ -212,6 +216,8 @@ class _ContractCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isRent = contract.type == ContractType.rent;
     final company = ref.watch(currentCompanyProvider).value;
+    final template =
+        ref.watch(contractTemplateProvider(contract.companyId)).value;
     final isAdmin = ref.watch(currentUserProvider).isAdmin;
     final typeLabel = isRent ? 'کرێ' : 'فرۆشتن';
 
@@ -328,18 +334,18 @@ class _ContractCard extends ConsumerWidget {
                     IconButton(
                       tooltip: 'پێشبینین',
                       icon: const Icon(Icons.visibility_outlined, color: primaryDarkBlue),
-                      onPressed: () => _openPreview(context, company),
+                      onPressed: () => _openPreview(context, company, template),
                     ),
                     PopupMenuButton<String>(
                       icon: const Icon(Icons.more_vert_rounded, color: Colors.grey),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       onSelected: (v) {
                         if (v == 'preview') {
-                          _openPreview(context, company);
+                          _openPreview(context, company, template);
                         } else if (v == 'print') {
-                          _run(context, () => ContractPdfService.printContract(contract, company: company));
+                          _run(context, () => ContractPdfService.printContract(contract, company: company, template: template));
                         } else if (v == 'share') {
-                          _run(context, () => ContractPdfService.shareContract(contract, company: company));
+                          _run(context, () => ContractPdfService.shareContract(contract, company: company, template: template));
                         } else if (v == 'edit') {
                           _edit(context);
                         } else if (v == 'delete') {

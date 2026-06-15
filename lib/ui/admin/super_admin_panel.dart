@@ -8,6 +8,7 @@ import '../../admin/admin_repository.dart';
 import '../../auth/session.dart';
 import '../../models/company_model.dart';
 import '../../models/enums.dart';
+import 'template_editor_screen.dart';
 
 // ڕەنگە سەرەکییەکان بۆ یەکپارچەیی دیزاینەکە
 const Color primaryDarkBlue = Color(0xFF0F2C59);
@@ -134,9 +135,9 @@ class SuperAdminPanel extends ConsumerWidget {
                 ),
                 child: ListTile(
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  leading: CircleAvatar(
+                  leading: const CircleAvatar(
                     backgroundColor: inputFillColor,
-                    child: const Icon(Icons.business, color: primaryDarkBlue),
+                    child: Icon(Icons.business, color: primaryDarkBlue),
                   ),
                   title: Text(c.displayName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   subtitle: Text(c.phone1, style: TextStyle(color: Colors.grey.shade600)),
@@ -559,6 +560,15 @@ class _CompanyUsersScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: appBackgroundColor,
       appBar: modernAppBar(company.displayName, actions: [
+        IconButton(
+          tooltip: 'تێمپلەیتی گرێبەست',
+          icon: const Icon(Icons.description_outlined, color: accentYellow),
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (_) => TemplateEditorScreen(company: company)),
+          ),
+        ),
         IconButton(
           tooltip: 'بەڕێوەبردنی لقەکان',
           icon: const Icon(Icons.account_tree_outlined, color: accentYellow),

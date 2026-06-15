@@ -1,13 +1,13 @@
 import 'dart:typed_data';
 
 import 'package:flutter/services.dart' show rootBundle;
-import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
 import '../../models/company_model.dart';
 import '../../models/contract_model.dart';
+import '../../models/contract_template_model.dart';
 
 /// On-device PDF generator for contracts.
 ///
@@ -18,9 +18,6 @@ class ContractPdfService {
   // Cache the parsed fonts so we don't re-read the asset for every contract.
   static pw.Font? _regular;
   static pw.Font? _bold;
-
-  static final _money = NumberFormat.decimalPattern();
-  static final _date = DateFormat('yyyy/MM/dd');
 
   /// Loads the PDF fonts bundled in assets (once). Vazirmatn is used for the
   /// PDF because it covers Kurdish/Arabic and subsets cleanly — the SPEDA file
@@ -34,9 +31,15 @@ class ContractPdfService {
   }
 
   /// Builds the PDF bytes for any contract. Pass [company] to render the
-  /// branded header (logo, name, phones, address).
-  static Future<Uint8List> build(Contract contract, {Company? company}) async {
+  /// branded header (logo, name, phones, address) and [template] to use the
+  /// company's custom clauses/design (defaults to [ContractTemplate.defaults]).
+  static Future<Uint8List> build(
+    Contract contract, {
+    Company? company,
+    ContractTemplate? template,
+  }) async {
     await _ensureFonts();
+    final tpl = template ?? ContractTemplate.defaults();
 
     // Fetch the logo image once. A hanging/offline fetch must not block the
     // print dialog forever, so we time out and degrade gracefully to no logo.
@@ -78,8 +81,8 @@ class ContractPdfService {
         header: (ctx) => _header(company, logo),
         footer: (ctx) => _footer(ctx, company),
         build: (ctx) => switch (contract) {
-          RentContract r => _rentContent(r, company),
-          SaleContract s => _saleContent(s, company),
+          RentContract r => _rentContent(r, company, tpl),
+          SaleContract s => _saleContent(s, company, tpl),
         },
       ),
     );
@@ -88,18 +91,26 @@ class ContractPdfService {
   }
 
   /// Sends the contract straight to a printer (Wi-Fi / system print dialog).
-  static Future<void> printContract(Contract contract, {Company? company}) async {
-    final bytes = await build(contract, company: company);
+  static Future<void> printContract(Contract contract,
+      {Company? company, ContractTemplate? template}) async {
+    final bytes = await build(contract, company: company, template: template);
     await Printing.layoutPdf(onLayout: (_) async => bytes);
   }
 
   /// Opens the OS share sheet (save / send via WhatsApp, email, etc.).
-  static Future<void> shareContract(Contract contract, {Company? company}) async {
-    final bytes = await build(contract, company: company);
+  static Future<void> shareContract(Contract contract,
+      {Company? company, ContractTemplate? template}) async {
+    final bytes = await build(contract, company: company, template: template);
     await Printing.sharePdf(
       bytes: bytes,
       filename: 'contract_${contract.id}.pdf',
     );
+  }
+
+  /// Parses a `RRGGBB` hex string into an opaque [PdfColor].
+  static PdfColor _hexColor(String hex) {
+    final v = int.tryParse(hex.replaceAll('#', ''), radix: 16);
+    return v == null ? PdfColors.black : PdfColor.fromInt(0xFF000000 | v);
   }
 
   // ----------------------------- sections -----------------------------
@@ -117,13 +128,30 @@ class ContractPdfService {
   }
 
   /// The big contract title — placed as the first line of page 1's body.
-  static pw.Widget _title(String text) => pw.Padding(
+  static pw.Widget _title(String text, PdfColor color) => pw.Padding(
         padding: const pw.EdgeInsets.only(bottom: 8),
         child: pw.Text(text,
             textAlign: pw.TextAlign.center,
-            style:
-                pw.TextStyle(fontSize: 22, fontWeight: pw.FontWeight.bold)),
+            style: pw.TextStyle(
+                fontSize: 22, fontWeight: pw.FontWeight.bold, color: color)),
       );
+
+  /// The numbered clause list, built from template strings with `{token}`s
+  /// substituted for the contract's values.
+  static List<pw.Widget> _clauses(
+    List<String> clauses,
+    Map<String, String> tokens,
+    double fontSize,
+  ) =>
+      clauses.asMap().entries.map((e) {
+        final text = ContractTemplate.apply(e.value, tokens);
+        return pw.Padding(
+          padding: const pw.EdgeInsets.only(bottom: 6),
+          child: pw.Text('${e.key + 1}- $text',
+              textAlign: pw.TextAlign.justify,
+              style: pw.TextStyle(fontSize: fontSize, lineSpacing: 2)),
+        );
+      }).toList();
 
   /// Branded company strip: company name in all 3 languages on the right
   /// (RTL start), logo on the left.
@@ -193,10 +221,12 @@ class ContractPdfService {
   }
 
   // ----------------------------- SALE -----------------------------
-  static List<pw.Widget> _saleContent(SaleContract s, Company? company) {
+  static List<pw.Widget> _saleContent(
+      SaleContract s, Company? company, ContractTemplate tpl) {
+    final color = _hexColor(tpl.primaryColorHex);
     return [
-      _title('گرێبەستی کڕین و فرۆشتن'),
-      _card('زانیاری گرێبەست', [
+      _title(tpl.saleTitle, color),
+      _card('زانیاری گرێبەست', color, [
         _row('ژمارەی گرێبەست:', '${s.contractNumber}'),
         _row('لایەنی یەکەم (فرۆشیار):', s.party1Name),
         _row('لایەنی دووەم (کڕیار):', s.party2Name),
@@ -207,16 +237,11 @@ class ContractPdfService {
       ]),
       pw.SizedBox(height: 12),
       pw.Text('هەردوو لایەن ڕێکەوتن لەسەر ئەم خاڵانەی خوارەوە (بەندەکان):',
-          style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 12)),
+          style: pw.TextStyle(
+              fontWeight: pw.FontWeight.bold, fontSize: 12, color: color)),
       pw.SizedBox(height: 6),
-      ..._saleClauses(s, company).asMap().entries.map(
-            (e) => pw.Padding(
-              padding: const pw.EdgeInsets.only(bottom: 6),
-              child: pw.Text('${e.key + 1}- ${e.value}',
-                  textAlign: pw.TextAlign.justify,
-                  style: const pw.TextStyle(fontSize: 11, lineSpacing: 2)),
-            ),
-          ),
+      ..._clauses(tpl.saleClauses, ContractTemplate.tokensFor(s, company),
+          tpl.clauseFontSize),
       if (s.notes.trim().isNotEmpty) ...[
         pw.SizedBox(height: 8),
         pw.Text('تێبینی: ${s.notes}', style: const pw.TextStyle(fontSize: 11)),
@@ -226,34 +251,13 @@ class ContractPdfService {
     ];
   }
 
-  /// The 14 sale clauses with placeholders filled. `companyname` uses the
-  /// company's Kurdish name; the late-delivery fee reuses lateFeePerDay.
-  static List<String> _saleClauses(SaleContract s, Company? company) {
-    final cn = company?.nameKu ?? 'کۆمپانیا';
-    final cur = s.currency.label;
-    String m(num v) => _money.format(v);
-    return [
-      'لایەنی یەکەم ${s.party1Name} ڕەزامەندە لەسەر فرۆشتنی ئەم موڵکەی سەرەوە بە لایەنی دووەم بە نرخی ${m(s.totalPrice)} $cur.',
-      'لایەنی دووەم ${s.party2Name} ڕەزامەندە لەسەر کڕینی ئەم موڵکەی سەرەوە بە نرخی ${m(s.totalPrice)} $cur.',
-      '$cn بڕی ${m(s.downPayment)} $cur وەردەگرێت وەکو پێشەکی لە جیاتی لایەنی یەکەم.',
-      'بڕی پارەی ماوە بەم شێوەی خوارەوە دەدرێت: ${s.paymentMethod}',
-      'لەسەر لایەنی یەکەم پێویستە ئەم موڵکە ڕادەستی لایەنی دووەم بکات لە ڕێکەوتی ${_date.format(s.deliveryDate)} دوای گەیشتنی بە شایستە داراییەکان.',
-      'ئەگەر لایەنی یەکەم لە بەرواری دیاریکراودا ئەم موڵکەی ڕادەستی لایەنی دووەم نەکرد ئەوا دەبێت پابەند بێت بە پێدانی بڕی ${m(s.lateFeePerDay)} $cur بۆ هەر ڕۆژ دواکەوتن.',
-      'ئەگەر هاتوو هەر لایەنێک بە هەر هۆیەک پاشەگەزبێتەوە لەم گرێبەستە دەبێت پابەندبێت بە پێدانی بڕی ${m(s.withdrawalAmount)} $cur بۆ لایەنەکەی تر بەبێ ئاگادار کردنەوەی لایەنی فەرمی.',
-      'ڕسووماتی فرۆشتن و گواستنەوە و جیاکردنەوە و یەخستن و ڕاستکردنەوە و باجی خانووبەرە لەسەر لایەنی یەکەمە بیدات بەپێی یاسا ئەگەر تاپۆ بوو، وە ئەگەر تاپۆ نەبوو لایەنی یەکەم پابەندە بە پێدانی بڕی پارەی بەناوکردنی خۆی.',
-      'ڕسووماتی کەشف و تۆماری عەقار دەکەوێتە سەر لایەنی دووەم بەگوێرەی یاسا ئەگەر تاپۆ بوو، وە ئەگەر تاپۆ نەبوو لایەنی دووەم پابەندە بە بڕی پارەی بەناوکردن.',
-      'لەسەر لایەنی یەکەم پێویستە دەسەڵات بدات بە پارێزەر ${s.lawyer} بە بریکارنامەی تایبەت بەم موڵکە لە فەرمانگەی دادنووس بە مەبەستی ڕایکردنی مامەڵەکان و بەناوکردنی لە بەڕیوبەرایەتی تۆماری خانووبەرە بۆ لایەنی دووەم.',
-      'لەسەر لایەنی یەکەم پێویستە قەرزی کارەبا و هەر خزمەتگوزاریەک لەسەر ئەم موڵکە هەبێت پاک بکاتەوە تا بەرواری ڕادەست کردنی موڵکەکە.',
-      'لەسەر لایەنی یەکەم پێویستە بڕی ٪١ لە نرخی ئەم موڵکەی سەرەوە بدات بە $cn لە بەرامبەر فرۆشتنی ئەم موڵکە.',
-      'لەسەر لایەنی دووەم پێویستە بڕی ٪١ لە نرخی ئەم موڵکەی سەرەوە بدات بە $cn لە بەرامبەر کڕینی ئەم موڵکە.',
-    ];
-  }
-
   // ----------------------------- RENT -----------------------------
-  static List<pw.Widget> _rentContent(RentContract c, Company? company) {
+  static List<pw.Widget> _rentContent(
+      RentContract c, Company? company, ContractTemplate tpl) {
+    final color = _hexColor(tpl.primaryColorHex);
     return [
-      _title('گرێبەستی کرێ'),
-      _card('زانیاری گرێبەست', [
+      _title(tpl.rentTitle, color),
+      _card('زانیاری گرێبەست', color, [
         _row('ژمارەی گرێبەست:', '${c.contractNumber}'),
         _row('لایەنی یەکەم (خاوەن موڵک):', c.party1Name),
         _row('لایەنی دووەم (کرێچی):', c.party2Name),
@@ -264,59 +268,17 @@ class ContractPdfService {
       ]),
       pw.SizedBox(height: 12),
       pw.Text('هەردوو لایەن ڕێکەوتن لەسەر ئەم خاڵانەی خوارەوە (بەندەکان):',
-          style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 12)),
+          style: pw.TextStyle(
+              fontWeight: pw.FontWeight.bold, fontSize: 12, color: color)),
       pw.SizedBox(height: 6),
-      ..._rentClauses(c, company).asMap().entries.map(
-            (e) => pw.Padding(
-              padding: const pw.EdgeInsets.only(bottom: 6),
-              child: pw.Text('${e.key + 1}- ${e.value}',
-                  textAlign: pw.TextAlign.justify,
-                  style: const pw.TextStyle(fontSize: 11, lineSpacing: 2)),
-            ),
-          ),
+      ..._clauses(tpl.rentClauses, ContractTemplate.tokensFor(c, company),
+          tpl.clauseFontSize),
       if (c.notes.trim().isNotEmpty) ...[
         pw.SizedBox(height: 8),
         pw.Text('تێبینی: ${c.notes}', style: const pw.TextStyle(fontSize: 11)),
       ],
       pw.SizedBox(height: 24),
       _partySignatures(c.party1Name, c.agentName, c.party2Name),
-    ];
-  }
-
-  /// The 27 rent clauses with placeholders filled. `companyname` uses the
-  /// company's Kurdish name.
-  static List<String> _rentClauses(RentContract c, Company? company) {
-    final cn = company?.nameKu ?? 'کۆمپانیا';
-    final cur = c.currency.label;
-    String m(num v) => _money.format(v);
-    return [
-      'لایەنی یەکەم ڕەزامەندە لەسەر بەکرێدانی ئەم موڵکەی سەرەوە بە لایەنی دووەم بۆ ماوەی (${c.rentalPeriodMonths}) مانگ.',
-      'هەردوو لایەن ڕەزامەندن لەسەر کرێی مانگانە بە بڕی ${m(c.rentAmount)} $cur.',
-      'ئەم گرێبەستە دەست پێدەکات لە بەرواری: ${_date.format(c.startDate)} تاکو ${_date.format(c.handoverDate)}.',
-      'لایەنی دووەم بڕی ${m(c.downPayment)} دەداتە لایەنی یەکەم وەک پێشەکی ${c.downPaymentMonths} مانگ و دوای پێشەکی کرێیەکە بەمشێوەیە دەدریێت: ${c.paymentFrequencyMonths} مانگ جارێک.',
-      'لایەنی دووەم لەسەریەتی بڕی ${m(c.guaranteeAmount)} وەک دڵنیایی دابنێ لای $cn، ئەم بڕە پارەیە دەگەڕێتەوە بۆ لایەنی دووەم دوای ڕادەستکردنی موڵکەکە بێ هیچ کەم و کوڕییەک.',
-      'لایەنی دووەم ئەم موڵکە بەکاردێنێت بۆ مەبەستی ${c.rentalPurpose}، بە پێچەوانەوە بۆ هەر مەبەستێکی تر پێویستە ئاگاداری $cn و ڕەزامەندی لایەنی یەکەم بە نوسراوێک وەربگرێت.',
-      'لایەنی دووەم بۆی نیە داوای کلیلی موڵکەکە بکات بۆ هەر مەبەستێک بێت تا ڕێپێدان لە لایەنی پەیوەندیدار یان ئاسایش وەرنەگرێت، گەر لە ماوەی ${c.gracePeriod} ڕۆژ نەیتوانی ڕێپێدان لە لایەنی پەیوەندیدار وەربگرێت گرێبەستەکە ڕاستەوخۆ هەڵدەوەشێتەوە و پارەکان دەگەڕێتەوە بۆ لایەنی دووەم.',
-      'لایەنی دووەم پێش ڕاخراوکردنی (تاثیث) موڵکەکە پێویستە لەسەر ئەستۆی خۆی قوفڵی دەرگا دەرەکیەکان بگۆڕێت، بەپێچەوانەوە هەر کێشەیەک ڕووبدات خۆی بەرپرسیارە لێی.',
-      'لایەنی دووەم پابەند دەبێت بە پێدانی کرێیەکە (٧) ڕۆژ پێش ڕێکەوتی دیاریکراو، وە ئەگەر (٧) ڕۆژ لە وادەی دیاریکراو دواکەوت ئەوا لایەنی دووەم بەرپرسیار دەبێت بەرامبەر یاسا.',
-      'دوای تەواوبوونی ماوەی گرێبەستەکە ئەگەر لایەنی دووەم پابەند نەبێ بە چۆڵکردنی یان نوێکردنەوەی ئەم گرێبەستە ئەوا کرێی موڵکەکە دەبێت ڕۆژانە بە بڕی ${m(c.lateFeePerDay)} بۆ هەر ڕۆژێک تا یەکلا دەبێتەوە.',
-      'خزمەتگوزاری پڕۆژە و شارەوانی و کارەبا و ئاو و هەر خزمەتگوزاریەکی تر هەبێت لە ماوەی ئەم گرێبەستە لە ئەستۆی لایەنی دووەمە.',
-      'ئەگەر لایەنی دووەم بیەوێت هەر جۆرە گۆڕانکاریەک لە دەرەوە یان ناوەوەی ئەم موڵکە بکات پێویستە بە ئاگاداری $cn و ڕەزامەندی لایەنی یەکەم بێت، وە بە نوسراوێک گۆڕانکاریەکان دیاری بکرێت و بۆی نیە داوای گەڕانەوەی تێچووی گۆڕانکاریەکان بکات لە لایەنی یەکەم دوای دەرچوون.',
-      'لایەنی دووەم بە هیچ شێوەیەک بۆی نیە ئەم موڵکە (هەمووی یان بەشێکی) بەکرێ بداتەوە لایەنی تر بە بێ ئاگادارکردنەوەی $cn و ڕەزامەندی لایەنی یەکەم.',
-      'ئەگەر لایەنی یەکەم موڵکەکەی فرۆشت ئەوا لایەنی دووەم بۆی هەیە لە ناو موڵکەکەی بمێنێتەوە تا کۆتایی وادەی گرێبەستەکە، وە خاوەنە نوێیەکەش پابەند دەبێت بە ناوەڕۆکی ئەم گرێبەستە.',
-      'ئەگەر لایەنی دووەم پێش کۆتایی هاتنی گرێبەستەکە زووتر دەرچوو لە موڵکەکە، $cn هاوکار دەبێ بۆ گێڕانەوەی (بەشێک یان هەموو) کرێی ماوەی چۆڵکردنی موڵکەکە، ئەگەر بەکرێدرایەوە لەلایەن $cn.',
-      '$cn هاوکار دەبێت (نەک بەرپرس) لە نێوان هەردوولایەن لە ماوەی گرێبەستەکە بۆ بەردەوام بوون و مانەوەیان و چارەسەرکردنی کێشە ئەگەر هەبوو.',
-      'ئەگەر موڵکەکە ڕاخراو بوو (مؤثث) لەسەر هەردوولا پێویستە کەل و پەلەکان ئەژمار بکەن (جرد) و وێنەی بگرن هاوپێچی گرێبەستەکە بکرێت بۆ بەرچاو ڕوونی هەردوولا، و لایەنی دووەم پێویستە پارێزگاری لە کەلوپەلەکان بکات و لەکاتی دەرچوونی وەک خۆی ڕادەستی لایەنی یەکەمی بکاتەوە، بەپێچەوانەوە لایەنی دووەم بەرپرسە لە چاککردنەوە یان گۆڕینی لەسەر ئەرکی خۆی.',
-      'لایەنی یەکەم لەسەریەتی پارەی کارەبای حکومی و ئەهلی و خزمەتگوزاریەکان بدات و ئەستۆی پاکی بکات پێش بەکرێدان و بەرپرسە لە چاککردنەوەی هەر کەم و کوڕیەک کە پەیوەندی بە ژێرخانی موڵکەکە بێت.',
-      'لەکاتی هاتنی کرێیەکە پێویستە لایەنی یەکەم بە زووترین کات بێتە $cn و کرێیەکە وەربگرێت، بە پێچەوانەوە پارەکە دەخرێتە ناو حساب بانکی $cn دواتر بە چەک بۆی سەرف دەکرێت.',
-      'هەریەک لە لایەنی یەکەم و دووەم پێویستە بڕی کرێی نیو مانگ بۆ هەر ساڵێک بدەن بە $cn لەجیاتی کرێی ڕێکخستنی ئەم گرێبەستە.',
-      'لایەنی دووەم لەسەریەتی (مانگێک) پێش وادەی کۆتایی هاتنی گرێبەستەکە، ئاگاداری $cn بکاتەوە ئەگەر نیازی نوێکردنەوە یان چۆڵکردنی موڵکەکەی هەبوو، بە پێچەوانەوە کرێی (مانگێک) دەکەوێتە ئەستۆی لایەنی دووەم.',
-      'لەکاتی چۆڵکردن لایەنی دووەم لەسەریەتی چۆن موڵکەکەی وەرگرتووە وەک خۆی بێ کەم و کوڕی ڕادەستی لایەنی یەکەم بکاتەوە، بە پێچەوانەوە بەرپرسە لە چاکردنەوەی کەم و کوڕیەکان بە زووترین کات و پابەندە بە پێدانی پارەی کارەبای نیشتیمانی لەگەڵ هاتنی پسوولەی کارەبا یان سەردانی فەرمانگەی کارەبای نیشتیمانی بکات و پابەندە بە پێدانی پارەی خزمەت گوزاری تا بەرواری چۆڵکردن.',
-      'دوای کۆتایی هاتنی وادەی گرێبەستەکە، ئەم گرێبەستە نوێ دەکرێتەوە بە نرخی ڕۆژ بە ڕەزامەندی هەردوولا بە نێوەندگیری $cn بۆ نرخ دانان و شێوازی کرێدانەکە، یان موڵکەکە چۆڵدەکرێت و ڕادەستی خاوەنەکەی دەکرێتەوە.',
-      'لە کاتی نوێکردنەوەی گرێبەستەکە هەر یەکێک لە دوولایەنەکە پابەند دەبێت بە پێدانی کرێی نیو مانگ بۆ یەک ساڵ بە $cn.',
-      'لەسەر لایەنی دووەم پێویستە موڵکەکە بۆ ئەو مەبەستە بەکاربهێنێت کە لەسەری ڕێکەوتوون، کە نەبێتە مایەی ئەزیەت و ئازار بۆ هاوسێیەکانی، بە پێچەوانەوە بەرپرسیار دەبێت بەرامبەر یاسا و گرێبەستەکە هەڵدەوەشێتەوە.',
-      'لەکاتی چارەسەر نەبوونی کێشەی نێوان دوو لایەنەکە (ئەگەر هەبوو) $cn بەرپرس نیە و کێشەکە دەبردرێتە دادگا بۆ چارەسەرکردنی بە شاهێدی کارمەندانی بەرپرس.',
-      'ئەگەر لایەنی یەکەم خۆی کڕیی وەرگرت لە کرێچی ئەوا $cn بەرپرس نیە لە هیچ جۆرە کێشەیەک.',
     ];
   }
 
@@ -347,19 +309,20 @@ class ContractPdfService {
 
   // ----------------------------- helpers -----------------------------
 
-  static pw.Widget _card(String title, List<pw.Widget> rows) => pw.Container(
+  static pw.Widget _card(String title, PdfColor color, List<pw.Widget> rows) =>
+      pw.Container(
         width: double.infinity,
         padding: const pw.EdgeInsets.all(10),
         decoration: pw.BoxDecoration(
-          border: pw.Border.all(color: PdfColors.grey400),
+          border: pw.Border.all(color: color),
           borderRadius: pw.BorderRadius.circular(6),
         ),
         child: pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.stretch,
           children: [
             pw.Text(title,
-                style:
-                    pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 13)),
+                style: pw.TextStyle(
+                    fontWeight: pw.FontWeight.bold, fontSize: 13, color: color)),
             pw.SizedBox(height: 6),
             ...rows,
           ],

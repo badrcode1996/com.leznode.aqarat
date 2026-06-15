@@ -81,6 +81,13 @@ service cloud.firestore {
       allow update, delete: if sameCompany(resource.data.company_id);
     }
 
+    // --- Contract templates (تێمپلەیت): one doc per company (id == company_id).
+    //     The owning company reads it to render PDFs; only super admins edit.
+    match /templates/{companyId} {
+      allow read:  if isSuperAdmin() || sameCompany(companyId);
+      allow write: if isSuperAdmin();
+    }
+
     // --- Lawyers (پارێزەران): company-scoped directory managed by the company
     //     admin (admin restriction enforced client-side). Agents read them to
     //     pick a lawyer on the sale contract form.
