@@ -99,7 +99,8 @@ exports.setUserPassword = onCall(async (request) => {
  * to the receipt's company, and returns the PDF as base64.
  */
 exports.renderReceiptPdf = onCall(
-    {memory: "1GiB", timeoutSeconds: 120},
+    // concurrency 1: each Chromium render gets the instance's full memory.
+    {memory: "1GiB", timeoutSeconds: 120, concurrency: 1},
     async (request) => {
       const auth = request.auth;
       if (!auth) throw new HttpsError("unauthenticated", "Sign in required.");
