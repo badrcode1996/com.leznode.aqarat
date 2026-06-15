@@ -62,7 +62,7 @@ class InstallmentGrid extends ConsumerWidget {
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-            child: const Text('دروستکردنی وەصڵ'),
+            child: const Text('دروستکردنی پسولە'),
           ),
         ],
       ),

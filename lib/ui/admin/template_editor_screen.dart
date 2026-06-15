@@ -282,7 +282,7 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
   }
 
   // --------------------------- receipt design ---------------------------
-  Widget _receiptSection() => _panel('دیزاینی پسولە (وەصڵ)', [
+  Widget _receiptSection() => _panel('دیزاینی پسولە', [
         Row(
           children: [
             Expanded(

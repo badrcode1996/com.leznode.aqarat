@@ -69,7 +69,7 @@ class _ReceiptPreviewScreenState extends State<ReceiptPreviewScreen> {
       backgroundColor: appBackgroundColor,
       appBar: AppBar(
         title: Text(
-          'وەصڵ #${widget.receipt.receiptNumber}',
+          'پسولە #${widget.receipt.receiptNumber}',
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         backgroundColor: primaryDarkBlue,
