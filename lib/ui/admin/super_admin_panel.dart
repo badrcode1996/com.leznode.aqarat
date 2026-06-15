@@ -8,6 +8,7 @@ import '../../admin/admin_repository.dart';
 import '../../auth/session.dart';
 import '../../models/company_model.dart';
 import '../../models/enums.dart';
+import '../../services/export/export_service.dart';
 import 'template_editor_screen.dart';
 
 // ڕەنگە سەرەکییەکان بۆ یەکپارچەیی دیزاینەکە
@@ -561,6 +562,11 @@ class _CompanyUsersScreen extends ConsumerWidget {
       backgroundColor: appBackgroundColor,
       appBar: modernAppBar(company.displayName, actions: [
         IconButton(
+          tooltip: 'دەرهێنان (Export)',
+          icon: const Icon(Icons.file_download_outlined, color: accentYellow),
+          onPressed: () => _chooseExport(context, ref),
+        ),
+        IconButton(
           tooltip: 'تێمپلەیتی گرێبەست',
           icon: const Icon(Icons.description_outlined, color: accentYellow),
           onPressed: () => Navigator.push(
@@ -639,6 +645,88 @@ class _CompanyUsersScreen extends ConsumerWidget {
         },
       ),
     );
+  }
+
+  /// Bottom sheet to pick the export format.
+  void _chooseExport(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 16, 20, 8),
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: Text('دەرهێنانی داتای کۆمپانیا',
+                    style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: primaryDarkBlue)),
+              ),
+            ),
+            ListTile(
+              leading: const CircleAvatar(
+                  backgroundColor: Color(0x1A10B981),
+                  child: Icon(Icons.grid_on, color: Color(0xFF10B981))),
+              title: const Text('Excel (xlsx)'),
+              subtitle: const Text('گرێبەست + پسولە لە دوو شیت'),
+              onTap: () {
+                Navigator.pop(context);
+                _runExport(context, ref, excel: true);
+              },
+            ),
+            ListTile(
+              leading: CircleAvatar(
+                  backgroundColor: Colors.red.shade50,
+                  child: Icon(Icons.picture_as_pdf, color: Colors.red.shade700)),
+              title: const Text('PDF'),
+              subtitle: const Text('ڕاپۆرتی خشتەیی'),
+              onTap: () {
+                Navigator.pop(context);
+                _runExport(context, ref, excel: false);
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Fetches the company's data and hands the generated file to the share sheet.
+  Future<void> _runExport(BuildContext context, WidgetRef ref,
+      {required bool excel}) async {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+          child: CircularProgressIndicator(color: primaryDarkBlue)),
+    );
+    final nav = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final repo = ref.read(adminRepositoryProvider);
+      final contracts = await repo.fetchCompanyContracts(company.id);
+      final receipts = await repo.fetchCompanyReceipts(company.id);
+      if (excel) {
+        await ExportService.shareExcel(company,
+            contracts: contracts, receipts: receipts);
+      } else {
+        await ExportService.sharePdf(company,
+            contracts: contracts, receipts: receipts);
+      }
+      nav.pop(); // close the loading dialog
+    } catch (e) {
+      nav.pop();
+      messenger.showSnackBar(SnackBar(
+          content: Text('هەڵە لە دەرهێنان: $e'),
+          backgroundColor: Colors.red.shade700));
+    }
   }
 
   Future<void> _editBranches(BuildContext context, WidgetRef ref) async {

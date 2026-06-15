@@ -11,7 +11,9 @@ import '../auth/session.dart';
 import '../firebase_options.dart';
 import '../models/app_user_model.dart';
 import '../models/company_model.dart';
+import '../models/contract_model.dart';
 import '../models/enums.dart';
+import '../models/receipt_model.dart';
 
 /// Super-Admin provisioning: create companies (with logo), company admins, and
 /// agents.
@@ -244,6 +246,24 @@ class AdminRepository {
         .snapshots()
         .map((s) =>
             s.docs.map((d) => AppUser.fromJson(d.id, d.data())).toList());
+  }
+
+  /// One-shot fetch of a company's contracts (super admin only — for export).
+  Future<List<Contract>> fetchCompanyContracts(String companyId) async {
+    final snap = await _db
+        .collection('contracts')
+        .where('company_id', isEqualTo: companyId)
+        .get();
+    return snap.docs.map((d) => Contract.fromJson(d.id, d.data())).toList();
+  }
+
+  /// One-shot fetch of a company's receipts (super admin only — for export).
+  Future<List<Receipt>> fetchCompanyReceipts(String companyId) async {
+    final snap = await _db
+        .collection('receipts')
+        .where('company_id', isEqualTo: companyId)
+        .get();
+    return snap.docs.map((d) => Receipt.fromJson(d.id, d.data())).toList();
   }
 }
 

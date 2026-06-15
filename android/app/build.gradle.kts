@@ -19,7 +19,9 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "com.leznode.aqarat"
-    compileSdk = flutter.compileSdkVersion
+    // share_plus + image_picker/url_launcher/lifecycle plugins require a newer
+    // compileSdk than Flutter's default; pin to 36.
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
