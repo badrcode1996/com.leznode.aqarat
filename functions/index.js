@@ -158,6 +158,7 @@ exports.renderReceiptPdf = onCall(
 
       const html = buildReceiptHtml({...fonts(), company, receipt, template});
       const pdf = await htmlToPdf(html);
-      return {pdf_base64: pdf.toString("base64")};
+      // puppeteer returns a Uint8Array; wrap in Buffer for real base64.
+      return {pdf_base64: Buffer.from(pdf).toString("base64")};
     },
 );
