@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../auth/session.dart';
 import '../../data/receipt_repository.dart';
+import '../../data/template_repository.dart';
 import '../../models/enums.dart';
 import '../../models/receipt_model.dart';
 import '../../services/pdf/receipt_pdf_service.dart';
@@ -104,9 +105,12 @@ class _CreateReceiptScreenState extends ConsumerState<CreateReceiptScreen> {
           createdAt: DateTime.now(),
         );
         final saved = await repo.createReceipt(draft);
+        final template =
+            ref.read(contractTemplateProvider(user.companyId)).value;
         if (mounted) {
           Navigator.pop(context);
-          await ReceiptPdfService.printReceipt(saved, company: company);
+          await ReceiptPdfService.printReceipt(saved,
+              company: company, template: template);
         }
       }
     } catch (e) {

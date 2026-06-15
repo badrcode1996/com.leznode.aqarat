@@ -26,9 +26,11 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
   final _rentTitle = TextEditingController();
   final _saleTitle = TextEditingController();
   final _color = TextEditingController();
+  final _receiptColor = TextEditingController();
   final _rent = <TextEditingController>[];
   final _sale = <TextEditingController>[];
   double _fontSize = 11;
+  double _receiptFontSize = 10;
 
   bool _loading = true;
   bool _saving = false;
@@ -50,7 +52,9 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
     _rentTitle.text = tpl.rentTitle;
     _saleTitle.text = tpl.saleTitle;
     _color.text = tpl.primaryColorHex;
+    _receiptColor.text = tpl.receiptColorHex;
     _fontSize = tpl.clauseFontSize;
+    _receiptFontSize = tpl.receiptFontSize;
     _disposeLists();
     _rent
       ..clear()
@@ -74,6 +78,7 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
     _rentTitle.dispose();
     _saleTitle.dispose();
     _color.dispose();
+    _receiptColor.dispose();
     _disposeLists();
     super.dispose();
   }
@@ -84,6 +89,7 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
         .where((t) => t.isNotEmpty)
         .toList();
     final hex = _color.text.trim().replaceAll('#', '');
+    final rHex = _receiptColor.text.trim().replaceAll('#', '');
     return ContractTemplate(
       rentClauses: clean(_rent),
       saleClauses: clean(_sale),
@@ -91,6 +97,8 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
       saleTitle: _saleTitle.text.trim(),
       primaryColorHex: hex.length == 6 ? hex : '0F2C59',
       clauseFontSize: _fontSize,
+      receiptColorHex: rHex.length == 6 ? rHex : '1E4D8B',
+      receiptFontSize: _receiptFontSize,
     );
   }
 
@@ -195,6 +203,8 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
               children: [
                 _designSection(),
                 const SizedBox(height: 16),
+                _receiptSection(),
+                const SizedBox(height: 16),
                 _tokenLegend(),
                 const SizedBox(height: 16),
                 _clauseSection('بەندەکانی گرێبەستی کرێ', _rent),
@@ -235,7 +245,7 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: _previewColor(),
+                color: _swatchColor(_color.text),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: Colors.grey.shade300),
               ),
@@ -264,12 +274,60 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
         ),
       ]);
 
-  Color _previewColor() {
-    final hex = _color.text.trim().replaceAll('#', '');
-    final v = int.tryParse(hex, radix: 16);
-    if (hex.length != 6 || v == null) return Colors.grey.shade300;
+  Color _swatchColor(String hex) {
+    final h = hex.trim().replaceAll('#', '');
+    final v = int.tryParse(h, radix: 16);
+    if (h.length != 6 || v == null) return Colors.grey.shade300;
     return Color(0xFF000000 | v);
   }
+
+  // --------------------------- receipt design ---------------------------
+  Widget _receiptSection() => _panel('دیزاینی پسولە (وەصڵ)', [
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _receiptColor,
+                decoration: const InputDecoration(
+                    labelText: 'ڕەنگی پسولە (RRGGBB)',
+                    prefixText: '#',
+                    hintText: '1E4D8B'),
+                onChanged: (_) => setState(() {}),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: _swatchColor(_receiptColor.text),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            const Text('قەبارەی فۆنتی خانەکان:',
+                style: TextStyle(fontWeight: FontWeight.w600)),
+            Expanded(
+              child: Slider(
+                value: _receiptFontSize,
+                min: 8,
+                max: 14,
+                divisions: 12,
+                label: _receiptFontSize.toStringAsFixed(1),
+                activeColor: _primaryDarkBlue,
+                onChanged: (v) => setState(() => _receiptFontSize = v),
+              ),
+            ),
+            Text(_receiptFontSize.toStringAsFixed(1),
+                style: const TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+      ]);
 
   // --------------------------- token legend ---------------------------
   Widget _tokenLegend() => Container(

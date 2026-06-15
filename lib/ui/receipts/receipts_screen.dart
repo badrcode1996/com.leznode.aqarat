@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../auth/session.dart';
 import '../../data/receipt_repository.dart';
+import '../../data/template_repository.dart';
 import '../../models/receipt_model.dart';
 import '../../services/pdf/receipt_pdf_service.dart';
 import 'create_receipt_screen.dart';
@@ -170,11 +171,13 @@ class _ReceiptCard extends ConsumerWidget {
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         onTap: () {
           final company = ref.read(currentCompanyProvider).value;
+          final template =
+              ref.read(contractTemplateProvider(receipt.companyId)).value;
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) =>
-                  ReceiptPreviewScreen(receipt: receipt, company: company),
+              builder: (_) => ReceiptPreviewScreen(
+                  receipt: receipt, company: company, template: template),
             ),
           );
         },
@@ -196,7 +199,10 @@ class _ReceiptCard extends ConsumerWidget {
               icon: const Icon(Icons.print_outlined, color: _primaryDarkBlue),
               onPressed: () {
                 final company = ref.read(currentCompanyProvider).value;
-                ReceiptPdfService.printReceipt(receipt, company: company);
+                final template =
+                    ref.read(contractTemplateProvider(receipt.companyId)).value;
+                ReceiptPdfService.printReceipt(receipt,
+                    company: company, template: template);
               },
             ),
             if (isAdmin)

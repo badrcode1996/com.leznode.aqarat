@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
 
 import '../../models/company_model.dart';
+import '../../models/contract_template_model.dart';
 import '../../models/receipt_model.dart';
 import '../../services/pdf/receipt_pdf_service.dart';
 
@@ -21,10 +22,12 @@ class ReceiptPreviewScreen extends StatefulWidget {
     super.key,
     required this.receipt,
     this.company,
+    this.template,
   });
 
   final Receipt receipt;
   final Company? company;
+  final ContractTemplate? template;
 
   @override
   State<ReceiptPreviewScreen> createState() => _ReceiptPreviewScreenState();
@@ -34,8 +37,8 @@ class _ReceiptPreviewScreenState extends State<ReceiptPreviewScreen> {
   late final Future<List<Uint8List>> _pages = _render();
 
   Future<List<Uint8List>> _render() async {
-    final bytes =
-        await ReceiptPdfService.build(widget.receipt, company: widget.company);
+    final bytes = await ReceiptPdfService.build(widget.receipt,
+        company: widget.company, template: widget.template);
     final images = <Uint8List>[];
     await for (final page in Printing.raster(bytes, dpi: 110)) {
       images.add(await page.toPng());
@@ -79,7 +82,8 @@ class _ReceiptPreviewScreenState extends State<ReceiptPreviewScreen> {
             icon: const Icon(Icons.share_rounded),
             onPressed: () => _run(() => ReceiptPdfService.shareReceipt(
                 widget.receipt,
-                company: widget.company)),
+                company: widget.company,
+                template: widget.template)),
           ),
           Padding(
             padding: const EdgeInsets.only(right: 8, left: 8),
@@ -94,7 +98,8 @@ class _ReceiptPreviewScreenState extends State<ReceiptPreviewScreen> {
                 icon: const Icon(Icons.print_rounded, color: primaryDarkBlue),
                 onPressed: () => _run(() => ReceiptPdfService.printReceipt(
                     widget.receipt,
-                    company: widget.company)),
+                    company: widget.company,
+                    template: widget.template)),
               ),
             ),
           ),

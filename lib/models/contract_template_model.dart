@@ -4,12 +4,13 @@ import 'package:intl/intl.dart';
 import 'company_model.dart';
 import 'contract_model.dart';
 
-/// Per-company contract template (collection: `templates`, doc id == company_id).
+/// Per-company document template (collection: `templates`, doc id == company_id).
 ///
-/// Clauses are stored as strings containing `{token}` placeholders that are
-/// substituted with the contract's data at render time (see [tokensFor]). This
-/// lets a super admin customise the legal clauses and a few design knobs per
-/// company without touching code. Any missing field falls back to
+/// Covers both the **contract** PDF (clauses + design) and the **receipt**
+/// (وەصڵ) PDF design. Clauses are stored as strings containing `{token}`
+/// placeholders substituted with the contract's data at render time (see
+/// [tokensFor]). This lets a super admin customise clauses and a few design
+/// knobs per company without touching code. Any missing field falls back to
 /// [ContractTemplate.defaults] — the built-in clauses + design.
 class ContractTemplate {
   const ContractTemplate({
@@ -19,6 +20,8 @@ class ContractTemplate {
     required this.saleTitle,
     required this.primaryColorHex,
     required this.clauseFontSize,
+    required this.receiptColorHex,
+    required this.receiptFontSize,
   });
 
   final List<String> rentClauses;
@@ -30,6 +33,10 @@ class ContractTemplate {
   final String primaryColorHex;
   final double clauseFontSize;
 
+  /// Receipt (وەصڵ) design: banner/footer colour + field font size.
+  final String receiptColorHex;
+  final double receiptFontSize;
+
   ContractTemplate copyWith({
     List<String>? rentClauses,
     List<String>? saleClauses,
@@ -37,6 +44,8 @@ class ContractTemplate {
     String? saleTitle,
     String? primaryColorHex,
     double? clauseFontSize,
+    String? receiptColorHex,
+    double? receiptFontSize,
   }) =>
       ContractTemplate(
         rentClauses: rentClauses ?? this.rentClauses,
@@ -45,6 +54,8 @@ class ContractTemplate {
         saleTitle: saleTitle ?? this.saleTitle,
         primaryColorHex: primaryColorHex ?? this.primaryColorHex,
         clauseFontSize: clauseFontSize ?? this.clauseFontSize,
+        receiptColorHex: receiptColorHex ?? this.receiptColorHex,
+        receiptFontSize: receiptFontSize ?? this.receiptFontSize,
       );
 
   /// Reads a stored template, filling every absent/empty field from
@@ -71,6 +82,9 @@ class ContractTemplate {
       primaryColorHex: str('primary_color', d.primaryColorHex),
       clauseFontSize: (json['clause_font_size'] as num?)?.toDouble() ??
           d.clauseFontSize,
+      receiptColorHex: str('receipt_color', d.receiptColorHex),
+      receiptFontSize: (json['receipt_font_size'] as num?)?.toDouble() ??
+          d.receiptFontSize,
     );
   }
 
@@ -81,6 +95,8 @@ class ContractTemplate {
         'sale_title': saleTitle,
         'primary_color': primaryColorHex,
         'clause_font_size': clauseFontSize,
+        'receipt_color': receiptColorHex,
+        'receipt_font_size': receiptFontSize,
         'updated_at': FieldValue.serverTimestamp(),
       };
 
@@ -201,6 +217,8 @@ class ContractTemplate {
         saleTitle: 'گرێبەستی کڕین و فرۆشتن',
         primaryColorHex: '0F2C59',
         clauseFontSize: 11,
+        receiptColorHex: '1E4D8B',
+        receiptFontSize: 10,
         rentClauses: _defaultRentClauses,
         saleClauses: _defaultSaleClauses,
       );

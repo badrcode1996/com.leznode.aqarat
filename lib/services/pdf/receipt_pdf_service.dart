@@ -7,6 +7,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
 import '../../models/company_model.dart';
+import '../../models/contract_template_model.dart';
 import '../../models/enums.dart';
 import '../../models/receipt_model.dart';
 
@@ -20,8 +21,8 @@ class ReceiptPdfService {
   static final _money = NumberFormat.decimalPattern();
   static final _date = DateFormat('yyyy/MM/dd');
 
-  // Brand palette (matches app_theme).
-  static const PdfColor _blue = PdfColor.fromInt(0xFF1E4D8B);
+  // Brand palette (matches app_theme). The banner/footer colour and field font
+  // size are overridable per company via the template; these are the defaults.
   static const PdfColor _darkBlue = PdfColor.fromInt(0xFF0F2C59);
   static const PdfColor _red = PdfColor.fromInt(0xFFD64545);
 
@@ -33,8 +34,18 @@ class ReceiptPdfService {
         pw.Font.ttf(await rootBundle.load('assets/fonts/Vazirmatn-Bold.ttf'));
   }
 
-  static Future<Uint8List> build(Receipt r, {Company? company}) async {
+  /// Parses a `RRGGBB` hex string into an opaque [PdfColor].
+  static PdfColor _hexColor(String hex) {
+    final v = int.tryParse(hex.replaceAll('#', ''), radix: 16);
+    return v == null ? const PdfColor.fromInt(0xFF1E4D8B) : PdfColor.fromInt(0xFF000000 | v);
+  }
+
+  static Future<Uint8List> build(Receipt r,
+      {Company? company, ContractTemplate? template}) async {
     await _ensureFonts();
+    final tpl = template ?? ContractTemplate.defaults();
+    final accent = _hexColor(tpl.receiptColorHex);
+    final fs = tpl.receiptFontSize;
     pw.ImageProvider? logo;
     if (company != null && company.logoUrl.isNotEmpty) {
       try {
@@ -61,11 +72,13 @@ class ReceiptPdfService {
         build: (ctx) => pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.stretch,
           children: [
-            pw.Expanded(child: _copy(r, company, logo, 'کۆپی کۆمپانیا')),
+            pw.Expanded(
+                child: _copy(r, company, logo, 'کۆپی کۆمپانیا', accent, fs)),
             pw.SizedBox(height: 10),
             _scissorLine(),
             pw.SizedBox(height: 10),
-            pw.Expanded(child: _copy(r, company, logo, 'کۆپی زەبوون')),
+            pw.Expanded(
+                child: _copy(r, company, logo, 'کۆپی زەبوون', accent, fs)),
           ],
         ),
       ),
@@ -73,13 +86,15 @@ class ReceiptPdfService {
     return doc.save();
   }
 
-  static Future<void> printReceipt(Receipt r, {Company? company}) async {
-    final bytes = await build(r, company: company);
+  static Future<void> printReceipt(Receipt r,
+      {Company? company, ContractTemplate? template}) async {
+    final bytes = await build(r, company: company, template: template);
     await Printing.layoutPdf(onLayout: (_) async => bytes);
   }
 
-  static Future<void> shareReceipt(Receipt r, {Company? company}) async {
-    final bytes = await build(r, company: company);
+  static Future<void> shareReceipt(Receipt r,
+      {Company? company, ContractTemplate? template}) async {
+    final bytes = await build(r, company: company, template: template);
     await Printing.sharePdf(
         bytes: bytes, filename: 'receipt_${r.receiptNumber}.pdf');
   }
@@ -90,6 +105,8 @@ class ReceiptPdfService {
     Company? company,
     pw.ImageProvider? logo,
     String copyLabel,
+    PdfColor accent,
+    double fs,
   ) {
     final isPay = r.type.isPayment;
     final personKuAr = isPay
@@ -112,8 +129,8 @@ class ReceiptPdfService {
         pw.Row(
           crossAxisAlignment: pw.CrossAxisAlignment.center,
           children: [
-            pw.Expanded(child: _banner(r.type)),
-            _arrowTail(),
+            pw.Expanded(child: _banner(r.type, accent)),
+            _arrowTail(accent),
             pw.SizedBox(width: 10),
             _logoBox(logo),
           ],
@@ -139,24 +156,25 @@ class ReceiptPdfService {
             pw.Expanded(
               flex: 3,
               child: _field('التأريخ / بەروار / DATE', 'DATE',
-                  _date.format(r.date),
+                  _date.format(r.date), fs,
                   showEn: false),
             ),
             pw.SizedBox(width: 16),
             pw.Expanded(
               flex: 2,
-              child: _field('لق', 'Branch', r.branch, showEn: false),
+              child: _field('لق', 'Branch', r.branch, fs, showEn: false),
             ),
           ],
         ),
 
         // ---------------- Fields ----------------
-        _field('ژمارەی پسوله / رقم الوصل', 'Voucher No.', '${r.receiptNumber}'),
-        _field(personKuAr, personEn, r.personName),
+        _field('ژمارەی پسوله / رقم الوصل', 'Voucher No.', '${r.receiptNumber}',
+            fs),
+        _field(personKuAr, personEn, r.personName, fs),
         _field('بڕی پارە / مبلغ وقدره', 'Amount',
-            '${_money.format(r.amount)} ${r.currency.label}'),
-        _field('لەبڕی / وذلك لقاء', 'Payment Purpose', r.paymentPurpose),
-        _field('تێبینی / ملاحظة', 'Note', r.note, labelColor: _red),
+            '${_money.format(r.amount)} ${r.currency.label}', fs),
+        _field('لەبڕی / وذلك لقاء', 'Payment Purpose', r.paymentPurpose, fs),
+        _field('تێبینی / ملاحظة', 'Note', r.note, fs, labelColor: _red),
 
         pw.Spacer(),
 
@@ -173,7 +191,7 @@ class ReceiptPdfService {
         // ---------------- Footer ----------------
         if (company != null) ...[
           pw.SizedBox(height: 8),
-          _footer(company),
+          _footer(company, accent),
         ],
       ],
     );
@@ -181,12 +199,12 @@ class ReceiptPdfService {
 
   // ---------------- header pieces ----------------
 
-  /// The blue title band with the three-language voucher name.
-  static pw.Widget _banner(ReceiptType type) => pw.Container(
+  /// The title band with the three-language voucher name.
+  static pw.Widget _banner(ReceiptType type, PdfColor accent) => pw.Container(
         height: 34,
-        decoration: const pw.BoxDecoration(
-          color: _blue,
-          borderRadius: pw.BorderRadius.only(
+        decoration: pw.BoxDecoration(
+          color: accent,
+          borderRadius: const pw.BorderRadius.only(
             topRight: pw.Radius.circular(6),
             bottomRight: pw.Radius.circular(6),
           ),
@@ -216,11 +234,11 @@ class ReceiptPdfService {
       );
 
   /// The leftward arrow tail that joins the banner to the logo.
-  static pw.Widget _arrowTail() => pw.CustomPaint(
+  static pw.Widget _arrowTail(PdfColor accent) => pw.CustomPaint(
         size: const PdfPoint(16, 34),
         painter: (canvas, size) {
           canvas
-            ..setFillColor(_blue)
+            ..setFillColor(accent)
             ..moveTo(16, 34)
             ..lineTo(16, 0)
             ..lineTo(0, 17)
@@ -248,7 +266,8 @@ class ReceiptPdfService {
   static pw.Widget _field(
     String kuAr,
     String en,
-    String value, {
+    String value,
+    double fs, {
     bool showEn = true,
     PdfColor labelColor = _darkBlue,
   }) =>
@@ -259,7 +278,7 @@ class ReceiptPdfService {
           children: [
             pw.Text('$kuAr :',
                 style: pw.TextStyle(
-                    fontSize: 10,
+                    fontSize: fs,
                     fontWeight: pw.FontWeight.bold,
                     color: labelColor)),
             pw.SizedBox(width: 6),
@@ -267,7 +286,7 @@ class ReceiptPdfService {
               child: pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.stretch,
                 children: [
-                  pw.Text(value, style: const pw.TextStyle(fontSize: 10)),
+                  pw.Text(value, style: pw.TextStyle(fontSize: fs)),
                   pw.SizedBox(height: 2),
                   _dottedLine(),
                 ],
@@ -333,7 +352,7 @@ class ReceiptPdfService {
 
   // ---------------- footer ----------------
 
-  static pw.Widget _footer(Company company) {
+  static pw.Widget _footer(Company company, PdfColor accent) {
     final cells = <String>[
       if (company.phone1.isNotEmpty) company.phone1,
       if (company.phone2.isNotEmpty) company.phone2,
@@ -342,9 +361,9 @@ class ReceiptPdfService {
     if (cells.isEmpty) return pw.SizedBox();
     return pw.Container(
       height: 24,
-      decoration: const pw.BoxDecoration(
-        color: _blue,
-        borderRadius: pw.BorderRadius.all(pw.Radius.circular(6)),
+      decoration: pw.BoxDecoration(
+        color: accent,
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6)),
       ),
       padding: const pw.EdgeInsets.symmetric(horizontal: 14),
       child: pw.Row(
