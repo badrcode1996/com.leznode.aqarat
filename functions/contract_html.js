@@ -141,11 +141,10 @@ function buildContractHtml(o) {
 @font-face{font-family:'Speda';src:url(data:font/ttf;base64,${o.fontRegB64}) format('truetype');font-weight:normal;}
 @font-face{font-family:'Speda';src:url(data:font/ttf;base64,${o.fontBoldB64}) format('truetype');font-weight:bold;}
 *{box-sizing:border-box;margin:0;padding:0;}
-@page{size:A4;margin:14mm 16mm;}
+@page{size:A4;margin:14mm 16mm 24mm;}
 body{font-family:'Speda';direction:rtl;color:#111;font-size:${fs};line-height:1.6;}
 table.page{width:100%;border-collapse:collapse;}
 thead{display:table-header-group;}
-tfoot{display:table-footer-group;}
 .band{display:flex;align-items:center;padding-bottom:6px;}
 .band .names{flex:1;}
 .band .names div{font-weight:bold;font-size:14px;}
@@ -166,8 +165,9 @@ tfoot{display:table-footer-group;}
 .sgl{font-weight:bold;}
 .sgline{border-top:1px solid #000;width:120px;margin:18px auto 4px;}
 .sgn{font-size:11px;}
-.foot{padding-top:6px;border-top:.8px solid #bbb;display:flex;
-  justify-content:space-between;font-size:9px;}
+.foot{position:fixed;bottom:0;left:0;right:0;padding-top:6px;
+  border-top:.8px solid #bbb;display:flex;justify-content:space-between;
+  font-size:9px;background:#fff;}
 </style></head><body>
 <table class="page">
   <thead><tr><td>
@@ -175,10 +175,6 @@ tfoot{display:table-footer-group;}
     `<div>${esc(n)}</div>`).join("")}</div>${logo}</div>
     <div class="bandline"></div>
   </td></tr></thead>
-  <tfoot><tr><td>
-    ${footerCells.length ? `<div class="foot">${footerCells.map((x) =>
-    `<span>${esc(x)}</span>`).join("")}</div>` : ""}
-  </td></tr></tfoot>
   <tbody><tr><td>
     <div class="title">${esc(title)}</div>
     <div class="card"><div class="ct">زانیاری گرێبەست</div>${card}</div>
@@ -192,6 +188,8 @@ tfoot{display:table-footer-group;}
     </div>
   </td></tr></tbody>
 </table>
+${footerCells.length ? `<div class="foot">${footerCells.map((x) =>
+    `<span>${esc(x)}</span>`).join("")}</div>` : ""}
 </body></html>`;
 }
 
