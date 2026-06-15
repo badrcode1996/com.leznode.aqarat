@@ -710,15 +710,16 @@ class _CompanyUsersScreen extends ConsumerWidget {
     final nav = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
     try {
-      final repo = ref.read(adminRepositoryProvider);
-      final contracts = await repo.fetchCompanyContracts(company.id);
-      final receipts = await repo.fetchCompanyReceipts(company.id);
       if (excel) {
+        // Excel is built on-device from one-shot fetches.
+        final repo = ref.read(adminRepositoryProvider);
+        final contracts = await repo.fetchCompanyContracts(company.id);
+        final receipts = await repo.fetchCompanyReceipts(company.id);
         await ExportService.shareExcel(company,
             contracts: contracts, receipts: receipts);
       } else {
-        await ExportService.sharePdf(company,
-            contracts: contracts, receipts: receipts);
+        // PDF is rendered server-side (the function fetches the data).
+        await ExportService.sharePdfRemote(company);
       }
       nav.pop(); // close the loading dialog
     } catch (e) {

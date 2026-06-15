@@ -4,6 +4,7 @@ const fs = require("fs");
 const path = require("path");
 const {buildReceiptHtml} = require("./receipt_html");
 const {buildContractHtml} = require("./contract_html");
+const {buildExportHtml} = require("./export_html");
 
 admin.initializeApp();
 
@@ -231,6 +232,60 @@ exports.renderContractPdf = onCall(
 
       const html = buildContractHtml({
         ...fonts(), contract, company, template: t,
+      });
+      const pdf = await htmlToPdf(html);
+      return {pdf_base64: Buffer.from(pdf).toString("base64")};
+    },
+);
+
+/**
+ * Renders a company's data export (contracts + receipts tables) to PDF.
+ * Super-admin only.
+ */
+exports.renderExportPdf = onCall(
+    {memory: "1GiB", timeoutSeconds: 120, concurrency: 1},
+    async (request) => {
+      const auth = request.auth;
+      if (!auth) throw new HttpsError("unauthenticated", "Sign in required.");
+
+      const db = admin.firestore();
+      const callerSnap = await db.collection("users").doc(auth.uid).get();
+      if (!callerSnap.exists ||
+          callerSnap.data().role !== "super_admin") {
+        throw new HttpsError("permission-denied", "Super admin only.");
+      }
+
+      const companyId = request.data && request.data.companyId;
+      if (typeof companyId !== "string" || !companyId) {
+        throw new HttpsError("invalid-argument", "companyId is required.");
+      }
+
+      const [cSnap, kQ, rQ] = await Promise.all([
+        db.collection("companies").doc(companyId).get(),
+        db.collection("contracts").where("company_id", "==", companyId).get(),
+        db.collection("receipts").where("company_id", "==", companyId).get(),
+      ]);
+      const cd = cSnap.exists ? cSnap.data() : {};
+      const company = {
+        nameKu: cd.name_ku || "",
+        nameAr: cd.name_ar || "",
+        nameEn: cd.name_en || "",
+      };
+      const contracts = kQ.docs.map((d) => {
+        const k = d.data();
+        return {
+          ...k,
+          start_date: toDate(k.start_date),
+          delivery_date: toDate(k.delivery_date),
+        };
+      });
+      const receipts = rQ.docs.map((d) => {
+        const r = d.data();
+        return {...r, date: toDate(r.date)};
+      });
+
+      const html = buildExportHtml({
+        ...fonts(), company, contracts, receipts,
       });
       const pdf = await htmlToPdf(html);
       return {pdf_base64: Buffer.from(pdf).toString("base64")};

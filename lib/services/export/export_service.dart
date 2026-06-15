@@ -1,85 +1,55 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:excel/excel.dart';
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:intl/intl.dart';
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../models/company_model.dart';
 import '../../models/contract_model.dart';
 import '../../models/receipt_model.dart';
-import '../pdf/pdf_fonts.dart';
 
-/// Super-admin data export: a company's contracts + receipts as an Excel
-/// workbook (two sheets) or a PDF report. Both are handed to the OS share
-/// sheet so the file can be saved or sent on.
+/// Super-admin data export for one company.
+///
+/// * **Excel** (.xlsx) is built on-device — spreadsheets store raw Unicode, so
+///   shaping is the spreadsheet app's job, no PDF shaper involved.
+/// * **PDF** is rendered server-side by the `renderExportPdf` Cloud Function
+///   (headless Chrome) so Kurdish ێ shapes correctly.
 class ExportService {
   static final _money = NumberFormat.decimalPattern();
   static final _date = DateFormat('yyyy/MM/dd');
 
   static const _contractHeaders = [
-    'ژمارە',
-    'جۆر',
-    'لایەنی یەکەم',
-    'لایەنی دووەم',
-    'موڵک',
-    'پڕۆژە',
-    'بڕ / نرخ',
-    'دراو',
-    'بەروار',
+    'ژمارە', 'جۆر', 'لایەنی یەکەم', 'لایەنی دووەم', 'موڵک', 'پڕۆژە',
+    'بڕ / نرخ', 'دراو', 'بەروار',
   ];
   static const _receiptHeaders = [
-    'ژمارە',
-    'جۆر',
-    'کەس',
-    'بڕ',
-    'دراو',
-    'مەبەست',
-    'لق',
-    'بەروار',
+    'ژمارە', 'جۆر', 'کەس', 'بڕ', 'دراو', 'مەبەست', 'لق', 'بەروار',
   ];
 
   static List<String> _contractRow(Contract c) => switch (c) {
         RentContract r => [
-            '${r.contractNumber}',
-            'کرێ',
-            r.party1Name,
-            r.party2Name,
-            r.propertyType,
-            r.projectName,
-            _money.format(r.rentAmount),
-            r.currency.label,
-            _date.format(r.startDate),
+            '${r.contractNumber}', 'کرێ', r.party1Name, r.party2Name,
+            r.propertyType, r.projectName, _money.format(r.rentAmount),
+            r.currency.label, _date.format(r.startDate),
           ],
         SaleContract s => [
-            '${s.contractNumber}',
-            'فرۆشتن',
-            s.party1Name,
-            s.party2Name,
-            s.propertyType,
-            s.projectName,
-            _money.format(s.totalPrice),
-            s.currency.label,
-            _date.format(s.deliveryDate),
+            '${s.contractNumber}', 'فرۆشتن', s.party1Name, s.party2Name,
+            s.propertyType, s.projectName, _money.format(s.totalPrice),
+            s.currency.label, _date.format(s.deliveryDate),
           ],
       };
 
   static List<String> _receiptRow(Receipt r) => [
-        '${r.receiptNumber}',
-        r.type.titleKu,
-        r.personName,
-        _money.format(r.amount),
-        r.currency.label,
-        r.paymentPurpose,
-        r.branch,
+        '${r.receiptNumber}', r.type.titleKu, r.personName,
+        _money.format(r.amount), r.currency.label, r.paymentPurpose, r.branch,
         _date.format(r.date),
       ];
 
-  // --------------------------- Excel ---------------------------
+  // --------------------------- Excel (on-device) ---------------------------
 
   /// Builds and shares an `.xlsx` workbook for the company.
   static Future<void> shareExcel(
@@ -115,7 +85,6 @@ class ExportService {
       rSheet.appendRow(_receiptRow(r).map(TextCellValue.new).toList());
     }
 
-    // Drop the empty default sheet that createExcel() inserts.
     if (defaultSheet != null && defaultSheet != 'گرێبەستەکان') {
       excel.delete(defaultSheet);
     }
@@ -125,78 +94,21 @@ class ExportService {
     return Uint8List.fromList(bytes);
   }
 
-  // --------------------------- PDF ---------------------------
+  // --------------------------- PDF (server-side) ---------------------------
 
-  /// Builds and shares a PDF report (two tables) for the company.
-  static Future<void> sharePdf(
-    Company company, {
-    required List<Contract> contracts,
-    required List<Receipt> receipts,
-  }) async {
-    final bytes =
-        await buildPdf(company, contracts: contracts, receipts: receipts);
-    await Printing.sharePdf(bytes: bytes, filename: '${_slug(company)}.pdf');
-  }
-
-  /// Builds the PDF report bytes (two tables) for the company.
-  static Future<Uint8List> buildPdf(
-    Company company, {
-    required List<Contract> contracts,
-    required List<Receipt> receipts,
-  }) async {
-    final reg = pw.Font.ttf(await rootBundle.load(pdfFontRegular));
-    final bold = pw.Font.ttf(await rootBundle.load(pdfFontBold));
-    final theme = pw.ThemeData.withFont(base: reg, bold: bold);
-    final doc = pw.Document(theme: theme);
-
-    doc.addPage(
-      pw.MultiPage(
-        pageFormat: PdfPageFormat.a4.landscape,
-        textDirection: pw.TextDirection.rtl,
-        margin: const pw.EdgeInsets.all(24),
-        theme: theme,
-        build: (ctx) => [
-          pw.Text('ڕاپۆرتی ${company.displayName}',
-              style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
-          pw.SizedBox(height: 4),
-          pw.Text('بەروار: ${_date.format(DateTime.now())}',
-              style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey700)),
-          pw.SizedBox(height: 12),
-          _pdfHeading('گرێبەستەکان (${contracts.length})'),
-          _pdfTable(_contractHeaders, contracts.map(_contractRow).toList()),
-          pw.SizedBox(height: 16),
-          _pdfHeading('پسولەکان (${receipts.length})'),
-          _pdfTable(_receiptHeaders, receipts.map(_receiptRow).toList()),
-        ],
-      ),
-    );
-
-    return doc.save();
-  }
-
-  static pw.Widget _pdfHeading(String text) => pw.Padding(
-        padding: const pw.EdgeInsets.only(bottom: 6),
-        child: pw.Text(text,
-            style: pw.TextStyle(
-                fontSize: 13,
-                fontWeight: pw.FontWeight.bold,
-                color: PdfColors.blue900)),
-      );
-
-  static pw.Widget _pdfTable(List<String> headers, List<List<String>> rows) {
-    if (rows.isEmpty) {
-      return pw.Text('— هیچ تۆمارێک نییە —',
-          style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey600));
+  /// Calls `renderExportPdf` and shares the returned PDF report.
+  static Future<void> sharePdfRemote(Company company) async {
+    final callable =
+        FirebaseFunctions.instance.httpsCallable('renderExportPdf');
+    final res = await callable.call<Map<dynamic, dynamic>>({
+      'companyId': company.id,
+    });
+    final b64 = res.data['pdf_base64'] as String?;
+    if (b64 == null || b64.isEmpty) {
+      throw Exception('وەڵامی فەنکشن بەتاڵە');
     }
-    return pw.TableHelper.fromTextArray(
-      headers: headers,
-      data: rows,
-      headerStyle: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold),
-      cellStyle: const pw.TextStyle(fontSize: 9),
-      headerDecoration: const pw.BoxDecoration(color: PdfColors.blue50),
-      cellAlignment: pw.Alignment.centerRight,
-      border: pw.TableBorder.all(color: PdfColors.grey400, width: 0.5),
-    );
+    await Printing.sharePdf(
+        bytes: base64Decode(b64), filename: '${_slug(company)}.pdf');
   }
 
   // --------------------------- helpers ---------------------------
