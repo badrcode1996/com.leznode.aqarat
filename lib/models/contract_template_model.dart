@@ -216,7 +216,7 @@ class ContractTemplate {
         rentTitle: 'گرێبەستی کرێ',
         saleTitle: 'گرێبەستی کڕین و فرۆشتن',
         primaryColorHex: '0F2C59',
-        clauseFontSize: 11,
+        clauseFontSize: 14,
         receiptColorHex: '1E4D8B',
         receiptFontSize: 10,
         rentClauses: _defaultRentClauses,
