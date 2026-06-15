@@ -12,6 +12,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../models/company_model.dart';
 import '../../models/contract_model.dart';
 import '../../models/receipt_model.dart';
+import '../pdf/pdf_fonts.dart';
 
 /// Super-admin data export: a company's contracts + receipts as an Excel
 /// workbook (two sheets) or a PDF report. Both are handed to the OS share
@@ -143,10 +144,8 @@ class ExportService {
     required List<Contract> contracts,
     required List<Receipt> receipts,
   }) async {
-    final reg =
-        pw.Font.ttf(await rootBundle.load('assets/fonts/Vazirmatn-Regular.ttf'));
-    final bold =
-        pw.Font.ttf(await rootBundle.load('assets/fonts/Vazirmatn-Bold.ttf'));
+    final reg = pw.Font.ttf(await rootBundle.load(pdfFontRegular));
+    final bold = pw.Font.ttf(await rootBundle.load(pdfFontBold));
     final theme = pw.ThemeData.withFont(base: reg, bold: bold);
     final doc = pw.Document(theme: theme);
 

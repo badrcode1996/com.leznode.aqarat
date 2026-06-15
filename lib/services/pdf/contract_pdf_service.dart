@@ -8,24 +8,23 @@ import 'package:printing/printing.dart';
 import '../../models/company_model.dart';
 import '../../models/contract_model.dart';
 import '../../models/contract_template_model.dart';
+import 'pdf_fonts.dart';
 
 /// On-device PDF generator for contracts.
 ///
-/// * RTL (Kurdish/Arabic) is forced via [pw.Directionality] + the SPEDA `.ttf`.
-/// * Dynamic form data is mixed with static, hardcoded legal clauses.
+/// * RTL (Kurdish/Arabic) is forced via [pw.TextDirection.rtl] + the SPEDA `.ttf`.
+/// * Dynamic form data is mixed with template-driven legal clauses.
 /// * Uses the `printing` package to print over Wi-Fi or share the file.
 class ContractPdfService {
   // Cache the parsed fonts so we don't re-read the asset for every contract.
   static pw.Font? _regular;
   static pw.Font? _bold;
 
-  /// Loads the PDF fonts bundled in assets (once). Vazirmatn is used for the
-  /// PDF because it covers Kurdish/Arabic and subsets cleanly — the SPEDA file
-  /// crashes the pdf package's TTF subsetter. (The app UI still uses SPEDA.)
+  /// Loads the PDF fonts bundled in assets (once). See [pdfFontRegular].
   static Future<void> _ensureFonts() async {
     if (_regular != null && _bold != null) return;
-    final reg = await rootBundle.load('assets/fonts/Vazirmatn-Regular.ttf');
-    final bold = await rootBundle.load('assets/fonts/Vazirmatn-Bold.ttf');
+    final reg = await rootBundle.load(pdfFontRegular);
+    final bold = await rootBundle.load(pdfFontBold);
     _regular = pw.Font.ttf(reg);
     _bold = pw.Font.ttf(bold);
   }

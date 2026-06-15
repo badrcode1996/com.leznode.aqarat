@@ -10,6 +10,7 @@ import '../../models/company_model.dart';
 import '../../models/contract_template_model.dart';
 import '../../models/enums.dart';
 import '../../models/receipt_model.dart';
+import 'pdf_fonts.dart';
 
 /// On-device PDF for a receipt/voucher (وەصڵ). Renders TWO copies on one A4
 /// page — company copy + customer copy — in the trilingual (Kurdish / Arabic /
@@ -28,10 +29,8 @@ class ReceiptPdfService {
 
   static Future<void> _ensureFonts() async {
     if (_regular != null && _bold != null) return;
-    _regular =
-        pw.Font.ttf(await rootBundle.load('assets/fonts/Vazirmatn-Regular.ttf'));
-    _bold =
-        pw.Font.ttf(await rootBundle.load('assets/fonts/Vazirmatn-Bold.ttf'));
+    _regular = pw.Font.ttf(await rootBundle.load(pdfFontRegular));
+    _bold = pw.Font.ttf(await rootBundle.load(pdfFontBold));
   }
 
   /// Parses a `RRGGBB` hex string into an opaque [PdfColor].
