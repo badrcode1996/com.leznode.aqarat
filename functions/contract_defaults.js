@@ -4,7 +4,7 @@ const DEFAULTS = {
   rent_title: "گرێبەستی کرێ",
   sale_title: "گرێبەستی کڕین و فرۆشتن",
   primary_color: "0F2C59",
-  clause_font_size: 14,
+  clause_font_size: 16,
   rent_clauses: [
   "لایەنی یەکەم ڕەزامەندە لەسەر بەکرێدانی ئەم موڵکەی سەرەوە بە لایەنی دووەم بۆ ماوەی ({period_months}) مانگ.",
   "هەردوو لایەن ڕەزامەندن لەسەر کرێی مانگانە بە بڕی {rent_amount} {currency}.",
