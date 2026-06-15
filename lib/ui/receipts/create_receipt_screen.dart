@@ -4,10 +4,9 @@ import 'package:intl/intl.dart';
 
 import '../../auth/session.dart';
 import '../../data/receipt_repository.dart';
-import '../../data/template_repository.dart';
 import '../../models/enums.dart';
 import '../../models/receipt_model.dart';
-import '../../services/pdf/receipt_pdf_service.dart';
+import '../../services/pdf/receipt_pdf_remote.dart';
 
 const Color _appBg = Color(0xFFF5F7FA);
 
@@ -61,7 +60,6 @@ class _CreateReceiptScreenState extends ConsumerState<CreateReceiptScreen> {
     setState(() => _busy = true);
     final user = ref.read(currentUserProvider);
     final repo = ref.read(receiptRepositoryProvider);
-    final company = ref.read(currentCompanyProvider).value;
     try {
       if (_isEdit) {
         // Preserve immutable fields; overwrite only what the form edits.
@@ -105,12 +103,9 @@ class _CreateReceiptScreenState extends ConsumerState<CreateReceiptScreen> {
           createdAt: DateTime.now(),
         );
         final saved = await repo.createReceipt(draft);
-        final template =
-            ref.read(contractTemplateProvider(user.companyId)).value;
         if (mounted) {
           Navigator.pop(context);
-          await ReceiptPdfService.printReceipt(saved,
-              company: company, template: template);
+          await ReceiptPdfRemote.printReceipt(saved.id);
         }
       }
     } catch (e) {

@@ -5,11 +5,10 @@ import 'package:intl/intl.dart';
 import '../../auth/session.dart';
 import '../../data/contract_repository.dart';
 import '../../data/receipt_repository.dart';
-import '../../data/template_repository.dart';
 import '../../models/contract_model.dart';
 import '../../models/enums.dart';
 import '../../models/receipt_model.dart';
-import '../../services/pdf/receipt_pdf_service.dart';
+import '../../services/pdf/receipt_pdf_remote.dart';
 
 // ڕەنگە سەرەکییەکان
 const Color primaryDarkBlue = Color(0xFF0F2C59);
@@ -113,9 +112,6 @@ class InstallmentGrid extends ConsumerWidget {
         );
         final saved =
             await ref.read(receiptRepositoryProvider).createReceipt(draft);
-        final company = ref.read(currentCompanyProvider).value;
-        final template =
-            ref.read(contractTemplateProvider(saved.companyId)).value;
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -126,8 +122,7 @@ class InstallmentGrid extends ConsumerWidget {
           );
         }
         // Open the receipt PDF right away (same as external receipts).
-        await ReceiptPdfService.printReceipt(saved,
-            company: company, template: template);
+        await ReceiptPdfRemote.printReceipt(saved.id);
       }
     } catch (e) {
       if (context.mounted) {

@@ -4,9 +4,8 @@ import 'package:intl/intl.dart';
 
 import '../../auth/session.dart';
 import '../../data/receipt_repository.dart';
-import '../../data/template_repository.dart';
 import '../../models/receipt_model.dart';
-import '../../services/pdf/receipt_pdf_service.dart';
+import '../../services/pdf/receipt_pdf_remote.dart';
 import 'create_receipt_screen.dart';
 import 'receipt_preview_screen.dart';
 
@@ -170,14 +169,10 @@ class _ReceiptCard extends ConsumerWidget {
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         onTap: () {
-          final company = ref.read(currentCompanyProvider).value;
-          final template =
-              ref.read(contractTemplateProvider(receipt.companyId)).value;
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => ReceiptPreviewScreen(
-                  receipt: receipt, company: company, template: template),
+              builder: (_) => ReceiptPreviewScreen(receipt: receipt),
             ),
           );
         },
@@ -197,13 +192,7 @@ class _ReceiptCard extends ConsumerWidget {
             IconButton(
               tooltip: 'پرینت',
               icon: const Icon(Icons.print_outlined, color: _primaryDarkBlue),
-              onPressed: () {
-                final company = ref.read(currentCompanyProvider).value;
-                final template =
-                    ref.read(contractTemplateProvider(receipt.companyId)).value;
-                ReceiptPdfService.printReceipt(receipt,
-                    company: company, template: template);
-              },
+              onPressed: () => ReceiptPdfRemote.printReceipt(receipt.id),
             ),
             if (isAdmin)
               PopupMenuButton<String>(
