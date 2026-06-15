@@ -8,7 +8,7 @@ import '../../models/company_model.dart';
 import '../../models/contract_model.dart';
 import '../../models/contract_template_model.dart';
 import '../../models/enums.dart';
-import '../../services/pdf/contract_pdf_service.dart';
+import '../../services/pdf/contract_pdf_remote.dart';
 import 'contract_preview_screen.dart';
 import 'create_rent_contract_stepper.dart';
 import 'create_sale_contract_stepper.dart';
@@ -343,9 +343,9 @@ class _ContractCard extends ConsumerWidget {
                         if (v == 'preview') {
                           _openPreview(context, company, template);
                         } else if (v == 'print') {
-                          _run(context, () => ContractPdfService.printContract(contract, company: company, template: template));
+                          _run(context, () => ContractPdfRemote.printContract(contract.id));
                         } else if (v == 'share') {
-                          _run(context, () => ContractPdfService.shareContract(contract, company: company, template: template));
+                          _run(context, () => ContractPdfRemote.shareContract(contract.id));
                         } else if (v == 'edit') {
                           _edit(context);
                         } else if (v == 'delete') {
