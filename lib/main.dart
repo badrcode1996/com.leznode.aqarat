@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 import 'auth/session.dart';
@@ -17,6 +19,17 @@ Future<void> main() async {
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // App Check attests that requests come from our genuine app before Firebase
+  // (Firestore/Storage/Functions) will serve them. Debug builds use the debug
+  // provider — register the token printed in logcat once in the console;
+  // release builds use Play Integrity (Android) / App Attest (iOS). Enforcement
+  // must stay OFF in the console until live traffic shows valid tokens.
+  await FirebaseAppCheck.instance.activate(
+    androidProvider:
+        kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+    appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
   );
 
   runApp(const ProviderScope(child: AqaratApp()));
