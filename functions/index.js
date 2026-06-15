@@ -40,22 +40,31 @@ async function logoDataUri(url) {
   }
 }
 
-/** Renders an HTML string to a PDF Buffer using headless Chromium. */
-async function htmlToPdf(html) {
+// Reuse one Chromium across warm invocations — launching it is most of the
+// per-call latency, so we keep it alive and only open/close a page each time.
+let _browser;
+async function getBrowser() {
+  if (_browser && _browser.connected) return _browser;
   const chromium = require("@sparticuz/chromium");
   const puppeteer = require("puppeteer-core");
-  const browser = await puppeteer.launch({
+  _browser = await puppeteer.launch({
     args: chromium.args,
     executablePath: await chromium.executablePath(),
     headless: chromium.headless,
   });
+  return _browser;
+}
+
+/** Renders an HTML string to a PDF Buffer using headless Chromium. */
+async function htmlToPdf(html) {
+  const browser = await getBrowser();
+  const page = await browser.newPage();
   try {
-    const page = await browser.newPage();
     await page.setContent(html, {waitUntil: "networkidle0"});
     await page.evaluateHandle("document.fonts.ready");
     return await page.pdf({format: "A4", printBackground: true});
   } finally {
-    await browser.close();
+    await page.close();
   }
 }
 
@@ -100,6 +109,7 @@ exports.setUserPassword = onCall(async (request) => {
  */
 exports.renderReceiptPdf = onCall(
     // concurrency 1: each Chromium render gets the instance's full memory.
+    // (Add minInstances: 1 to also remove cold starts — it raises the bill.)
     {memory: "1GiB", timeoutSeconds: 120, concurrency: 1},
     async (request) => {
       const auth = request.auth;
