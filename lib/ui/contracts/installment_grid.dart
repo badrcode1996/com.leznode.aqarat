@@ -138,11 +138,23 @@ class InstallmentGrid extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Watch the live contract from the stream so a status change shows
+    // immediately — the passed-in `contract` is only the initial snapshot.
+    var live = contract;
+    final contracts = ref.watch(contractsStreamProvider).value;
+    if (contracts != null) {
+      for (final c in contracts) {
+        if (c.id == contract.id && c is RentContract) {
+          live = c;
+          break;
+        }
+      }
+    }
     return GridView.builder(
       padding: const EdgeInsets.all(16), // تۆزێک بۆشایی زیاتر لە دەوریدا
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: contract.installments.length,
+      itemCount: live.installments.length,
       // زیادکردنی بەرزییەکە بۆ 120 بۆ ئەوەی دیزاینە نوێیەکەی بەجوانی تێدا جێببێتەوە
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
@@ -151,7 +163,7 @@ class InstallmentGrid extends ConsumerWidget {
         mainAxisSpacing: 12,
       ),
       itemBuilder: (_, i) {
-        final inst = contract.installments[i];
+        final inst = live.installments[i];
         final (label, color, icon) = _style(inst.status);
 
         return Container(
