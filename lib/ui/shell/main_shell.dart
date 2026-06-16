@@ -3,14 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/session.dart';
 import '../../models/enums.dart';
-import '../contracts/contracts_screen.dart';
+import '../archive/archive_screen.dart';
 import '../contracts/create_rent_contract_stepper.dart';
 import '../contracts/create_sale_contract_stepper.dart';
 import '../dashboard/dashboard_screen.dart';
 import '../listings/create_listing_screen.dart';
 import '../market/market_screen.dart';
 import '../receipts/create_receipt_screen.dart';
-import '../receipts/receipts_screen.dart';
+import '../tenants/tenants_screen.dart';
 
 // ڕەنگە سەرەکییەکان
 const Color primaryDarkBlue = Color(0xFF0F2C59);
@@ -29,8 +29,8 @@ class _MainShellState extends ConsumerState<MainShell> {
 
   static const _tabs = [
     DashboardScreen(),
-    ContractsScreen(),
-    ReceiptsScreen(),
+    TenantsScreen(),
+    ArchiveScreen(),
     MarketScreen(),
   ];
 
@@ -112,9 +112,9 @@ class _MainShellState extends ConsumerState<MainShell> {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _navItem(0, Icons.home_outlined, Icons.home_rounded, 'سەرەکی'),
-            _navItem(1, Icons.description_outlined, Icons.description_rounded, 'گرێبەست'),
+            _navItem(1, Icons.people_outline, Icons.people_rounded, 'کرێچیەکان'),
             const SizedBox(width: 40), // notch gap
-            _navItem(2, Icons.receipt_long_outlined, Icons.receipt_long, 'پسولە'),
+            _navItem(2, Icons.inventory_2_outlined, Icons.inventory_2, 'ئەرشیف'),
             _navItem(3, Icons.public_outlined, Icons.public_rounded, 'بازاڕ'),
           ],
         ),

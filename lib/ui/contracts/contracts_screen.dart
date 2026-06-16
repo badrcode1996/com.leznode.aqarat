@@ -19,41 +19,42 @@ const Color primaryDarkBlue = Color(0xFF0F2C59);
 const Color accentYellow = Color(0xFFF8B115);
 const Color appBackgroundColor = Color(0xFFF5F7FA);
 
-/// Contracts tab: rent / sale sub-tabs (like the market), with print/share +
-/// the rent installment grid.
-class ContractsScreen extends StatelessWidget {
-  const ContractsScreen({super.key});
+/// Reusable contracts body (rent / sale sub-tabs) with print/share + the rent
+/// installment grid. Rendered inside the Archive screen's "گرێبەستەکان" tab —
+/// no Scaffold/AppBar of its own so it can nest under the Archive's top tabs.
+class ContractsArchiveBody extends StatelessWidget {
+  const ContractsArchiveBody({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
+    return const DefaultTabController(
       length: 2,
-      child: Scaffold(
-        backgroundColor: appBackgroundColor,
-        appBar: AppBar(
-          title: const Text('گرێبەستەکان', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
-          backgroundColor: primaryDarkBlue,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          centerTitle: true,
-          bottom: const TabBar(
-            indicatorColor: accentYellow,
-            indicatorWeight: 4,
-            labelColor: accentYellow,
-            unselectedLabelColor: Colors.white70,
-            labelStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            tabs: [
-              Tab(text: 'کرێ'),
-              Tab(text: 'فرۆشتن'),
-            ],
+      child: Column(
+        children: [
+          Material(
+            color: Colors.white,
+            elevation: 1,
+            child: TabBar(
+              indicatorColor: accentYellow,
+              indicatorWeight: 3,
+              labelColor: primaryDarkBlue,
+              unselectedLabelColor: Colors.grey,
+              labelStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              tabs: [
+                Tab(text: 'کرێ'),
+                Tab(text: 'فرۆشتن'),
+              ],
+            ),
           ),
-        ),
-        body: const TabBarView(
-          children: [
-            _ContractsList(type: ContractType.rent),
-            _ContractsList(type: ContractType.sale),
-          ],
-        ),
+          Expanded(
+            child: TabBarView(
+              children: [
+                _ContractsList(type: ContractType.rent),
+                _ContractsList(type: ContractType.sale),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

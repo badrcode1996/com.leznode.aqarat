@@ -11,45 +11,44 @@ import 'receipt_preview_screen.dart';
 
 const Color _primaryDarkBlue = Color(0xFF0F2C59);
 const Color _accentYellow = Color(0xFFF8B115);
-const Color _appBg = Color(0xFFF5F7FA);
 const Color _green = Color(0xFF10B981);
 
-/// Receipts tab: two sub-tabs — rent receipts (کرێ) and external receipts
-/// (دەرەکی). Creation lives in the central Quick Actions sheet.
-class ReceiptsScreen extends StatelessWidget {
-  const ReceiptsScreen({super.key});
+/// Reusable receipts body: two sub-tabs — rent receipts (کرێ) and external
+/// receipts (دەرەکی). Rendered inside the Archive screen's "پسولەکان" tab — no
+/// Scaffold/AppBar of its own so it can nest under the Archive's top tabs.
+class ReceiptsArchiveBody extends StatelessWidget {
+  const ReceiptsArchiveBody({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
+    return const DefaultTabController(
       length: 2,
-      child: Scaffold(
-        backgroundColor: _appBg,
-        appBar: AppBar(
-          title: const Text('پسولەکان',
-              style: TextStyle(fontWeight: FontWeight.bold)),
-          backgroundColor: _primaryDarkBlue,
-          foregroundColor: Colors.white,
-          centerTitle: true,
-          elevation: 0,
-          bottom: const TabBar(
-            indicatorColor: _accentYellow,
-            indicatorWeight: 4,
-            labelColor: _accentYellow,
-            unselectedLabelColor: Colors.white70,
-            labelStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            tabs: [
-              Tab(text: 'پسولەی کرێ'),
-              Tab(text: 'پسولەی دەرەکی'),
-            ],
+      child: Column(
+        children: [
+          Material(
+            color: Colors.white,
+            elevation: 1,
+            child: TabBar(
+              indicatorColor: _accentYellow,
+              indicatorWeight: 3,
+              labelColor: _primaryDarkBlue,
+              unselectedLabelColor: Colors.grey,
+              labelStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              tabs: [
+                Tab(text: 'پسولەی کرێ'),
+                Tab(text: 'پسولەی دەرەکی'),
+              ],
+            ),
           ),
-        ),
-        body: const TabBarView(
-          children: [
-            _ReceiptsList(rent: true),
-            _ReceiptsList(rent: false),
-          ],
-        ),
+          Expanded(
+            child: TabBarView(
+              children: [
+                _ReceiptsList(rent: true),
+                _ReceiptsList(rent: false),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
