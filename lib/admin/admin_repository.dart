@@ -85,6 +85,7 @@ class AdminRepository {
     required String userPhone,
     List<String> branches = const [],
     CompanyPlan plan = CompanyPlan.bronze,
+    bool webOnly = false,
   }) async {
     final companyId = Company.slugify(companyNameEn);
     if (companyId.isEmpty) {
@@ -117,6 +118,7 @@ class AdminRepository {
       createdAt: now,
       branches: branches.map((b) => b.trim()).where((b) => b.isNotEmpty).toList(),
       plan: plan,
+      webOnly: webOnly,
     );
     final firstBranch = company.branches.isNotEmpty ? company.branches.first : '';
     final admin = AppUser(
@@ -199,6 +201,14 @@ class AdminRepository {
         .collection('companies')
         .doc(companyId)
         .update({'plan': plan.wire});
+  }
+
+  /// Toggles whether a company is web-only (mobile app blocks login).
+  Future<void> setWebOnly(String companyId, bool webOnly) {
+    return _db
+        .collection('companies')
+        .doc(companyId)
+        .update({'web_only': webOnly});
   }
 
   /// Changes a user's password via the `setUserPassword` Cloud Function

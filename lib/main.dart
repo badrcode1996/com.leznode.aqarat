@@ -109,8 +109,45 @@ class _SessionGate extends ConsumerWidget {
       data: (user) {
         if (user == null) return const _NoAccessScreen();
         if (user.role == UserRole.superAdmin) return const SuperAdminPanel();
+        // Web-only companies are blocked in the mobile app.
+        if (!kIsWeb && user.webOnly) return const _WebOnlyScreen();
         return const MainShell();
       },
+    );
+  }
+}
+
+/// Shown in the mobile app for a company configured as web-only. The same
+/// account works on the web build (aqarat.leznode.com).
+class _WebOnlyScreen extends ConsumerWidget {
+  const _WebOnlyScreen();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.public, size: 64),
+            const SizedBox(height: 12),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 32),
+              child: Text(
+                'ئەم هەژمارە تەنها لە وێب کاردەکات.\n'
+                'تکایە لە ڕێگەی aqarat.leznode.com بچۆ ژوورەوە.',
+                textAlign: TextAlign.center,
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextButton.icon(
+              icon: const Icon(Icons.logout),
+              label: const Text('دەرچوون'),
+              onPressed: () => ref.read(authRepositoryProvider).signOut(),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

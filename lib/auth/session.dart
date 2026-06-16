@@ -19,6 +19,7 @@ class SessionUser {
     this.branch = '',
     this.branchAdmin = false,
     this.plan = CompanyPlan.bronze,
+    this.webOnly = false,
   });
 
   final String uid;
@@ -29,6 +30,9 @@ class SessionUser {
   /// The company's subscription tier — gates which features are available.
   /// Super admins are treated as [CompanyPlan.gold] (they see everything).
   final CompanyPlan plan;
+
+  /// When true the company is web-only: the mobile app blocks login.
+  final bool webOnly;
 
   /// The signed-in user's own phone (their Global Market contact number).
   final String phone;
@@ -106,10 +110,13 @@ final sessionProvider = FutureProvider<SessionUser?>((ref) async {
   // checked synchronously off the session everywhere in the UI.
   final companyId = data['company_id'] as String? ?? '';
   var plan = CompanyPlan.bronze;
+  var webOnly = false;
   if (companyId.isNotEmpty) {
     final companySnap =
         await db.collection('companies').doc(companyId).get();
-    plan = CompanyPlan.fromWire(companySnap.data()?['plan'] as String?);
+    final companyData = companySnap.data();
+    plan = CompanyPlan.fromWire(companyData?['plan'] as String?);
+    webOnly = companyData?['web_only'] as bool? ?? false;
   }
 
   return SessionUser(
@@ -121,6 +128,7 @@ final sessionProvider = FutureProvider<SessionUser?>((ref) async {
     branch: data['branch'] as String? ?? '',
     branchAdmin: data['branch_admin'] as bool? ?? false,
     plan: plan,
+    webOnly: webOnly,
   );
 });
 

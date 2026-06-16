@@ -377,6 +377,7 @@ class _CreateCompanyScreenState extends ConsumerState<_CreateCompanyScreen> {
   Uint8List? _logoBytes;
   String _logoContentType = 'image/jpeg';
   CompanyPlan _plan = CompanyPlan.bronze;
+  bool _webOnly = false;
   bool _busy = false;
   String? _error;
 
@@ -428,6 +429,7 @@ class _CreateCompanyScreenState extends ConsumerState<_CreateCompanyScreen> {
         userPhone: _userPhone.text,
         branches: _branches.text.split(','),
         plan: _plan,
+        webOnly: _webOnly,
       );
       if (mounted) Navigator.pop(context);
     } catch (e) {
@@ -494,6 +496,16 @@ class _CreateCompanyScreenState extends ConsumerState<_CreateCompanyScreen> {
                   _PlanSelector(
                     value: _plan,
                     onChanged: (p) => setState(() => _plan = p),
+                  ),
+                  const SizedBox(height: 20),
+                  const Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Text('دەستگەیشتن', style: TextStyle(fontWeight: FontWeight.bold, color: primaryDarkBlue)),
+                  ),
+                  const SizedBox(height: 8),
+                  _AccessSelector(
+                    webOnly: _webOnly,
+                    onChanged: (v) => setState(() => _webOnly = v),
                   ),
                 ],
               ),
@@ -591,6 +603,11 @@ class _CompanyUsersScreen extends ConsumerWidget {
           tooltip: 'پلانی بەژداری',
           icon: const Icon(Icons.workspace_premium_outlined, color: accentYellow),
           onPressed: () => _changePlan(context, ref),
+        ),
+        IconButton(
+          tooltip: 'دەستگەیشتن (ئەپ/وێب)',
+          icon: const Icon(Icons.devices_outlined, color: accentYellow),
+          onPressed: () => _changeAccess(context, ref),
         ),
         IconButton(
           tooltip: 'دەرهێنان (Export)',
@@ -811,6 +828,70 @@ class _CompanyUsersScreen extends ConsumerWidget {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
               content: Text('پلان گۆڕدرا بۆ ${result.label}'),
+              backgroundColor: Colors.green));
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text('هەڵە: $e'),
+              backgroundColor: Colors.red.shade700));
+        }
+      }
+    }
+  }
+
+  Future<void> _changeAccess(BuildContext context, WidgetRef ref) async {
+    var webOnly = company.webOnly;
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialog) => AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('دەستگەیشتن',
+              style: TextStyle(
+                  color: primaryDarkBlue, fontWeight: FontWeight.bold)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _AccessSelector(
+                webOnly: webOnly,
+                onChanged: (v) => setDialog(() => webOnly = v),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'ئەگەر «تەنها وێب» هەڵبژێردرا، یوزەرەکانی ئەم کۆمپانیایە ناتوانن لە ئەپی مۆبایل بچنە ژوورەوە — تەنها لە وێب.',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('پاشگەزبوونەوە',
+                    style: TextStyle(color: Colors.grey))),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryDarkBlue,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10))),
+              onPressed: () => Navigator.pop(ctx, webOnly),
+              child:
+                  const Text('پاشەکەوت', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (result != null && result != company.webOnly) {
+      try {
+        await ref.read(adminRepositoryProvider).setWebOnly(company.id, result);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text(result
+                  ? 'گۆڕدرا بۆ: تەنها وێب'
+                  : 'گۆڕدرا بۆ: ئەپ و وێب'),
               backgroundColor: Colors.green));
         }
       } catch (e) {
@@ -1130,6 +1211,36 @@ class _PlanSelector extends StatelessWidget {
             icon: Icon(Icons.workspace_premium, color: accentYellow)),
       ],
       selected: {value},
+      onSelectionChanged: (s) => onChanged(s.first),
+    );
+  }
+}
+
+/// Two-way access picker: both (app + web) or web-only. Reused by the create
+/// form and the change-access dialog.
+class _AccessSelector extends StatelessWidget {
+  const _AccessSelector({required this.webOnly, required this.onChanged});
+
+  final bool webOnly;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return SegmentedButton<bool>(
+      style: SegmentedButton.styleFrom(
+        backgroundColor: Colors.white,
+        selectedForegroundColor: Colors.white,
+        selectedBackgroundColor: primaryDarkBlue,
+      ),
+      segments: const [
+        ButtonSegment(
+            value: false,
+            label: Text('ئەپ و وێب'),
+            icon: Icon(Icons.devices)),
+        ButtonSegment(
+            value: true, label: Text('تەنها وێب'), icon: Icon(Icons.public)),
+      ],
+      selected: {webOnly},
       onSelectionChanged: (s) => onChanged(s.first),
     );
   }

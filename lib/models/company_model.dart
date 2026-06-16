@@ -24,6 +24,7 @@ class Company {
     required this.createdAt,
     this.branches = const [],
     this.plan = CompanyPlan.bronze,
+    this.webOnly = false,
   });
 
   final String id;
@@ -38,6 +39,7 @@ class Company {
   final DateTime createdAt;
   final List<String> branches; // لقەکان — branch names defined by Super Admin
   final CompanyPlan plan; // subscription tier (gates features)
+  final bool webOnly; // when true, the mobile app blocks login (web only)
 
   /// Preferred label for the UI: Kurdish first, then Arabic, then English.
   String get displayName =>
@@ -59,6 +61,7 @@ class Company {
             .map((e) => e.toString())
             .toList(),
         plan: CompanyPlan.fromWire(json['plan'] as String?),
+        webOnly: json['web_only'] as bool? ?? false,
       );
 
   Map<String, dynamic> toJson() => {
@@ -73,6 +76,7 @@ class Company {
         'created_at': Timestamp.fromDate(createdAt),
         'branches': branches,
         'plan': plan.wire,
+        'web_only': webOnly,
       };
 
   /// Turns an English company name into a safe, readable Firestore document id.
