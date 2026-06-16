@@ -1,6 +1,10 @@
 [
   {
-    "origin": ["https://leznode.com"],
+    "origin": [
+      "https://aqarat.leznode.com",
+      "https://aqarat-49fc2.web.app",
+      "https://aqarat-49fc2.firebaseapp.com"
+    ],
     "method": ["GET", "PUT", "POST"],
     "maxAgeSeconds": 3600,
     "responseHeader": ["Content-Type", "Authorization", "Content-Length", "User-Agent", "x-goog-resumable"]
