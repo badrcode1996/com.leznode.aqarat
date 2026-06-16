@@ -37,11 +37,15 @@ class InstallmentGrid extends ConsumerWidget {
     PaymentStatus.deliveredToOwner => ('گەیەنرا', const Color(0xFF10B981), Icons.done_all_rounded), // سەوزێکی مۆدێرن
   };
 
-  /// Asks the user for an optional note/code before a rent receipt is created.
-  /// Returns the entered text, or null if the user cancelled (abort the action).
-  Future<String?> _askNote(BuildContext context, bool isReceive) {
+  /// Asks the user for an optional note/code before a rent receipt is created,
+  /// and whether the receipt PDF should be printed. Returns `(note, print)`, or
+  /// null if the user cancelled (abort the action). When `print` is false the
+  /// receipt is still saved — it just isn't opened/printed (for tenants/owners
+  /// who don't need a paper voucher).
+  Future<({String note, bool print})?> _askNote(
+      BuildContext context, bool isReceive) {
     final controller = TextEditingController();
-    return showDialog<String>(
+    return showDialog<({String note, bool print})>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(isReceive ? 'وەرگرتنی کرێ' : 'دانەوەی کرێ'),
@@ -59,8 +63,16 @@ class InstallmentGrid extends ConsumerWidget {
             onPressed: () => Navigator.pop(ctx),
             child: const Text('پاشگەزبوونەوە'),
           ),
+          // بەبێ پرینتی پسولە — کردارەکە ئەنجام دەدرێت و پسولە تۆمار دەکرێت،
+          // بەڵام PDF ـەکە ناکرێتەوە (بۆ کرێچی/خاوەن خانووی پسولەی ناوێت).
+          OutlinedButton(
+            onPressed: () =>
+                Navigator.pop(ctx, (note: controller.text.trim(), print: false)),
+            child: const Text('بەبێ پسولە'),
+          ),
           ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+            onPressed: () =>
+                Navigator.pop(ctx, (note: controller.text.trim(), print: true)),
             child: const Text('دروستکردنی پسولە'),
           ),
         ],
@@ -77,10 +89,12 @@ class InstallmentGrid extends ConsumerWidget {
         newStatus == PaymentStatus.deliveredToOwner;
     final isReceive = newStatus == PaymentStatus.receivedFromTenant;
     String note = '';
+    bool printReceipt = true;
     if (makesReceipt) {
       final entered = await _askNote(context, isReceive);
       if (entered == null) return; // cancelled
-      note = entered;
+      note = entered.note;
+      printReceipt = entered.print;
     }
 
     try {
@@ -121,8 +135,11 @@ class InstallmentGrid extends ConsumerWidget {
             ),
           );
         }
-        // Open the receipt PDF right away (same as external receipts).
-        await ReceiptPdfRemote.printReceipt(saved.id);
+        // Open the receipt PDF right away (same as external receipts) — unless
+        // the user chose "بەبێ پسولە", in which case it's saved but not printed.
+        if (printReceipt) {
+          await ReceiptPdfRemote.printReceipt(saved.id);
+        }
       }
     } catch (e) {
       if (context.mounted) {
