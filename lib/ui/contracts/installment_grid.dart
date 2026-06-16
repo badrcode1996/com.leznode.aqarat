@@ -8,9 +8,8 @@ import '../../data/receipt_repository.dart';
 import '../../models/contract_model.dart';
 import '../../models/enums.dart';
 import '../../models/receipt_model.dart';
-import '../../services/pdf/receipt_pdf_remote.dart';
+import '../receipts/receipt_preview_screen.dart';
 import '../widgets/processing_dialog.dart';
-import 'package:printing/printing.dart';
 
 // ڕەنگە سەرەکییەکان
 const Color primaryDarkBlue = Color(0xFF0F2C59);
@@ -127,13 +126,11 @@ class InstallmentGrid extends ConsumerWidget {
           monthNumber: inst.monthNumber,
           createdAt: DateTime.now(),
         );
-        // Save the receipt — and render its PDF when printing — behind a
-        // "please wait" spinner. The "بەبێ پسولە" path skips the render.
-        final (saved, pdf) = await showProcessingWhile(context, () async {
-          final s = await ref.read(receiptRepositoryProvider).createReceipt(draft);
-          final bytes = printReceipt ? await ReceiptPdfRemote.build(s.id) : null;
-          return (s, bytes);
-        });
+        // Save the receipt behind a brief "please wait" spinner.
+        final saved = await showProcessingWhile(
+          context,
+          () => ref.read(receiptRepositoryProvider).createReceipt(draft),
+        );
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -143,9 +140,15 @@ class InstallmentGrid extends ConsumerWidget {
             ),
           );
         }
-        // Open the print preview — unless the user chose "بەبێ پسولە".
-        if (pdf != null) {
-          await Printing.layoutPdf(onLayout: (_) async => pdf);
+        // Open the receipt preview (view + print + share) right away — unless
+        // the user chose "بەبێ پسولە".
+        if (printReceipt && context.mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ReceiptPreviewScreen(receipt: saved),
+            ),
+          );
         }
       }
     } catch (e) {

@@ -6,9 +6,8 @@ import '../../auth/session.dart';
 import '../../data/receipt_repository.dart';
 import '../../models/enums.dart';
 import '../../models/receipt_model.dart';
-import '../../services/pdf/receipt_pdf_remote.dart';
 import '../widgets/processing_dialog.dart';
-import 'package:printing/printing.dart';
+import 'receipt_preview_screen.dart';
 
 const Color _appBg = Color(0xFFF5F7FA);
 
@@ -104,15 +103,18 @@ class _CreateReceiptScreenState extends ConsumerState<CreateReceiptScreen> {
           monthNumber: 0,
           createdAt: DateTime.now(),
         );
-        // Save + render the PDF behind a "please wait" spinner, then close the
-        // form and open the print preview.
-        final bytes = await showProcessingWhile(context, () async {
-          final saved = await repo.createReceipt(draft);
-          return ReceiptPdfRemote.build(saved.id);
-        });
+        // Save behind a brief "please wait" spinner, then replace the form with
+        // the receipt preview (view + print + share).
+        final saved = await showProcessingWhile(
+          context,
+          () => repo.createReceipt(draft),
+        );
         if (mounted) {
-          Navigator.pop(context);
-          await Printing.layoutPdf(onLayout: (_) async => bytes);
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (_) => ReceiptPreviewScreen(receipt: saved),
+            ),
+          );
         }
       }
     } catch (e) {
