@@ -119,8 +119,11 @@ function buildReceiptHtml(o) {
 *{box-sizing:border-box;margin:0;padding:0;}
 @page{size:A4;margin:14mm 12mm;}
 body{font-family:'Speda';direction:rtl;color:#111;font-size:${fs};}
-.copy{display:flex;flex-direction:column;min-height:128mm;
-  padding-bottom:6mm;border-bottom:1.5px dashed #bbb;margin-bottom:6mm;}
+/* Each copy takes exactly half the printable height (A4 297mm − 14mm×2
+   margins = 269mm; half ≈ 134mm) so the second copy begins right at the
+   page's vertical centre, on the dashed cut line. */
+.copy{display:flex;flex-direction:column;height:134mm;
+  padding-bottom:5mm;border-bottom:1.5px dashed #bbb;}
 .copy:last-child{border-bottom:none;}
 .header{display:flex;align-items:center;gap:0;}
 .banner{flex:1;height:34px;border-radius:6px 0 0 6px;color:#fff;
@@ -138,7 +141,7 @@ body{font-family:'Speda';direction:rtl;color:#111;font-size:${fs};}
 .row2 .field:first-child{flex:3;}
 .row2 .field:last-child{flex:2;}
 .sp{width:16px;}
-.field{display:flex;align-items:flex-end;margin:5px 0;gap:6px;}
+.field{display:flex;align-items:flex-end;margin:14px 0;gap:6px;}
 .field .kuar{font-weight:bold;white-space:nowrap;}
 .field .val{flex:1;border-bottom:1px dotted #888;min-height:1.3em;
   padding:0 4px 1px;}
