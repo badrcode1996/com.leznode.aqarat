@@ -96,7 +96,6 @@ class RentContract extends Contract {
     required this.installments,
     this.notes = '',
     this.agentName = '',
-    this.imageUrl = '',
   }) : super(type: ContractType.rent);
 
   final String party1Name; // لایەنی یەکەم (خاوەن)
@@ -127,7 +126,6 @@ class RentContract extends Contract {
 
   final String notes; // تێبینی (up to 5 lines)
   final String agentName; // name of the user who created the contract
-  final String imageUrl; // وێنەی خانوو (Storage download URL, optional)
 
   @override
   String get listTitle => party2Name.isNotEmpty ? party2Name : party1Name;
@@ -173,7 +171,6 @@ class RentContract extends Contract {
           .toList(),
       notes: json['notes'] as String? ?? '',
       agentName: json['agent_name'] as String? ?? '',
-      imageUrl: json['image_url'] as String? ?? '',
     );
   }
 
@@ -203,7 +200,6 @@ class RentContract extends Contract {
         'installments': installments.map((i) => i.toJson()).toList(),
         'notes': notes,
         'agent_name': agentName,
-        'image_url': imageUrl,
       };
 
   /// Builds a 12-period schedule from [start], spaced by [everyMonths].
@@ -230,8 +226,7 @@ class RentContract extends Contract {
       .where((i) => i.status == PaymentStatus.deliveredToOwner)
       .length;
 
-  RentContract copyWith({List<Installment>? installments, String? imageUrl}) =>
-      RentContract(
+  RentContract copyWith({List<Installment>? installments}) => RentContract(
         id: id,
         companyId: companyId,
         agentId: agentId,
@@ -261,7 +256,6 @@ class RentContract extends Contract {
         installments: installments ?? this.installments,
         notes: notes,
         agentName: agentName,
-        imageUrl: imageUrl ?? this.imageUrl,
       );
 }
 
