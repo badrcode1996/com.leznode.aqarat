@@ -9,6 +9,8 @@ import '../../models/contract_model.dart';
 import '../../models/enums.dart';
 import '../../models/receipt_model.dart';
 import '../../services/pdf/receipt_pdf_remote.dart';
+import '../widgets/processing_dialog.dart';
+import 'package:printing/printing.dart';
 
 // ڕەنگە سەرەکییەکان
 const Color primaryDarkBlue = Color(0xFF0F2C59);
@@ -105,6 +107,7 @@ class InstallmentGrid extends ConsumerWidget {
       );
 
       if (makesReceipt) {
+        if (!context.mounted) return;
         final user = ref.read(currentUserProvider);
         final draft = Receipt(
           id: '',
@@ -124,8 +127,13 @@ class InstallmentGrid extends ConsumerWidget {
           monthNumber: inst.monthNumber,
           createdAt: DateTime.now(),
         );
-        final saved =
-            await ref.read(receiptRepositoryProvider).createReceipt(draft);
+        // Save the receipt — and render its PDF when printing — behind a
+        // "please wait" spinner. The "بەبێ پسولە" path skips the render.
+        final (saved, pdf) = await showProcessingWhile(context, () async {
+          final s = await ref.read(receiptRepositoryProvider).createReceipt(draft);
+          final bytes = printReceipt ? await ReceiptPdfRemote.build(s.id) : null;
+          return (s, bytes);
+        });
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -135,10 +143,9 @@ class InstallmentGrid extends ConsumerWidget {
             ),
           );
         }
-        // Open the receipt PDF right away (same as external receipts) — unless
-        // the user chose "بەبێ پسولە", in which case it's saved but not printed.
-        if (printReceipt) {
-          await ReceiptPdfRemote.printReceipt(saved.id);
+        // Open the print preview — unless the user chose "بەبێ پسولە".
+        if (pdf != null) {
+          await Printing.layoutPdf(onLayout: (_) async => pdf);
         }
       }
     } catch (e) {
