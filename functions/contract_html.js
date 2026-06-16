@@ -96,6 +96,9 @@ function buildContractHtml(o) {
       .filter(Boolean);
   const logo = company.logo_data_uri ?
     `<img class="logo" src="${company.logo_data_uri}">` : "";
+  // Faint full-page watermark of the company logo (all plans).
+  const watermark = company.logo_data_uri ?
+    `<img class="watermark" src="${company.logo_data_uri}">` : "";
 
   const row = (label, val) =>
     `<div class="r"><span class="rl">${esc(label)}</span>` +
@@ -168,7 +171,12 @@ thead{display:table-header-group;}
 .foot{position:fixed;bottom:0;left:0;right:0;padding-top:6px;
   border-top:.8px solid #bbb;display:flex;justify-content:space-between;
   font-size:9px;background:#fff;}
+/* Company-logo watermark: fixed + centred so it repeats faintly behind the
+   text on every printed page. Available on all plans. */
+.watermark{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:62%;opacity:.06;z-index:-1;pointer-events:none;}
 </style></head><body>
+${watermark}
 <table class="page">
   <thead><tr><td>
     <div class="band"><div class="names">${names.map((n) =>
