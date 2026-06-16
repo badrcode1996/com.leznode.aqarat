@@ -142,7 +142,21 @@ class SuperAdminPanel extends ConsumerWidget {
                   ),
                   title: Text(c.displayName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   subtitle: Text(c.phone1, style: TextStyle(color: Colors.grey.shade600)),
-                  trailing: const Icon(Icons.chevron_left, color: accentYellow),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: primaryDarkBlue.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(c.plan.label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: primaryDarkBlue)),
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(Icons.chevron_left, color: accentYellow),
+                    ],
+                  ),
                   onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => _CompanyUsersScreen(company: c)),
@@ -362,6 +376,7 @@ class _CreateCompanyScreenState extends ConsumerState<_CreateCompanyScreen> {
 
   Uint8List? _logoBytes;
   String _logoContentType = 'image/jpeg';
+  CompanyPlan _plan = CompanyPlan.bronze;
   bool _busy = false;
   String? _error;
 
@@ -412,6 +427,7 @@ class _CreateCompanyScreenState extends ConsumerState<_CreateCompanyScreen> {
         userPassword: _userPassword.text,
         userPhone: _userPhone.text,
         branches: _branches.text.split(','),
+        plan: _plan,
       );
       if (mounted) Navigator.pop(context);
     } catch (e) {
@@ -469,6 +485,16 @@ class _CreateCompanyScreenState extends ConsumerState<_CreateCompanyScreen> {
                   TextFormField(controller: _address, decoration: modernInputDecoration(label: 'ناونیشانی کۆمپانیا', icon: Icons.location_on_outlined), validator: _req),
                   const SizedBox(height: 16),
                   TextFormField(controller: _branches, decoration: modernInputDecoration(label: 'لقەکان (بە کۆما جیابکەرەوە)', icon: Icons.account_tree_outlined)),
+                  const SizedBox(height: 20),
+                  const Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Text('پلانی بەژداری', style: TextStyle(fontWeight: FontWeight.bold, color: primaryDarkBlue)),
+                  ),
+                  const SizedBox(height: 8),
+                  _PlanSelector(
+                    value: _plan,
+                    onChanged: (p) => setState(() => _plan = p),
+                  ),
                 ],
               ),
               const SizedBox(height: 20),
@@ -561,6 +587,11 @@ class _CompanyUsersScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: appBackgroundColor,
       appBar: modernAppBar(company.displayName, actions: [
+        IconButton(
+          tooltip: 'پلانی بەژداری',
+          icon: const Icon(Icons.workspace_premium_outlined, color: accentYellow),
+          onPressed: () => _changePlan(context, ref),
+        ),
         IconButton(
           tooltip: 'دەرهێنان (Export)',
           icon: const Icon(Icons.file_download_outlined, color: accentYellow),
@@ -727,6 +758,68 @@ class _CompanyUsersScreen extends ConsumerWidget {
       messenger.showSnackBar(SnackBar(
           content: Text('هەڵە لە دەرهێنان: $e'),
           backgroundColor: Colors.red.shade700));
+    }
+  }
+
+  Future<void> _changePlan(BuildContext context, WidgetRef ref) async {
+    var selected = company.plan;
+    final result = await showDialog<CompanyPlan>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialog) => AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('پلانی بەژداری',
+              style: TextStyle(
+                  color: primaryDarkBlue, fontWeight: FontWeight.bold)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _PlanSelector(
+                value: selected,
+                onChanged: (p) => setDialog(() => selected = p),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'کۆمپانیا تەنها ئەو تایبەتمەندییانە دەبینێت کە پلانەکەی ڕێگەی پێدەدات.',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('پاشگەزبوونەوە',
+                    style: TextStyle(color: Colors.grey))),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryDarkBlue,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10))),
+              onPressed: () => Navigator.pop(ctx, selected),
+              child:
+                  const Text('پاشەکەوت', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (result != null && result != company.plan) {
+      try {
+        await ref.read(adminRepositoryProvider).setPlan(company.id, result);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text('پلان گۆڕدرا بۆ ${result.label}'),
+              backgroundColor: Colors.green));
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text('هەڵە: $e'),
+              backgroundColor: Colors.red.shade700));
+        }
+      }
     }
   }
 
@@ -1002,6 +1095,42 @@ class _AddUserScreenState extends ConsumerState<_AddUserScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Segmented Bronze / Silver / Gold plan picker reused by the create form and
+/// the change-plan dialog.
+class _PlanSelector extends StatelessWidget {
+  const _PlanSelector({required this.value, required this.onChanged});
+
+  final CompanyPlan value;
+  final ValueChanged<CompanyPlan> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return SegmentedButton<CompanyPlan>(
+      style: SegmentedButton.styleFrom(
+        backgroundColor: Colors.white,
+        selectedForegroundColor: Colors.white,
+        selectedBackgroundColor: primaryDarkBlue,
+      ),
+      segments: const [
+        ButtonSegment(
+            value: CompanyPlan.bronze,
+            label: Text('بڕۆنز'),
+            icon: Icon(Icons.workspace_premium, color: Color(0xFFCD7F32))),
+        ButtonSegment(
+            value: CompanyPlan.silver,
+            label: Text('سیلڤەر'),
+            icon: Icon(Icons.workspace_premium, color: Color(0xFF9CA3AF))),
+        ButtonSegment(
+            value: CompanyPlan.gold,
+            label: Text('گۆڵد'),
+            icon: Icon(Icons.workspace_premium, color: accentYellow)),
+      ],
+      selected: {value},
+      onSelectionChanged: (s) => onChanged(s.first),
     );
   }
 }

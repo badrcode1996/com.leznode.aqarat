@@ -98,8 +98,8 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
 
-          // بەشی بەڕێوەبردن — تەنها بۆ ئەدمین
-          if (user.isAdmin) ...[
+          // بەشی بەڕێوەبردن — تەنها بۆ ئەدمین (پارێزەران: پلانی گۆڵد)
+          if (user.isAdmin && user.plan.canLawyers) ...[
             const SizedBox(height: 20),
             const Padding(
               padding: EdgeInsets.only(left: 8, bottom: 8),

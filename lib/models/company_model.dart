@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'enums.dart';
+
 /// A tenant. (collection: `companies`, doc id == company_id == slug of English name)
 ///
 /// The company name is multilingual (Kurdish / Arabic / English). The English
@@ -21,6 +23,7 @@ class Company {
     required this.ownerUid,
     required this.createdAt,
     this.branches = const [],
+    this.plan = CompanyPlan.bronze,
   });
 
   final String id;
@@ -34,6 +37,7 @@ class Company {
   final String ownerUid; // the Company Admin who created it
   final DateTime createdAt;
   final List<String> branches; // لقەکان — branch names defined by Super Admin
+  final CompanyPlan plan; // subscription tier (gates features)
 
   /// Preferred label for the UI: Kurdish first, then Arabic, then English.
   String get displayName =>
@@ -54,6 +58,7 @@ class Company {
         branches: (json['branches'] as List<dynamic>? ?? const [])
             .map((e) => e.toString())
             .toList(),
+        plan: CompanyPlan.fromWire(json['plan'] as String?),
       );
 
   Map<String, dynamic> toJson() => {
@@ -67,6 +72,7 @@ class Company {
         'owner_uid': ownerUid,
         'created_at': Timestamp.fromDate(createdAt),
         'branches': branches,
+        'plan': plan.wire,
       };
 
   /// Turns an English company name into a safe, readable Firestore document id.

@@ -84,6 +84,7 @@ class AdminRepository {
     required String userPassword,
     required String userPhone,
     List<String> branches = const [],
+    CompanyPlan plan = CompanyPlan.bronze,
   }) async {
     final companyId = Company.slugify(companyNameEn);
     if (companyId.isEmpty) {
@@ -115,6 +116,7 @@ class AdminRepository {
       ownerUid: adminUid,
       createdAt: now,
       branches: branches.map((b) => b.trim()).where((b) => b.isNotEmpty).toList(),
+      plan: plan,
     );
     final firstBranch = company.branches.isNotEmpty ? company.branches.first : '';
     final admin = AppUser(
@@ -189,6 +191,14 @@ class AdminRepository {
     return _db.collection('companies').doc(companyId).update({
       'branches': branches.map((b) => b.trim()).where((b) => b.isNotEmpty).toList(),
     });
+  }
+
+  /// Changes a company's subscription plan (Super Admin only).
+  Future<void> setPlan(String companyId, CompanyPlan plan) {
+    return _db
+        .collection('companies')
+        .doc(companyId)
+        .update({'plan': plan.wire});
   }
 
   /// Changes a user's password via the `setUserPassword` Cloud Function

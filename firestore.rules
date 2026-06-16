@@ -36,6 +36,21 @@ service cloud.firestore {
       return isSignedIn() && profileExists() && userData().company_id == cid;
     }
 
+    // --- Subscription plan gating. Mirrors CompanyPlan in lib/models/enums.dart.
+    //     Rank: bronze=0, silver=1, gold=2 (missing/unknown → bronze).
+    function planRank(plan) {
+      return plan == 'gold' ? 2 : (plan == 'silver' ? 1 : 0);
+    }
+    function companyPlanRank(cid) {
+      return planRank(
+        get(/databases/$(database)/documents/companies/$(cid)).data.get('plan', 'bronze')
+      );
+    }
+    // True if company [cid]'s plan is at least [minRank].
+    function planAtLeast(cid, minRank) {
+      return companyPlanRank(cid) >= minRank;
+    }
+
     // --- User profiles.
     //     Super Admin provisions users. A normal user may create only their own
     //     profile and may never self-assign super_admin or change their
@@ -66,10 +81,12 @@ service cloud.firestore {
       allow read, write: if isSuperAdmin() || sameCompany(companyId);
     }
 
-    // --- Contracts: strictly company-scoped.
+    // --- Contracts: strictly company-scoped. Sale contracts need Silver+.
     match /contracts/{id} {
       allow read:   if isSuperAdmin() || sameCompany(resource.data.company_id);
-      allow create: if sameCompany(request.resource.data.company_id);
+      allow create: if sameCompany(request.resource.data.company_id)
+        && (request.resource.data.contract_type != 'sale'
+            || planAtLeast(request.resource.data.company_id, 1));
       allow update, delete: if sameCompany(resource.data.company_id);
     }
 
@@ -93,7 +110,8 @@ service cloud.firestore {
     //     pick a lawyer on the sale contract form.
     match /lawyers/{id} {
       allow read:   if isSuperAdmin() || sameCompany(resource.data.company_id);
-      allow create: if sameCompany(request.resource.data.company_id);
+      allow create: if sameCompany(request.resource.data.company_id)
+        && planAtLeast(request.resource.data.company_id, 2); // Gold
       allow update, delete: if sameCompany(resource.data.company_id);
     }
 
@@ -103,14 +121,16 @@ service cloud.firestore {
     match /properties/{id} {
       allow read:   if isSuperAdmin() || resource.data.is_public == true ||
                        sameCompany(resource.data.company_id);
-      allow create: if sameCompany(request.resource.data.company_id);
+      allow create: if sameCompany(request.resource.data.company_id)
+        && planAtLeast(request.resource.data.company_id, 1); // Silver+
       allow update, delete: if sameCompany(resource.data.company_id);
     }
 
     match /requests/{id} {
       allow read:   if isSuperAdmin() || resource.data.is_public == true ||
                        sameCompany(resource.data.company_id);
-      allow create: if sameCompany(request.resource.data.company_id);
+      allow create: if sameCompany(request.resource.data.company_id)
+        && planAtLeast(request.resource.data.company_id, 1); // Silver+
       allow update, delete: if sameCompany(resource.data.company_id);
     }
   }

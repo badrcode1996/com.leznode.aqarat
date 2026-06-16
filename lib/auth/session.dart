@@ -18,12 +18,17 @@ class SessionUser {
     required this.phone,
     this.branch = '',
     this.branchAdmin = false,
+    this.plan = CompanyPlan.bronze,
   });
 
   final String uid;
   final String companyId;
   final UserRole role;
   final String displayName;
+
+  /// The company's subscription tier — gates which features are available.
+  /// Super admins are treated as [CompanyPlan.gold] (they see everything).
+  final CompanyPlan plan;
 
   /// The signed-in user's own phone (their Global Market contact number).
   final String phone;
@@ -93,17 +98,29 @@ final sessionProvider = FutureProvider<SessionUser?>((ref) async {
       role: UserRole.superAdmin,
       displayName: data['display_name'] as String? ?? user.email ?? '',
       phone: '',
+      plan: CompanyPlan.gold, // sees everything
     );
+  }
+
+  // Resolve the company's subscription plan (one read) so feature gates can be
+  // checked synchronously off the session everywhere in the UI.
+  final companyId = data['company_id'] as String? ?? '';
+  var plan = CompanyPlan.bronze;
+  if (companyId.isNotEmpty) {
+    final companySnap =
+        await db.collection('companies').doc(companyId).get();
+    plan = CompanyPlan.fromWire(companySnap.data()?['plan'] as String?);
   }
 
   return SessionUser(
     uid: user.uid,
-    companyId: data['company_id'] as String? ?? '',
+    companyId: companyId,
     role: role,
     displayName: data['display_name'] as String? ?? user.email ?? '',
     phone: data['phone'] as String? ?? '',
     branch: data['branch'] as String? ?? '',
     branchAdmin: data['branch_admin'] as bool? ?? false,
+    plan: plan,
   );
 });
 

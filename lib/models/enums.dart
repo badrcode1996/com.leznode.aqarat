@@ -20,6 +20,47 @@ enum UserRole {
       );
 }
 
+/// Subscription tier sold to a company. Higher tiers unlock more features.
+///
+/// The feature getters below are the SINGLE SOURCE OF TRUTH for what each plan
+/// can do — they are mirrored in `firestore.rules` (planAtLeast). Change both
+/// together.
+enum CompanyPlan {
+  bronze('bronze', 'بڕۆنز'),
+  silver('silver', 'سیلڤەر'),
+  gold('gold', 'گۆڵد');
+
+  const CompanyPlan(this.wire, this.label);
+  final String wire;
+  final String label;
+
+  static CompanyPlan fromWire(String? value) => CompanyPlan.values.firstWhere(
+        (p) => p.wire == value,
+        orElse: () => CompanyPlan.bronze,
+      );
+
+  int get _rank => switch (this) {
+        CompanyPlan.bronze => 0,
+        CompanyPlan.silver => 1,
+        CompanyPlan.gold => 2,
+      };
+
+  bool atLeast(CompanyPlan min) => _rank >= min._rank;
+
+  // ----- Feature gates (mirror in firestore.rules) -----
+  /// Sale contracts (گرێبەستی فرۆشتن).
+  bool get canSaleContracts => atLeast(CompanyPlan.silver);
+
+  /// Listings + requests + the Global Market (خستنەڕوو/داواکاری/بازاڕ).
+  bool get canListings => atLeast(CompanyPlan.silver);
+
+  /// Lawyers directory (پارێزەران).
+  bool get canLawyers => atLeast(CompanyPlan.gold);
+
+  /// Custom per-company contract template (تێمپلەیتی تایبەت).
+  bool get canCustomTemplate => atLeast(CompanyPlan.gold);
+}
+
 /// The four receipt (وەصڵ) kinds. `isPayment` flips the person label to
 /// "Paid To" (صرف); `isRent` ties the receipt to a rent contract installment.
 enum ReceiptType {
