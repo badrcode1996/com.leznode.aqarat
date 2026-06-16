@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -6,6 +8,7 @@ import '../../auth/session.dart';
 import '../../data/contract_repository.dart';
 import '../../models/contract_model.dart';
 import '../../models/enums.dart';
+import '../widgets/house_image_picker.dart';
 
 // ڕەنگە سەرەکییەکان بۆ یەکپارچەیی دیزاینەکە
 const Color primaryDarkBlue = Color(0xFF0F2C59);
@@ -100,6 +103,9 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
   String _notes = '';
   DateTime _startDate = DateTime.now();
   DateTime _handoverDate = DateTime.now().add(const Duration(days: 365));
+
+  Uint8List? _imageBytes;
+  String _imageContentType = 'image/jpeg';
 
   static final _date = DateFormat('yyyy/MM/dd');
 
@@ -208,12 +214,17 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
       installments: installments,
       notes: _notes.trim(),
       agentName: existing?.agentName ?? user.displayName,
+      imageUrl: existing?.imageUrl ?? '',
     );
 
     try {
       final repo = ref.read(contractRepositoryProvider);
       if (existing != null) {
-        await repo.updateContract(contract);
+        await repo.updateContract(
+          contract,
+          imageBytes: _imageBytes,
+          imageContentType: _imageContentType,
+        );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('گرێبەستی کرێ نوێکرایەوە'), backgroundColor: Colors.green));
@@ -221,7 +232,11 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
         }
         return;
       }
-      final id = await repo.createContract(contract);
+      final id = await repo.createContract(
+        contract,
+        imageBytes: _imageBytes,
+        imageContentType: _imageContentType,
+      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('گرێبەستی کرێ دروستکرا ($id)'), backgroundColor: Colors.green));
@@ -362,6 +377,15 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
                   padding: const EdgeInsets.only(top: 16),
                   child: Column(
                     children: [
+                      // وێنەی خانوو (ئارەزوومەندانە) — کامێرا یان گەلەری
+                      HouseImagePicker(
+                        initialImageUrl: widget.existing?.imageUrl ?? '',
+                        onChanged: (bytes, contentType) {
+                          _imageBytes = bytes;
+                          _imageContentType = contentType;
+                        },
+                      ),
+                      const SizedBox(height: 20),
                       _text(_propertyType, 'جۆری موڵک (بۆ نموونە: خانوو)', icon: Icons.home_work_outlined),
                       _text(_projectName, 'پڕۆژە / گەرەک', icon: Icons.location_city_outlined),
                       _text(_propertyNumber, 'ژمارەی عەقار', icon: Icons.numbers),

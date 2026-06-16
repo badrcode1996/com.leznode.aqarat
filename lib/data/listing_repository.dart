@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../auth/session.dart';
@@ -63,8 +66,31 @@ class ListingRepository {
             .toList());
   }
 
-  Future<String> create(PropertyListing listing) async {
-    final ref = await _col(listing.kind).add(listing.toJson());
+  /// Uploads a house image and returns its download URL.
+  Future<String> _uploadImage(
+    String id,
+    Uint8List bytes,
+    String contentType,
+  ) async {
+    final ref =
+        FirebaseStorage.instance.ref('property_images/${_user.companyId}/$id');
+    await ref.putData(bytes, SettableMetadata(contentType: contentType));
+    return ref.getDownloadURL();
+  }
+
+  /// Creates a listing, optionally with a single house image (uploaded first so
+  /// the document already carries its `image_url`).
+  Future<String> create(
+    PropertyListing listing, {
+    Uint8List? imageBytes,
+    String imageContentType = 'image/jpeg',
+  }) async {
+    final ref = _col(listing.kind).doc();
+    final imageUrl = imageBytes == null
+        ? ''
+        : await _uploadImage(ref.id, imageBytes, imageContentType);
+    final data = listing.toJson()..['image_url'] = imageUrl;
+    await ref.set(data);
     return ref.id;
   }
 }

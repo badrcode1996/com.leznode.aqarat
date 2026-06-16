@@ -31,6 +31,7 @@ class PropertyListing {
     required this.createdAt,
     this.isArchived = false,
     this.branch = '',
+    this.imageUrl = '',
   });
 
   final String id;
@@ -57,6 +58,8 @@ class PropertyListing {
   final String agentName;
   final String agentPhone; // the creating user's own phone
 
+  final String imageUrl; // وێنەی خانوو (Storage download URL, optional)
+
   final DateTime createdAt;
 
   /// Normalized key used to match a demand against an offer.
@@ -79,6 +82,7 @@ class PropertyListing {
       branch: json['branch'] as String? ?? '',
       agentName: json['agent_name'] as String? ?? '',
       agentPhone: json['agent_phone'] as String? ?? '',
+      imageUrl: json['image_url'] as String? ?? '',
       createdAt:
           (json['created_at'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
@@ -98,6 +102,7 @@ class PropertyListing {
         'branch': branch,
         'agent_name': agentName,
         'agent_phone': agentPhone,
+        'image_url': imageUrl,
         'created_at': Timestamp.fromDate(createdAt),
       };
 

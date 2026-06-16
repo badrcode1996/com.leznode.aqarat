@@ -19,6 +19,14 @@ service firebase.storage {
         && request.resource.size < 5 * 1024 * 1024
         && request.resource.contentType.matches('image/.*');
     }
+    // House photos for contracts/listings/requests. Readable by signed-in
+    // users; writes require a signed-in user (tenant-gated in the UI).
+    match /property_images/{companyId}/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
     match /{allPaths=**} {
       allow read, write: if false;
     }

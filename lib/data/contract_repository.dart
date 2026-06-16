@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../auth/session.dart';
@@ -19,6 +22,18 @@ class ContractRepository {
 
   DocumentReference<Map<String, dynamic>> get _statsDoc =>
       _db.collection('company_stats').doc(_user.companyId);
+
+  /// Uploads a house image and returns its download URL.
+  Future<String> _uploadImage(
+    String id,
+    Uint8List bytes,
+    String contentType,
+  ) async {
+    final ref =
+        FirebaseStorage.instance.ref('property_images/${_user.companyId}/$id');
+    await ref.putData(bytes, SettableMetadata(contentType: contentType));
+    return ref.getDownloadURL();
+  }
 
   /// Builds the base query honoring multi-tenant isolation + role.
   ///
@@ -57,8 +72,18 @@ class ContractRepository {
 
   /// Creates a contract AND increments the company_stats counters in ONE
   /// atomic transaction. Either both succeed or neither does.
-  Future<String> createContract(Contract contract) async {
+  Future<String> createContract(
+    Contract contract, {
+    Uint8List? imageBytes,
+    String imageContentType = 'image/jpeg',
+  }) async {
     final newRef = _contracts.doc();
+
+    // Upload the house image up front (network I/O must stay out of the
+    // transaction, which Firestore may replay).
+    final imageUrl = imageBytes == null
+        ? null
+        : await _uploadImage(newRef.id, imageBytes, imageContentType);
 
     await _db.runTransaction((txn) async {
       final statsSnap = await txn.get(_statsDoc);
@@ -74,6 +99,7 @@ class ContractRepository {
       final data = contract.toJson()
         ..['contract_number'] = contractNumber
         ..['branch'] = _user.branch; // denormalize creator's branch
+      if (imageUrl != null) data['image_url'] = imageUrl;
       txn.set(newRef, data);
 
       // Expected value added to the pipeline by this contract.
@@ -125,8 +151,17 @@ class ContractRepository {
   /// value, `collected_revenue` by the change in received rent. The contract's
   /// identity fields (number, type, branch, agent, creation date) are
   /// preserved by the caller and never altered here.
-  Future<void> updateContract(Contract updated) async {
+  Future<void> updateContract(
+    Contract updated, {
+    Uint8List? imageBytes,
+    String imageContentType = 'image/jpeg',
+  }) async {
     final ref = _contracts.doc(updated.id);
+
+    // A freshly picked image replaces the stored one (uploaded before the txn).
+    final imageUrl = imageBytes == null
+        ? null
+        : await _uploadImage(updated.id, imageBytes, imageContentType);
 
     await _db.runTransaction((txn) async {
       final snap = await txn.get(ref);
@@ -144,6 +179,7 @@ class ContractRepository {
         ..['branch'] = data['branch']
         ..['agent_id'] = data['agent_id']
         ..['created_at'] = data['created_at'];
+      if (imageUrl != null) newData['image_url'] = imageUrl;
       txn.set(ref, newData);
 
       final revenueDelta = _expectedValue(updated) - _expectedValue(old);

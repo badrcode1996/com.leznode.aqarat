@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -5,6 +7,7 @@ import '../../auth/session.dart';
 import '../../data/listing_repository.dart';
 import '../../models/enums.dart';
 import '../../models/property_model.dart';
+import '../widgets/house_image_picker.dart';
 
 // ڕەنگە سەرەکییەکان بۆ یەکپارچەیی دیزاینەکە
 const Color primaryDarkBlue = Color(0xFF0F2C59);
@@ -75,6 +78,9 @@ class _CreateListingScreenState extends ConsumerState<CreateListingScreen> {
   bool _busy = false;
   String? _error;
 
+  Uint8List? _imageBytes;
+  String _imageContentType = 'image/jpeg';
+
   bool get _isOffer => widget.kind == ListingKind.offer;
 
   @override
@@ -111,7 +117,11 @@ class _CreateListingScreenState extends ConsumerState<CreateListingScreen> {
       branch: user.branch,
     );
     try {
-      await ref.read(listingRepositoryProvider).create(listing);
+      await ref.read(listingRepositoryProvider).create(
+            listing,
+            imageBytes: _imageBytes,
+            imageContentType: _imageContentType,
+          );
       if (mounted) Navigator.pop(context);
     } catch (e) {
       setState(() => _error = '$e');
@@ -154,19 +164,13 @@ class _CreateListingScreenState extends ConsumerState<CreateListingScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // ئایکۆنی سەرەوە
+                // وێنەی خانوو (ئارەزوومەندانە) — لە کامێرا یان گەلەری
                 Center(
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: accentYellow.withValues(alpha: 0.15),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      _isOffer ? Icons.maps_home_work_outlined : Icons.person_search_outlined,
-                      size: 48,
-                      color: accentYellow,
-                    ),
+                  child: HouseImagePicker(
+                    onChanged: (bytes, contentType) => setState(() {
+                      _imageBytes = bytes;
+                      _imageContentType = contentType;
+                    }),
                   ),
                 ),
                 const SizedBox(height: 32),
