@@ -116,6 +116,7 @@ class PropertyListing {
         area: area,
         agentName: agentName,
         agentPhone: agentPhone,
+        imageUrl: imageUrl,
       );
 }
 
@@ -131,6 +132,7 @@ class PublicListingView {
     required this.area,
     required this.agentName,
     required this.agentPhone,
+    this.imageUrl = '',
   });
 
   final String id;
@@ -140,4 +142,5 @@ class PublicListingView {
   final num area;
   final String agentName;
   final String agentPhone;
+  final String imageUrl;
 }

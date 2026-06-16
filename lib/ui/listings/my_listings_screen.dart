@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/listing_repository.dart';
 import '../../models/enums.dart';
 import '../../models/property_model.dart';
+import '../widgets/house_cover_image.dart';
 
 // ڕەنگە سەرەکییەکان بۆ یەکپارچەیی دیزاینەکە
 const Color primaryDarkBlue = Color(0xFF0F2C59);
@@ -218,6 +219,8 @@ class _ListingCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // وێنەی خانوو (ئەگەر هەبێت)
+            HouseCoverImage(url: listing.imageUrl),
             // بەشی سەرەوە (ناوی خاوەن و ئایکۆن)
             Row(
               children: [
