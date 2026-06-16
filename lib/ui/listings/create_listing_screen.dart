@@ -70,7 +70,7 @@ class _CreateListingScreenState extends ConsumerState<CreateListingScreen> {
   final _projectName = TextEditingController();
   final _area = TextEditingController();
 
-  PropertyType _propertyType = PropertyType.apartment;
+  PropertyType _propertyType = PropertyType.house;
   bool _isPublic = true;
   bool _busy = false;
   String? _error;
@@ -190,7 +190,7 @@ class _CreateListingScreenState extends ConsumerState<CreateListingScreen> {
                       child: Text(t.label, style: const TextStyle(fontWeight: FontWeight.bold)),
                     ))
                         .toList(),
-                    onChanged: (v) => setState(() => _propertyType = v ?? PropertyType.apartment),
+                    onChanged: (v) => setState(() => _propertyType = v ?? PropertyType.house),
                   ),
                 ),
 

@@ -106,20 +106,21 @@ enum ListingKind {
 
 /// Dropdown-backed property type.
 enum PropertyType {
-  apartment('apartment', 'Apartment'),
-  house('house', 'House'),
-  villa('villa', 'Villa'),
-  land('land', 'Land'),
-  shop('shop', 'Shop / Commercial'),
-  office('office', 'Office');
+  house('house', 'خانوو'),
+  villa('villa', 'ڤێڵا'),
+  shop('shop', 'دوکان'),
+  land('land', 'زەوی'),
+  office('office', 'ئۆفیس'),
+  other('other', 'هیتر');
 
   const PropertyType(this.wire, this.label);
   final String wire;
   final String label;
 
+  // Unknown or legacy wire values (e.g. the old 'apartment') fall back to هیتر.
   static PropertyType fromWire(String? value) => PropertyType.values.firstWhere(
         (p) => p.wire == value,
-        orElse: () => PropertyType.apartment,
+        orElse: () => PropertyType.other,
       );
 }
 
