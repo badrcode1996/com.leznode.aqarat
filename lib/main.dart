@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,11 +26,17 @@ Future<void> main() async {
   // provider — register the token printed in logcat once in the console;
   // release builds use Play Integrity (Android) / App Attest (iOS). Enforcement
   // must stay OFF in the console until live traffic shows valid tokens.
-  await FirebaseAppCheck.instance.activate(
-    androidProvider:
-        kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
-    appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
-  );
+  //
+  // Web is skipped: it would need a reCAPTCHA web provider + a registered site
+  // key. With enforcement OFF this isn't required for the web build to work; add
+  // a ReCaptchaV3Provider here once a site key is configured.
+  if (!kIsWeb) {
+    await FirebaseAppCheck.instance.activate(
+      androidProvider:
+          kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+      appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
+    );
+  }
 
   runApp(const ProviderScope(child: AqaratApp()));
 }
