@@ -10,6 +10,7 @@ import '../../models/enums.dart';
 import '../../models/property_model.dart';
 import '../listings/my_listings_screen.dart';
 import '../settings/settings_screen.dart';
+import 'overdue_screen.dart';
 import 'widgets/property_card.dart';
 import 'widgets/request_card.dart';
 import 'widgets/stat_card.dart';
@@ -157,6 +158,11 @@ class DashboardScreen extends ConsumerWidget {
                       icon: Icons.warning_rounded,
                       accent: const Color(0xFFEF4444), // سووری کاڵ
                       highlight: true,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const OverdueScreen()),
+                      ),
                     ),
                     const SizedBox(width: 12),
                     StatCard(

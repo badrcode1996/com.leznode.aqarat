@@ -19,12 +19,16 @@ class StatCard extends StatelessWidget {
     this.highlight = false,
     this.sparkline,
     this.width = 168,
+    this.onTap,
   });
 
   final String title;
   final String value;
   final IconData icon;
   final Color accent;
+
+  /// Optional tap handler (e.g. open the overdue-tenants list).
+  final VoidCallback? onTap;
 
   /// Highlights the card (e.g. overdue payments in red).
   final bool highlight;
@@ -40,7 +44,7 @@ class StatCard extends StatelessWidget {
     final Color valueColor = highlight ? modernRed : accent;
     final Color borderColor = highlight ? modernRed.withValues(alpha: 0.3) : Colors.grey.shade200;
 
-    return Container(
+    final card = Container(
       width: width,
       margin: const EdgeInsetsDirectional.only(end: 12),
       padding: const EdgeInsets.all(16),
@@ -116,6 +120,9 @@ class StatCard extends StatelessWidget {
         ],
       ),
     );
+
+    if (onTap == null) return card;
+    return GestureDetector(onTap: onTap, child: card);
   }
 }
 
