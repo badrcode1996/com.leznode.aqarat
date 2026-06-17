@@ -8,6 +8,7 @@ import '../../admin/admin_repository.dart';
 import '../../auth/session.dart';
 import '../../models/company_model.dart';
 import '../../models/enums.dart';
+import '../../models/plan_config_model.dart';
 import '../../services/export/export_service.dart';
 import 'plan_settings_screen.dart';
 import 'template_editor_screen.dart';
@@ -619,6 +620,11 @@ class _CompanyUsersScreen extends ConsumerWidget {
           onPressed: () => _changeAccess(context, ref),
         ),
         IconButton(
+          tooltip: 'تایبەتمەندییەکان',
+          icon: const Icon(Icons.toggle_on_outlined, color: accentYellow),
+          onPressed: () => _editFeatures(context, ref),
+        ),
+        IconButton(
           tooltip: 'دەرهێنان (Export)',
           icon: const Icon(Icons.file_download_outlined, color: accentYellow),
           onPressed: () => _chooseExport(context, ref),
@@ -845,6 +851,123 @@ class _CompanyUsersScreen extends ConsumerWidget {
               content: Text('هەڵە: $e'),
               backgroundColor: Colors.red.shade700));
         }
+      }
+    }
+  }
+
+  static const _featureLabels = {
+    'sale': 'گرێبەستی فرۆشتن',
+    'overdue': 'ئاگاداری کرێی دواکەوتوو',
+    'market': 'بازاڕی گشتی',
+    'offers': 'خستنەڕووی موڵک',
+    'requests': 'داواکاری موشتەری',
+    'lawyers': 'پارێزەران',
+  };
+
+  Future<void> _editFeatures(BuildContext context, WidgetRef ref) async {
+    // 0 = inherit (وەک پلان), 1 = on, 2 = off
+    final state = <String, int>{};
+    for (final k in PlanFeatures.overridableKeys) {
+      final ov = company.featureOverrides[k];
+      state[k] = ov == null ? 0 : (ov ? 1 : 2);
+    }
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialog) => AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('تایبەتمەندییەکانی کۆمپانیا',
+              style: TextStyle(
+                  color: primaryDarkBlue, fontWeight: FontWeight.bold)),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'سەرپێچی لەسەر پلانەکە. «وەک پلان» = بنەڕەتی پلانەکە.',
+                    style:
+                        TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  ),
+                  const SizedBox(height: 12),
+                  for (final k in PlanFeatures.overridableKeys)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(_featureLabels[k] ?? k,
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 4),
+                          SizedBox(
+                            width: double.infinity,
+                            child: SegmentedButton<int>(
+                              showSelectedIcon: false,
+                              style: SegmentedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                selectedForegroundColor: Colors.white,
+                                selectedBackgroundColor: primaryDarkBlue,
+                                visualDensity: VisualDensity.compact,
+                              ),
+                              segments: const [
+                                ButtonSegment(
+                                    value: 0, label: Text('وەک پلان')),
+                                ButtonSegment(value: 1, label: Text('چالاک')),
+                                ButtonSegment(
+                                    value: 2, label: Text('ناچالاک')),
+                              ],
+                              selected: {state[k]!},
+                              onSelectionChanged: (s) =>
+                                  setDialog(() => state[k] = s.first),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('پاشگەزبوونەوە',
+                    style: TextStyle(color: Colors.grey))),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryDarkBlue,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10))),
+              onPressed: () => Navigator.pop(ctx, true),
+              child:
+                  const Text('پاشەکەوت', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (ok != true) return;
+    final overrides = <String, bool>{};
+    state.forEach((k, v) {
+      if (v != 0) overrides[k] = v == 1;
+    });
+    try {
+      await ref
+          .read(adminRepositoryProvider)
+          .setFeatureOverrides(company.id, overrides);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('تایبەتمەندییەکان نوێکرانەوە'),
+            backgroundColor: Colors.green));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('هەڵە: $e'), backgroundColor: Colors.red.shade700));
       }
     }
   }

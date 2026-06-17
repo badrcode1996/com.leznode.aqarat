@@ -25,7 +25,8 @@ final currentPlanFeaturesProvider = Provider<PlanFeatures>((ref) {
   final config =
       ref.watch(planConfigProvider).valueOrNull ?? PlanConfig.defaults;
   if (user.role == UserRole.superAdmin) return config.gold;
-  return config.forPlan(user.plan);
+  // Plan features, then the company's per-feature overrides on top.
+  return config.forPlan(user.plan).applyOverrides(user.featureOverrides);
 });
 
 final planConfigRepositoryProvider = Provider<PlanConfigRepository>((ref) {

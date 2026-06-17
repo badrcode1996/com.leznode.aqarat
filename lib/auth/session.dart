@@ -20,6 +20,7 @@ class SessionUser {
     this.branchAdmin = false,
     this.plan = CompanyPlan.bronze,
     this.webOnly = false,
+    this.featureOverrides = const {},
   });
 
   final String uid;
@@ -33,6 +34,9 @@ class SessionUser {
 
   /// When true the company is web-only: the mobile app blocks login.
   final bool webOnly;
+
+  /// Per-company feature overrides on top of the plan (see Company).
+  final Map<String, bool> featureOverrides;
 
   /// The signed-in user's own phone (their Global Market contact number).
   final String phone;
@@ -111,12 +115,17 @@ final sessionProvider = FutureProvider<SessionUser?>((ref) async {
   final companyId = data['company_id'] as String? ?? '';
   var plan = CompanyPlan.bronze;
   var webOnly = false;
+  var featureOverrides = const <String, bool>{};
   if (companyId.isNotEmpty) {
     final companySnap =
         await db.collection('companies').doc(companyId).get();
     final companyData = companySnap.data();
     plan = CompanyPlan.fromWire(companyData?['plan'] as String?);
     webOnly = companyData?['web_only'] as bool? ?? false;
+    final ov = companyData?['feature_overrides'] as Map?;
+    if (ov != null) {
+      featureOverrides = ov.map((k, v) => MapEntry(k.toString(), v as bool));
+    }
   }
 
   return SessionUser(
@@ -129,6 +138,7 @@ final sessionProvider = FutureProvider<SessionUser?>((ref) async {
     branchAdmin: data['branch_admin'] as bool? ?? false,
     plan: plan,
     webOnly: webOnly,
+    featureOverrides: featureOverrides,
   );
 });
 

@@ -248,6 +248,16 @@ class AdminRepository {
         .update({'web_only': webOnly});
   }
 
+  /// Replaces a company's per-feature overrides (on top of its plan). Only keys
+  /// the Super Admin forced on/off are stored; the rest inherit the plan.
+  Future<void> setFeatureOverrides(
+      String companyId, Map<String, bool> overrides) {
+    return _db
+        .collection('companies')
+        .doc(companyId)
+        .update({'feature_overrides': overrides});
+  }
+
   /// Changes a user's password via the `setUserPassword` Cloud Function
   /// (direct password setting requires the Admin SDK). The function verifies
   /// the caller is a Super Admin.

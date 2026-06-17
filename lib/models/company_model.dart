@@ -25,6 +25,7 @@ class Company {
     this.branches = const [],
     this.plan = CompanyPlan.bronze,
     this.webOnly = false,
+    this.featureOverrides = const {},
   });
 
   final String id;
@@ -40,6 +41,10 @@ class Company {
   final List<String> branches; // لقەکان — branch names defined by Super Admin
   final CompanyPlan plan; // subscription tier (gates features)
   final bool webOnly; // when true, the mobile app blocks login (web only)
+
+  /// Per-company feature overrides on top of the plan. key = feature name,
+  /// value = forced on/off. Absent key → inherit the plan value.
+  final Map<String, bool> featureOverrides;
 
   /// Preferred label for the UI: Kurdish first, then Arabic, then English.
   String get displayName =>
@@ -62,6 +67,10 @@ class Company {
             .toList(),
         plan: CompanyPlan.fromWire(json['plan'] as String?),
         webOnly: json['web_only'] as bool? ?? false,
+        featureOverrides: (json['feature_overrides'] as Map?)?.map(
+              (k, v) => MapEntry(k.toString(), v as bool),
+            ) ??
+            const {},
       );
 
   Map<String, dynamic> toJson() => {
@@ -77,6 +86,7 @@ class Company {
         'branches': branches,
         'plan': plan.wire,
         'web_only': webOnly,
+        'feature_overrides': featureOverrides,
       };
 
   /// Turns an English company name into a safe, readable Firestore document id.

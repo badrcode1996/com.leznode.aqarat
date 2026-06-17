@@ -55,6 +55,32 @@ class PlanFeatures {
         'web_only': webOnly,
       };
 
+  /// The feature keys a company can override on top of its plan (limits +
+  /// webOnly are not per-feature overridable here).
+  static const overridableKeys = [
+    'sale',
+    'overdue',
+    'market',
+    'offers',
+    'requests',
+    'lawyers',
+  ];
+
+  /// Returns these features with any per-company overrides applied. A key
+  /// present in [overrides] forces that feature on/off; an absent key inherits
+  /// the plan value.
+  PlanFeatures applyOverrides(Map<String, bool> overrides) {
+    if (overrides.isEmpty) return this;
+    return copyWith(
+      sale: overrides['sale'],
+      overdue: overrides['overdue'],
+      market: overrides['market'],
+      offers: overrides['offers'],
+      requests: overrides['requests'],
+      lawyers: overrides['lawyers'],
+    );
+  }
+
   PlanFeatures copyWith({
     bool? sale,
     bool? overdue,
