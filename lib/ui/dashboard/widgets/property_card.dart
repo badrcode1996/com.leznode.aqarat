@@ -48,20 +48,8 @@ class PropertyCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ئایکۆن / شوێنی وێنە
-            Container(
-              width: 84,
-              height: 84,
-              decoration: BoxDecoration(
-                color: accentColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                Icons.maps_home_work_outlined,
-                color: accentColor,
-                size: 34,
-              ),
-            ),
+            // وێنەی خانوو (ئەگەر هەبێت) یان ئایکۆن
+            _thumb(accentColor),
             const SizedBox(width: 12),
 
             // زانیارییەکانی موڵک
@@ -166,6 +154,31 @@ class PropertyCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// 84×84 thumbnail: the house photo when present, else an icon placeholder.
+  Widget _thumb(Color accentColor) {
+    final placeholder = Container(
+      width: 84,
+      height: 84,
+      decoration: BoxDecoration(
+        color: accentColor.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(Icons.maps_home_work_outlined, color: accentColor, size: 34),
+    );
+    if (listing.imageUrl.isEmpty) return placeholder;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: Image.network(
+        listing.imageUrl,
+        width: 84,
+        height: 84,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => placeholder,
+        loadingBuilder: (ctx, child, prog) => prog == null ? child : placeholder,
       ),
     );
   }
