@@ -16,6 +16,7 @@ class StatCard extends StatelessWidget {
     required this.value,
     required this.icon,
     required this.accent,
+    this.secondValue,
     this.highlight = false,
     this.sparkline,
     this.width = 168,
@@ -24,6 +25,9 @@ class StatCard extends StatelessWidget {
 
   final String title;
   final String value;
+
+  /// Optional second line under [value] — e.g. a second currency total.
+  final String? secondValue;
   final IconData icon;
   final Color accent;
 
@@ -94,13 +98,30 @@ class StatCard extends StatelessWidget {
                   value,
                   maxLines: 1,
                   style: TextStyle(
-                    fontSize: 22,
+                    fontSize: secondValue == null ? 22 : 19,
                     fontWeight: FontWeight.bold,
                     color: valueColor,
                     letterSpacing: 0.5,
                   ),
                 ),
               ),
+
+              // دراوی دووەم (ئەگەر هەبێت)
+              if (secondValue != null)
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Text(
+                    secondValue!,
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: valueColor.withValues(alpha: 0.75),
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
 
               const SizedBox(height: 4),
 

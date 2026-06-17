@@ -50,12 +50,25 @@ class DashboardScreen extends ConsumerWidget {
     final contractsThisMonth = contracts
         .where((c) => c.createdAt.year == now.year && c.createdAt.month == now.month)
         .length;
-    num overdue = 0;
+    // Cashbox (received-from-tenant) and overdue (pending + past due), each
+    // split by currency so دینار and دۆلار are summed separately.
+    num collectedIqd = 0, collectedUsd = 0, overdueIqd = 0, overdueUsd = 0;
     for (final c in contracts) {
-      if (c is RentContract) {
-        for (final inst in c.installments) {
-          if (inst.status == PaymentStatus.pending && inst.dueDate.isBefore(now)) {
-            overdue += c.rentAmount;
+      if (c is! RentContract) continue;
+      final isIqd = c.currency == Currency.iqd;
+      for (final inst in c.installments) {
+        if (inst.status == PaymentStatus.receivedFromTenant) {
+          if (isIqd) {
+            collectedIqd += c.rentAmount;
+          } else {
+            collectedUsd += c.rentAmount;
+          }
+        } else if (inst.status == PaymentStatus.pending &&
+            inst.dueDate.isBefore(now)) {
+          if (isIqd) {
+            overdueIqd += c.rentAmount;
+          } else {
+            overdueUsd += c.rentAmount;
           }
         }
       }
@@ -142,7 +155,8 @@ class DashboardScreen extends ConsumerWidget {
                   children: [
                     StatCard(
                       title: 'قاسەی نووسینگە',
-                      value: _money.format(stats?.collectedRevenue ?? 0),
+                      value: '${_money.format(collectedIqd)} د.ع',
+                      secondValue: '${_money.format(collectedUsd)} \$',
                       icon: Icons.account_balance_wallet_rounded,
                       accent: primaryDarkBlue, // ڕەنگی مۆدێرن بۆ قاسە
                     ),
@@ -157,7 +171,8 @@ class DashboardScreen extends ConsumerWidget {
                       const SizedBox(width: 12),
                       StatCard(
                         title: 'پارەی دواکەوتوو',
-                        value: _money.format(overdue),
+                        value: '${_money.format(overdueIqd)} د.ع',
+                        secondValue: '${_money.format(overdueUsd)} \$',
                         icon: Icons.warning_rounded,
                         accent: const Color(0xFFEF4444), // سووری کاڵ
                         highlight: true,
