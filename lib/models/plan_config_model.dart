@@ -13,6 +13,7 @@ class PlanFeatures {
     this.offers = false,
     this.requests = false,
     this.lawyers = false,
+    this.guarantees = false,
     this.maxBranches = 0,
     this.maxUsers = 0,
     this.webOnly = false,
@@ -24,6 +25,7 @@ class PlanFeatures {
   final bool offers; // خستنەڕووی موڵک
   final bool requests; // داواکاری موشتەری
   final bool lawyers; // پارێزەران
+  final bool guarantees; // کۆی دڵنیایی (guarantee/deposit totals)
   final int maxBranches; // 0 = unlimited
   final int maxUsers; // 0 = unlimited
   final bool webOnly; // platform = web only
@@ -38,6 +40,7 @@ class PlanFeatures {
         offers: j['offers'] as bool? ?? false,
         requests: j['requests'] as bool? ?? false,
         lawyers: j['lawyers'] as bool? ?? false,
+        guarantees: j['guarantees'] as bool? ?? false,
         maxBranches: (j['max_branches'] as num?)?.toInt() ?? 0,
         maxUsers: (j['max_users'] as num?)?.toInt() ?? 0,
         webOnly: j['web_only'] as bool? ?? false,
@@ -50,6 +53,7 @@ class PlanFeatures {
         'offers': offers,
         'requests': requests,
         'lawyers': lawyers,
+        'guarantees': guarantees,
         'max_branches': maxBranches,
         'max_users': maxUsers,
         'web_only': webOnly,
@@ -64,6 +68,7 @@ class PlanFeatures {
     'offers',
     'requests',
     'lawyers',
+    'guarantees',
   ];
 
   /// Returns these features with any per-company overrides applied. A key
@@ -78,6 +83,7 @@ class PlanFeatures {
       offers: overrides['offers'],
       requests: overrides['requests'],
       lawyers: overrides['lawyers'],
+      guarantees: overrides['guarantees'],
     );
   }
 
@@ -88,6 +94,7 @@ class PlanFeatures {
     bool? offers,
     bool? requests,
     bool? lawyers,
+    bool? guarantees,
     int? maxBranches,
     int? maxUsers,
     bool? webOnly,
@@ -99,6 +106,7 @@ class PlanFeatures {
         offers: offers ?? this.offers,
         requests: requests ?? this.requests,
         lawyers: lawyers ?? this.lawyers,
+        guarantees: guarantees ?? this.guarantees,
         maxBranches: maxBranches ?? this.maxBranches,
         maxUsers: maxUsers ?? this.maxUsers,
         webOnly: webOnly ?? this.webOnly,
@@ -161,6 +169,7 @@ class PlanConfig {
       offers: true,
       requests: true,
       lawyers: true,
+      guarantees: true,
       maxBranches: 0,
       maxUsers: 0,
       webOnly: false,

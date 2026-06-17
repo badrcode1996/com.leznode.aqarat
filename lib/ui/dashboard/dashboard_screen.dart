@@ -53,9 +53,16 @@ class DashboardScreen extends ConsumerWidget {
     // Cashbox (received-from-tenant) and overdue (pending + past due), each
     // split by currency so دینار and دۆلار are summed separately.
     num collectedIqd = 0, collectedUsd = 0, overdueIqd = 0, overdueUsd = 0;
+    num guaranteeIqd = 0, guaranteeUsd = 0;
     for (final c in contracts) {
       if (c is! RentContract) continue;
       final isIqd = c.currency == Currency.iqd;
+      // Guarantee/deposit total (once per rent contract).
+      if (isIqd) {
+        guaranteeIqd += c.guaranteeAmount;
+      } else {
+        guaranteeUsd += c.guaranteeAmount;
+      }
       for (final inst in c.installments) {
         if (inst.status == PaymentStatus.receivedFromTenant) {
           if (isIqd) {
@@ -160,6 +167,16 @@ class DashboardScreen extends ConsumerWidget {
                       icon: Icons.account_balance_wallet_rounded,
                       accent: primaryDarkBlue, // ڕەنگی مۆدێرن بۆ قاسە
                     ),
+                    if (features.guarantees) ...[
+                      const SizedBox(width: 12),
+                      StatCard(
+                        title: 'کۆی دڵنیایی',
+                        value: '${_money.format(guaranteeIqd)} د.ع',
+                        secondValue: '${_money.format(guaranteeUsd)} \$',
+                        icon: Icons.shield_outlined,
+                        accent: const Color(0xFF8B5CF6), // مۆری بۆ دڵنیایی
+                      ),
+                    ],
                     const SizedBox(width: 12),
                     StatCard(
                       title: 'گرێبەستەکانی ئەم مانگە',

@@ -174,6 +174,8 @@ class _PlanSettingsScreenState extends ConsumerState<PlanSettingsScreen> {
               (v) => onChanged(f.copyWith(requests: v))),
           _toggle('پارێزەران', f.lawyers,
               (v) => onChanged(f.copyWith(lawyers: v))),
+          _toggle('کۆی دڵنیایی', f.guarantees,
+              (v) => onChanged(f.copyWith(guarantees: v))),
           _toggle('تەنها وێب (ئەپ ڕێگری لێدەکات)', f.webOnly,
               (v) => onChanged(f.copyWith(webOnly: v))),
           const Divider(height: 24),
