@@ -54,7 +54,17 @@ class DashboardScreen extends ConsumerWidget {
     // split by currency so دینار and دۆلار are summed separately.
     num collectedIqd = 0, collectedUsd = 0, overdueIqd = 0, overdueUsd = 0;
     num guaranteeIqd = 0, guaranteeUsd = 0;
+    num commissionIqd = 0, commissionUsd = 0;
     for (final c in contracts) {
+      if (c is SaleContract) {
+        // Sale commission total, split by currency.
+        if (c.currency == Currency.iqd) {
+          commissionIqd += c.commission;
+        } else {
+          commissionUsd += c.commission;
+        }
+        continue;
+      }
       if (c is! RentContract) continue;
       final isIqd = c.currency == Currency.iqd;
       // Guarantee/deposit total (once per rent contract).
@@ -175,6 +185,16 @@ class DashboardScreen extends ConsumerWidget {
                         secondValue: '${_money.format(guaranteeUsd)} \$',
                         icon: Icons.shield_outlined,
                         accent: const Color(0xFF8B5CF6), // مۆری بۆ دڵنیایی
+                      ),
+                    ],
+                    if (features.commission) ...[
+                      const SizedBox(width: 12),
+                      StatCard(
+                        title: 'کۆی عمولە',
+                        value: '${_money.format(commissionIqd)} د.ع',
+                        secondValue: '${_money.format(commissionUsd)} \$',
+                        icon: Icons.percent_rounded,
+                        accent: const Color(0xFF0EA5E9), // شینی بۆ عمولە
                       ),
                     ],
                     const SizedBox(width: 12),

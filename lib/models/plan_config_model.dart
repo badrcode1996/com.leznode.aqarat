@@ -14,6 +14,7 @@ class PlanFeatures {
     this.requests = false,
     this.lawyers = false,
     this.guarantees = false,
+    this.commission = false,
     this.maxBranches = 0,
     this.maxUsers = 0,
     this.webOnly = false,
@@ -26,6 +27,7 @@ class PlanFeatures {
   final bool requests; // داواکاری موشتەری
   final bool lawyers; // پارێزەران
   final bool guarantees; // کۆی دڵنیایی (guarantee/deposit totals)
+  final bool commission; // کۆی عمولە (sale-contract commission totals)
   final int maxBranches; // 0 = unlimited
   final int maxUsers; // 0 = unlimited
   final bool webOnly; // platform = web only
@@ -41,6 +43,7 @@ class PlanFeatures {
         requests: j['requests'] as bool? ?? false,
         lawyers: j['lawyers'] as bool? ?? false,
         guarantees: j['guarantees'] as bool? ?? false,
+        commission: j['commission'] as bool? ?? false,
         maxBranches: (j['max_branches'] as num?)?.toInt() ?? 0,
         maxUsers: (j['max_users'] as num?)?.toInt() ?? 0,
         webOnly: j['web_only'] as bool? ?? false,
@@ -54,6 +57,7 @@ class PlanFeatures {
         'requests': requests,
         'lawyers': lawyers,
         'guarantees': guarantees,
+        'commission': commission,
         'max_branches': maxBranches,
         'max_users': maxUsers,
         'web_only': webOnly,
@@ -69,6 +73,7 @@ class PlanFeatures {
     'requests',
     'lawyers',
     'guarantees',
+    'commission',
   ];
 
   /// Returns these features with any per-company overrides applied. A key
@@ -84,6 +89,7 @@ class PlanFeatures {
       requests: overrides['requests'],
       lawyers: overrides['lawyers'],
       guarantees: overrides['guarantees'],
+      commission: overrides['commission'],
     );
   }
 
@@ -95,6 +101,7 @@ class PlanFeatures {
     bool? requests,
     bool? lawyers,
     bool? guarantees,
+    bool? commission,
     int? maxBranches,
     int? maxUsers,
     bool? webOnly,
@@ -107,6 +114,7 @@ class PlanFeatures {
         requests: requests ?? this.requests,
         lawyers: lawyers ?? this.lawyers,
         guarantees: guarantees ?? this.guarantees,
+        commission: commission ?? this.commission,
         maxBranches: maxBranches ?? this.maxBranches,
         maxUsers: maxUsers ?? this.maxUsers,
         webOnly: webOnly ?? this.webOnly,
@@ -119,22 +127,26 @@ class PlanConfig {
     required this.bronze,
     required this.silver,
     required this.gold,
+    required this.diamond,
   });
 
   final PlanFeatures bronze;
   final PlanFeatures silver;
   final PlanFeatures gold;
+  final PlanFeatures diamond;
 
   PlanFeatures forPlan(CompanyPlan plan) => switch (plan) {
         CompanyPlan.bronze => bronze,
         CompanyPlan.silver => silver,
         CompanyPlan.gold => gold,
+        CompanyPlan.diamond => diamond,
       };
 
   PlanConfig withPlan(CompanyPlan plan, PlanFeatures features) => PlanConfig(
         bronze: plan == CompanyPlan.bronze ? features : bronze,
         silver: plan == CompanyPlan.silver ? features : silver,
         gold: plan == CompanyPlan.gold ? features : gold,
+        diamond: plan == CompanyPlan.diamond ? features : diamond,
       );
 
   /// Built-in defaults — mirror the agreed matrix. Used until the Super Admin
@@ -170,6 +182,22 @@ class PlanConfig {
       requests: true,
       lawyers: true,
       guarantees: true,
+      commission: true,
+      maxBranches: 0,
+      maxUsers: 0,
+      webOnly: false,
+    ),
+    // Diamond = the top/custom tier: everything on + unlimited by default; the
+    // Super Admin tailors it per company via feature overrides.
+    diamond: PlanFeatures(
+      sale: true,
+      overdue: true,
+      market: true,
+      offers: true,
+      requests: true,
+      lawyers: true,
+      guarantees: true,
+      commission: true,
       maxBranches: 0,
       maxUsers: 0,
       webOnly: false,
@@ -186,11 +214,16 @@ class PlanConfig {
         gold: j['gold'] is Map
             ? PlanFeatures.fromJson((j['gold'] as Map).cast<String, dynamic>())
             : defaults.gold,
+        diamond: j['diamond'] is Map
+            ? PlanFeatures.fromJson(
+                (j['diamond'] as Map).cast<String, dynamic>())
+            : defaults.diamond,
       );
 
   Map<String, dynamic> toJson() => {
         'bronze': bronze.toJson(),
         'silver': silver.toJson(),
         'gold': gold.toJson(),
+        'diamond': diamond.toJson(),
       };
 }

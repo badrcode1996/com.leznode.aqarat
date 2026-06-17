@@ -320,6 +320,7 @@ class SaleContract extends Contract {
     required this.withdrawalAmount, // بڕی پاشگەزبوونەوە
     required this.lawyer, // پارێزەر
     required this.deliveryDate, // ڕێکەوتی تەسلیم
+    this.commission = 0, // عمولە
     this.notes = '',
     this.agentName = '',
   }) : super(type: ContractType.sale);
@@ -342,6 +343,7 @@ class SaleContract extends Contract {
   final num withdrawalAmount;
   final String lawyer;
   final DateTime deliveryDate;
+  final num commission; // عمولە (sale commission)
 
   final String notes;
   final String agentName; // name of the user who created the contract
@@ -378,6 +380,7 @@ class SaleContract extends Contract {
       lawyer: json['lawyer'] as String? ?? '',
       deliveryDate:
           (json['delivery_date'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      commission: json['commission'] as num? ?? 0,
       notes: json['notes'] as String? ?? '',
       agentName: json['agent_name'] as String? ?? '',
     );
@@ -402,6 +405,7 @@ class SaleContract extends Contract {
         'withdrawal_amount': withdrawalAmount,
         'lawyer': lawyer,
         'delivery_date': Timestamp.fromDate(deliveryDate),
+        'commission': commission,
         'notes': notes,
         'agent_name': agentName,
       };

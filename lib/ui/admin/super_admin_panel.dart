@@ -863,6 +863,7 @@ class _CompanyUsersScreen extends ConsumerWidget {
     'requests': 'داواکاری موشتەری',
     'lawyers': 'پارێزەران',
     'guarantees': 'کۆی دڵنیایی',
+    'commission': 'کۆی عمولە',
   };
 
   Future<void> _editFeatures(BuildContext context, WidgetRef ref) async {
@@ -1324,24 +1325,19 @@ class _PlanSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SegmentedButton<CompanyPlan>(
+      showSelectedIcon: false,
       style: SegmentedButton.styleFrom(
         backgroundColor: Colors.white,
         selectedForegroundColor: Colors.white,
         selectedBackgroundColor: primaryDarkBlue,
+        visualDensity: VisualDensity.compact,
+        padding: const EdgeInsets.symmetric(horizontal: 8),
       ),
       segments: const [
-        ButtonSegment(
-            value: CompanyPlan.bronze,
-            label: Text('بڕۆنز'),
-            icon: Icon(Icons.workspace_premium, color: Color(0xFFCD7F32))),
-        ButtonSegment(
-            value: CompanyPlan.silver,
-            label: Text('سیلڤەر'),
-            icon: Icon(Icons.workspace_premium, color: Color(0xFF9CA3AF))),
-        ButtonSegment(
-            value: CompanyPlan.gold,
-            label: Text('گۆڵد'),
-            icon: Icon(Icons.workspace_premium, color: accentYellow)),
+        ButtonSegment(value: CompanyPlan.bronze, label: Text('بڕۆنز')),
+        ButtonSegment(value: CompanyPlan.silver, label: Text('سیلڤەر')),
+        ButtonSegment(value: CompanyPlan.gold, label: Text('گۆڵد')),
+        ButtonSegment(value: CompanyPlan.diamond, label: Text('دایمۆند')),
       ],
       selected: {value},
       onSelectionChanged: (s) => onChanged(s.first),

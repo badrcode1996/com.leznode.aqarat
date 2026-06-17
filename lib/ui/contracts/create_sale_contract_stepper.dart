@@ -93,6 +93,7 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
   final _paymentMethod = TextEditingController();
   final _lateFee = TextEditingController();
   final _withdrawal = TextEditingController();
+  final _commission = TextEditingController();
   final _lawyer = TextEditingController();
 
   Currency _currency = Currency.iqd;
@@ -120,6 +121,7 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
     _paymentMethod.text = e.paymentMethod;
     _lateFee.text = _numText(e.lateFeePerDay);
     _withdrawal.text = _numText(e.withdrawalAmount);
+    _commission.text = _numText(e.commission);
     _lawyer.text = e.lawyer;
     _currency = e.currency;
     _deliveryDate = e.deliveryDate;
@@ -134,7 +136,7 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
     for (final c in [
       _party1Name, _party1Mobile, _party2Name, _party2Mobile, _propertyType,
       _projectName, _propertyNumber, _area, _totalPrice, _downPayment,
-      _paymentMethod, _lateFee, _withdrawal, _lawyer,
+      _paymentMethod, _lateFee, _withdrawal, _commission, _lawyer,
     ]) {
       c.dispose();
     }
@@ -170,6 +172,7 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
       paymentMethod: _paymentMethod.text.trim(),
       lateFeePerDay: _n(_lateFee),
       withdrawalAmount: _n(_withdrawal),
+      commission: _n(_commission),
       lawyer: _lawyer.text.trim(),
       deliveryDate: _deliveryDate,
       agentName: existing?.agentName ?? user.displayName,
@@ -340,6 +343,15 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
                       _text(_paymentMethod, 'شێوازی پارەدان', icon: Icons.account_balance_wallet_outlined),
                       _text(_lateFee, 'پێدانی بڕی دواکەوتن بۆ ڕۆژێک', keyboard: const TextInputType.numberWithOptions(decimal: true), icon: Icons.warning_amber_rounded),
                       _text(_withdrawal, 'بڕی پاشگەزبوونەوە', keyboard: const TextInputType.numberWithOptions(decimal: true), icon: Icons.money_off_outlined),
+                      // عمولە (ئارەزوومەندانە) — خۆکارانە دەچێتە کۆی عمولە
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: TextFormField(
+                          controller: _commission,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          decoration: modernInputDecoration(label: 'عمولە (کۆمیشن)', icon: Icons.percent_rounded),
+                        ),
+                      ),
                       _lawyerField(),
 
                       _datePicker('ڕێکەوتی تەسلیم', _deliveryDate, (d) => setState(() => _deliveryDate = d)),

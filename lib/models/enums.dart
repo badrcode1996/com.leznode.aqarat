@@ -26,7 +26,8 @@ enum UserRole {
 enum CompanyPlan {
   bronze('bronze', 'بڕۆنز'),
   silver('silver', 'سیلڤەر'),
-  gold('gold', 'گۆڵد');
+  gold('gold', 'گۆڵد'),
+  diamond('diamond', 'دایمۆند');
 
   const CompanyPlan(this.wire, this.label);
   final String wire;

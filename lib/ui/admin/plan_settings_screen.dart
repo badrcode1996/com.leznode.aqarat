@@ -22,6 +22,7 @@ class _PlanSettingsScreenState extends ConsumerState<PlanSettingsScreen> {
   PlanFeatures _bronze = PlanConfig.defaults.bronze;
   PlanFeatures _silver = PlanConfig.defaults.silver;
   PlanFeatures _gold = PlanConfig.defaults.gold;
+  PlanFeatures _diamond = PlanConfig.defaults.diamond;
 
   final _controllers = <String, TextEditingController>{};
   bool _loading = true;
@@ -38,10 +39,12 @@ class _PlanSettingsScreenState extends ConsumerState<PlanSettingsScreen> {
     _bronze = cfg.bronze;
     _silver = cfg.silver;
     _gold = cfg.gold;
+    _diamond = cfg.diamond;
     for (final e in {
       'bronze': cfg.bronze,
       'silver': cfg.silver,
       'gold': cfg.gold,
+      'diamond': cfg.diamond,
     }.entries) {
       _controllers['${e.key}_branches'] =
           TextEditingController(text: e.value.maxBranches.toString());
@@ -70,6 +73,9 @@ class _PlanSettingsScreenState extends ConsumerState<PlanSettingsScreen> {
           maxBranches: _num('silver_branches'), maxUsers: _num('silver_users')),
       gold: _gold.copyWith(
           maxBranches: _num('gold_branches'), maxUsers: _num('gold_users')),
+      diamond: _diamond.copyWith(
+          maxBranches: _num('diamond_branches'),
+          maxUsers: _num('diamond_users')),
     );
     try {
       await ref.read(planConfigRepositoryProvider).save(config);
@@ -113,6 +119,9 @@ class _PlanSettingsScreenState extends ConsumerState<PlanSettingsScreen> {
                 const SizedBox(height: 16),
                 _planCard('🥇 گۆڵد', 'gold', _gold,
                     (f) => setState(() => _gold = f)),
+                const SizedBox(height: 16),
+                _planCard('💎 دایمۆند', 'diamond', _diamond,
+                    (f) => setState(() => _diamond = f)),
                 const SizedBox(height: 24),
                 ElevatedButton(
                   onPressed: _saving ? null : _save,
@@ -176,6 +185,8 @@ class _PlanSettingsScreenState extends ConsumerState<PlanSettingsScreen> {
               (v) => onChanged(f.copyWith(lawyers: v))),
           _toggle('کۆی دڵنیایی', f.guarantees,
               (v) => onChanged(f.copyWith(guarantees: v))),
+          _toggle('کۆی عمولە', f.commission,
+              (v) => onChanged(f.copyWith(commission: v))),
           _toggle('تەنها وێب (ئەپ ڕێگری لێدەکات)', f.webOnly,
               (v) => onChanged(f.copyWith(webOnly: v))),
           const Divider(height: 24),
