@@ -413,7 +413,12 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
                         ],
                       ),
 
-                      _datePicker('بەرواری بەکرێگرتن', _startDate, (d) => setState(() => _startDate = d)),
+                      // هەڵبژاردنی بەرواری بەکرێگرتن، بەرواری ڕادەستکردن خۆکارانە
+                      // دەبێتە ساڵێک دواتر (دەکرێت دواتر بەدەست بگۆڕدرێت).
+                      _datePicker('بەرواری بەکرێگرتن', _startDate, (d) => setState(() {
+                        _startDate = d;
+                        _handoverDate = DateTime(d.year + 1, d.month, d.day);
+                      })),
                       _datePicker('بەرواری ڕادەستکردن', _handoverDate, (d) => setState(() => _handoverDate = d)),
 
                       _text(_paymentFrequency, 'کرێدان چەند مانگ جارێکە؟', keyboard: TextInputType.number, icon: Icons.update),
