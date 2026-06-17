@@ -137,17 +137,26 @@ class ContractRepository {
       }
       final old = Contract.fromJson(snap.id, data);
 
-      // Persist the edited document. Keep the immutable identity fields from
-      // the stored copy so a stale client object can't rewrite them.
+      // Persist the edited document. Keep the immutable identity fields from the
+      // stored copy so a stale client object can't rewrite them. Installment
+      // statuses are owned by updateInstallmentStatus — an edit must NEVER
+      // rewrite them (a stale snapshot would clobber a payment and drift the
+      // collected-revenue counter, leaving money "stuck" in the cashbox).
       final newData = updated.toJson()
         ..['contract_number'] = data['contract_number']
         ..['branch'] = data['branch']
         ..['agent_id'] = data['agent_id']
         ..['created_at'] = data['created_at'];
+      if (data['installments'] != null) {
+        newData['installments'] = data['installments'];
+      }
       txn.set(ref, newData);
 
-      final revenueDelta = _expectedValue(updated) - _expectedValue(old);
-      final collectedDelta = _collectedValue(updated) - _collectedValue(old);
+      // Deltas come from what was actually stored (new amounts + the stored
+      // installment statuses) so an edit can't drift the counters.
+      final stored = Contract.fromJson(snap.id, newData);
+      final revenueDelta = _expectedValue(stored) - _expectedValue(old);
+      final collectedDelta = _collectedValue(stored) - _collectedValue(old);
       if (revenueDelta != 0 || collectedDelta != 0) {
         txn.set(
           _statsDoc,
@@ -198,6 +207,40 @@ class ContractRepository {
         SetOptions(merge: true),
       );
     });
+  }
+
+  /// Recomputes the company_stats counters from scratch off the company's
+  /// actual contracts. Use this to repair any drift in the running counters
+  /// (e.g. money "stuck" in the cashbox after a bad edit).
+  Future<void> recalculateStats() async {
+    final snap =
+        await _contracts.where('company_id', isEqualTo: _user.companyId).get();
+    final contracts =
+        snap.docs.map((d) => Contract.fromJson(d.id, d.data())).toList();
+
+    num total = 0;
+    num collected = 0;
+    var rent = 0;
+    var sale = 0;
+    for (final c in contracts) {
+      total += _expectedValue(c);
+      collected += _collectedValue(c);
+      if (c.type == ContractType.rent) {
+        rent++;
+      } else {
+        sale++;
+      }
+    }
+
+    await _statsDoc.set({
+      'company_id': _user.companyId,
+      'contract_count': contracts.length,
+      'rent_contract_count': rent,
+      'sale_contract_count': sale,
+      'total_revenue': total,
+      'collected_revenue': collected,
+      'updated_at': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
   }
 
   /// Updates a single rent installment's `payment_status` and adjusts the

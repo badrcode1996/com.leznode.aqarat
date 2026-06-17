@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/session.dart';
+import '../../data/contract_repository.dart';
 import '../../models/enums.dart';
 import '../lawyers/lawyers_screen.dart';
 
@@ -98,8 +99,8 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
 
-          // بەشی بەڕێوەبردن — تەنها بۆ ئەدمین (پارێزەران: پلانی گۆڵد)
-          if (user.isAdmin && user.plan.canLawyers) ...[
+          // بەشی بەڕێوەبردن — تەنها بۆ ئەدمین
+          if (user.isAdmin) ...[
             const SizedBox(height: 20),
             const Padding(
               padding: EdgeInsets.only(left: 8, bottom: 8),
@@ -112,16 +113,33 @@ class SettingsScreen extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4))],
               ),
-              child: ListTile(
-                leading: const Icon(Icons.gavel_rounded, color: primaryDarkBlue),
-                title: const Text('پارێزەران', style: TextStyle(fontWeight: FontWeight.w600)),
-                subtitle: const Text('زیادکردن و دەستکاری لیستی پارێزەران',
-                    style: TextStyle(color: Colors.grey)),
-                trailing: const Icon(Icons.chevron_left_rounded, color: Colors.grey),
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const LawyersScreen()),
-                ),
+              child: Column(
+                children: [
+                  // پارێزەران — تەنها پلانی گۆڵد
+                  if (user.plan.canLawyers) ...[
+                    ListTile(
+                      leading: const Icon(Icons.gavel_rounded, color: primaryDarkBlue),
+                      title: const Text('پارێزەران', style: TextStyle(fontWeight: FontWeight.w600)),
+                      subtitle: const Text('زیادکردن و دەستکاری لیستی پارێزەران',
+                          style: TextStyle(color: Colors.grey)),
+                      trailing: const Icon(Icons.chevron_left_rounded, color: Colors.grey),
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const LawyersScreen()),
+                      ),
+                    ),
+                    const Divider(indent: 60, height: 1),
+                  ],
+                  // نوێکردنەوەی قاسە و ئامار (دووبارە حیسابکردن لە گرێبەستەکانەوە)
+                  ListTile(
+                    leading: const Icon(Icons.calculate_outlined, color: primaryDarkBlue),
+                    title: const Text('نوێکردنەوەی قاسە و ئامار', style: TextStyle(fontWeight: FontWeight.w600)),
+                    subtitle: const Text('دووبارە حیسابکردنیان لە گرێبەستەکانەوە',
+                        style: TextStyle(color: Colors.grey)),
+                    trailing: const Icon(Icons.chevron_left_rounded, color: Colors.grey),
+                    onTap: () => _recalcStats(context, ref),
+                  ),
+                ],
               ),
             ),
           ],
@@ -144,6 +162,49 @@ class SettingsScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _recalcStats(BuildContext context, WidgetRef ref) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('نوێکردنەوەی قاسە و ئامار',
+            style: TextStyle(
+                color: primaryDarkBlue, fontWeight: FontWeight.bold)),
+        content: const Text(
+            'قاسە و ئامارەکان لە نوێوە لە گرێبەستەکانەوە حیساب دەکرێنەوە. ئەمە هیچ گرێبەست یان پسولەیەک ناگۆڕێت.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('پاشگەزبوونەوە',
+                  style: TextStyle(color: Colors.grey))),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+                backgroundColor: primaryDarkBlue,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10))),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('نوێکردنەوە'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await ref.read(contractRepositoryProvider).recalculateStats();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('قاسە و ئامار نوێکرانەوە'),
+            backgroundColor: Color(0xFF10B981)));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('هەڵە: $e'), backgroundColor: Colors.red.shade700));
+      }
+    }
   }
 
   Widget _tile(IconData icon, String label, String value) => ListTile(
