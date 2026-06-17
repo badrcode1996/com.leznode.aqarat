@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../auth/session.dart';
 import '../../data/contract_repository.dart';
 import '../../data/listing_repository.dart';
+import '../../data/plan_config_repository.dart';
 import '../../models/contract_model.dart';
 import '../../models/enums.dart';
 import '../../models/property_model.dart';
@@ -30,6 +31,7 @@ class DashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
+    final features = ref.watch(currentPlanFeaturesProvider);
     final company = ref.watch(currentCompanyProvider).value;
     final stats = ref.watch(companyStatsProvider).value;
     final contracts = ref.watch(contractsStreamProvider).value ?? const [];
@@ -151,19 +153,21 @@ class DashboardScreen extends ConsumerWidget {
                       icon: Icons.description_rounded,
                       accent: const Color(0xFF10B981), // سەوزی کاڵ
                     ),
-                    const SizedBox(width: 12),
-                    StatCard(
-                      title: 'پارەی دواکەوتوو',
-                      value: _money.format(overdue),
-                      icon: Icons.warning_rounded,
-                      accent: const Color(0xFFEF4444), // سووری کاڵ
-                      highlight: true,
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => const OverdueScreen()),
+                    if (features.overdue) ...[
+                      const SizedBox(width: 12),
+                      StatCard(
+                        title: 'پارەی دواکەوتوو',
+                        value: _money.format(overdue),
+                        icon: Icons.warning_rounded,
+                        accent: const Color(0xFFEF4444), // سووری کاڵ
+                        highlight: true,
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const OverdueScreen()),
+                        ),
                       ),
-                    ),
+                    ],
                     const SizedBox(width: 12),
                     StatCard(
                       title: 'کۆی گرێبەستەکان',

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/session.dart';
 import '../../data/contract_repository.dart';
+import '../../data/plan_config_repository.dart';
 import '../../models/enums.dart';
 import '../lawyers/lawyers_screen.dart';
 
@@ -18,6 +19,7 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
+    final features = ref.watch(currentPlanFeaturesProvider);
     final company = ref.watch(currentCompanyProvider).value;
 
     final roleLabel = switch (user.role) {
@@ -115,8 +117,8 @@ class SettingsScreen extends ConsumerWidget {
               ),
               child: Column(
                 children: [
-                  // پارێزەران — تەنها پلانی گۆڵد
-                  if (user.plan.canLawyers) ...[
+                  // پارێزەران — بەپێی کۆنفیگی پلان
+                  if (features.lawyers) ...[
                     ListTile(
                       leading: const Icon(Icons.gavel_rounded, color: primaryDarkBlue),
                       title: const Text('پارێزەران', style: TextStyle(fontWeight: FontWeight.w600)),

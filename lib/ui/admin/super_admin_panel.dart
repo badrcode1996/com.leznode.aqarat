@@ -9,6 +9,7 @@ import '../../auth/session.dart';
 import '../../models/company_model.dart';
 import '../../models/enums.dart';
 import '../../services/export/export_service.dart';
+import 'plan_settings_screen.dart';
 import 'template_editor_screen.dart';
 
 // ڕەنگە سەرەکییەکان بۆ یەکپارچەیی دیزاینەکە
@@ -84,6 +85,14 @@ class SuperAdminPanel extends ConsumerWidget {
       appBar: modernAppBar(
         'بەڕێوەبەری گشتی',
         actions: [
+          IconButton(
+            tooltip: 'ڕێکخستنی پلانەکان',
+            icon: const Icon(Icons.tune_rounded, color: accentYellow),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const PlanSettingsScreen()),
+            ),
+          ),
           IconButton(
             tooltip: 'سوپەر ئەدمینەکان',
             icon: const Icon(Icons.shield_outlined, color: accentYellow),

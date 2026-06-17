@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../auth/session.dart';
+import '../../data/plan_config_repository.dart';
 import '../../models/enums.dart';
 import '../widgets/plan_locked.dart';
 import 'global_market_tab.dart';
@@ -18,7 +18,7 @@ class MarketScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (!ref.watch(currentUserProvider).plan.canListings) {
+    if (!ref.watch(currentPlanFeaturesProvider).market) {
       return Scaffold(
         backgroundColor: appBackgroundColor,
         appBar: AppBar(

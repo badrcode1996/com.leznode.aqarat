@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../auth/session.dart';
+import '../../data/plan_config_repository.dart';
 import '../../models/enums.dart';
 import '../archive/archive_screen.dart';
 import '../contracts/create_rent_contract_stepper.dart';
@@ -35,7 +35,7 @@ class _MainShellState extends ConsumerState<MainShell> {
   ];
 
   void _openQuickActions() {
-    final plan = ref.read(currentUserProvider).plan;
+    final features = ref.read(currentPlanFeaturesProvider);
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -55,12 +55,12 @@ class _MainShellState extends ConsumerState<MainShell> {
                 ),
               ),
               _action(Icons.home_work_outlined, 'گرێبەستی کرێ', const Color(0xFF10B981), () => _push(const CreateRentContractStepper())),
-              if (plan.canSaleContracts)
+              if (features.sale)
                 _action(Icons.sell_outlined, 'گرێبەستی فرۆشتن', const Color(0xFF3B82F6), () => _push(const CreateSaleContractStepper())),
-              if (plan.canListings) ...[
+              if (features.offers)
                 _action(Icons.add_home_work_outlined, 'خستنەڕووی موڵک', const Color(0xFFF59E0B), () => _push(const CreateListingScreen(kind: ListingKind.offer))),
+              if (features.requests)
                 _action(Icons.person_search_outlined, 'داواکاری موشتەری', const Color(0xFF8B5CF6), () => _push(const CreateListingScreen(kind: ListingKind.demand))),
-              ],
               const Divider(indent: 20, endIndent: 20, height: 8),
               _action(Icons.south_west_rounded, 'پسولەی پارە وەرگرتن', const Color(0xFF10B981), () => _push(const CreateReceiptScreen(type: ReceiptType.externalReceive))),
               _action(Icons.north_east_rounded, 'پسولەی پارەدان', const Color(0xFFEF4444), () => _push(const CreateReceiptScreen(type: ReceiptType.externalPay))),

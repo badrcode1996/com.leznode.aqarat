@@ -13,6 +13,7 @@ import '../models/app_user_model.dart';
 import '../models/company_model.dart';
 import '../models/contract_model.dart';
 import '../models/enums.dart';
+import '../models/plan_config_model.dart';
 import '../models/receipt_model.dart';
 
 /// Super-Admin provisioning: create companies (with logo), company admins, and
@@ -161,6 +162,18 @@ class AdminRepository {
     return companyId;
   }
 
+  /// The feature set + limits for [companyId]'s current plan.
+  Future<PlanFeatures> _planFeaturesFor(String companyId) async {
+    final companySnap =
+        await _db.collection('companies').doc(companyId).get();
+    final plan = CompanyPlan.fromWire(companySnap.data()?['plan'] as String?);
+    final cfgSnap = await _db.collection('config').doc('plans').get();
+    final config = cfgSnap.exists
+        ? PlanConfig.fromJson(cfgSnap.data()!)
+        : PlanConfig.defaults;
+    return config.forPlan(plan);
+  }
+
   /// Adds a single user (agent or admin) to an existing company.
   Future<String> addUserToCompany({
     required String companyId,
@@ -172,6 +185,22 @@ class AdminRepository {
     String branch = '',
     bool branchAdmin = false,
   }) async {
+    // Enforce the plan's user limit before creating the auth account.
+    final features = await _planFeaturesFor(companyId);
+    if (!features.unlimitedUsers) {
+      final count = (await _db
+                  .collection('users')
+                  .where('company_id', isEqualTo: companyId)
+                  .count()
+                  .get())
+              .count ??
+          0;
+      if (count >= features.maxUsers) {
+        throw Exception(
+            'سنووری یوزەری ئەم پلانە پڕبووە (${features.maxUsers}). بۆ زیادکردن پلانەکە بەرز بکەرەوە.');
+      }
+    }
+
     final uid = await _createAuthUser(email, password);
     final profile = AppUser(
       uid: uid,
@@ -188,11 +217,19 @@ class AdminRepository {
     return uid;
   }
 
-  /// Replaces the company's branch (لق) list.
-  Future<void> setBranches(String companyId, List<String> branches) {
-    return _db.collection('companies').doc(companyId).update({
-      'branches': branches.map((b) => b.trim()).where((b) => b.isNotEmpty).toList(),
-    });
+  /// Replaces the company's branch (لق) list. Enforces the plan's branch limit.
+  Future<void> setBranches(String companyId, List<String> branches) async {
+    final cleaned =
+        branches.map((b) => b.trim()).where((b) => b.isNotEmpty).toList();
+    final features = await _planFeaturesFor(companyId);
+    if (!features.unlimitedBranches && cleaned.length > features.maxBranches) {
+      throw Exception(
+          'ئەم پلانە تەنها ${features.maxBranches} لقی ڕێگەپێدراوە. پلانەکە بەرز بکەرەوە.');
+    }
+    await _db
+        .collection('companies')
+        .doc(companyId)
+        .update({'branches': cleaned});
   }
 
   /// Changes a company's subscription plan (Super Admin only).

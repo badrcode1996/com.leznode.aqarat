@@ -7,6 +7,7 @@ import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 import 'auth/session.dart';
+import 'data/plan_config_repository.dart';
 import 'firebase_options.dart';
 import 'models/enums.dart';
 import 'theme/app_theme.dart';
@@ -109,8 +110,16 @@ class _SessionGate extends ConsumerWidget {
       data: (user) {
         if (user == null) return const _NoAccessScreen();
         if (user.role == UserRole.superAdmin) return const SuperAdminPanel();
-        // Web-only companies are blocked in the mobile app.
-        if (!kIsWeb && user.webOnly) return const _WebOnlyScreen();
+        // Web-only is blocked in the mobile app — set per company OR per plan.
+        final planWebOnly = ref
+                .watch(planConfigProvider)
+                .valueOrNull
+                ?.forPlan(user.plan)
+                .webOnly ??
+            false;
+        if (!kIsWeb && (user.webOnly || planWebOnly)) {
+          return const _WebOnlyScreen();
+        }
         return const MainShell();
       },
     );
