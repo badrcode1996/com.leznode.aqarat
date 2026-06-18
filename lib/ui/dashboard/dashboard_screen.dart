@@ -59,13 +59,18 @@ class DashboardScreen extends ConsumerWidget {
     num commissionIqd = 0, commissionUsd = 0;
     for (final c in contracts) {
       if (c is SaleContract) {
-        // Commission total = only CONFIRMED items' actual paid amount.
-        for (final item in c.commissionItems) {
-          if (!item.confirmed) continue;
-          if (c.currency == Currency.iqd) {
-            commissionIqd += item.paid;
-          } else {
-            commissionUsd += item.paid;
+        // Commission resets monthly — only this month's sales count, and only
+        // CONFIRMED items' actual paid amount.
+        final thisMonth =
+            c.createdAt.year == now.year && c.createdAt.month == now.month;
+        if (thisMonth) {
+          for (final item in c.commissionItems) {
+            if (!item.confirmed) continue;
+            if (c.currency == Currency.iqd) {
+              commissionIqd += item.paid;
+            } else {
+              commissionUsd += item.paid;
+            }
           }
         }
         continue;
@@ -202,7 +207,7 @@ class DashboardScreen extends ConsumerWidget {
                     if (features.commission) ...[
                       const SizedBox(width: 12),
                       StatCard(
-                        title: 'کۆی عمولە',
+                        title: 'عمولەی ئەم مانگە',
                         value: '${_money.format(commissionIqd)} د.ع',
                         secondValue: '${_money.format(commissionUsd)} \$',
                         icon: Icons.percent_rounded,
