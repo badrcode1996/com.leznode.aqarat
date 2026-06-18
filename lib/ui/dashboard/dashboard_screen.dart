@@ -11,6 +11,8 @@ import '../../models/enums.dart';
 import '../../models/property_model.dart';
 import '../listings/my_listings_screen.dart';
 import '../settings/settings_screen.dart';
+import 'commissions_screen.dart';
+import 'guarantees_screen.dart';
 import 'overdue_screen.dart';
 import 'widgets/property_card.dart';
 import 'widgets/request_card.dart';
@@ -57,21 +59,26 @@ class DashboardScreen extends ConsumerWidget {
     num commissionIqd = 0, commissionUsd = 0;
     for (final c in contracts) {
       if (c is SaleContract) {
-        // Sale commission total, split by currency.
-        if (c.currency == Currency.iqd) {
-          commissionIqd += c.commission;
-        } else {
-          commissionUsd += c.commission;
+        // Commission total = only CONFIRMED items' actual paid amount.
+        for (final item in c.commissionItems) {
+          if (!item.confirmed) continue;
+          if (c.currency == Currency.iqd) {
+            commissionIqd += item.paid;
+          } else {
+            commissionUsd += item.paid;
+          }
         }
         continue;
       }
       if (c is! RentContract) continue;
       final isIqd = c.currency == Currency.iqd;
-      // Guarantee/deposit total (once per rent contract).
-      if (isIqd) {
-        guaranteeIqd += c.guaranteeAmount;
-      } else {
-        guaranteeUsd += c.guaranteeAmount;
+      // Guarantee/deposit total — only those still held (not returned).
+      if (!c.guaranteeReturned) {
+        if (isIqd) {
+          guaranteeIqd += c.guaranteeAmount;
+        } else {
+          guaranteeUsd += c.guaranteeAmount;
+        }
       }
       for (final inst in c.installments) {
         if (inst.status == PaymentStatus.receivedFromTenant) {
@@ -185,6 +192,11 @@ class DashboardScreen extends ConsumerWidget {
                         secondValue: '${_money.format(guaranteeUsd)} \$',
                         icon: Icons.shield_outlined,
                         accent: const Color(0xFF8B5CF6), // مۆری بۆ دڵنیایی
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const GuaranteesScreen()),
+                        ),
                       ),
                     ],
                     if (features.commission) ...[
@@ -195,6 +207,11 @@ class DashboardScreen extends ConsumerWidget {
                         secondValue: '${_money.format(commissionUsd)} \$',
                         icon: Icons.percent_rounded,
                         accent: const Color(0xFF0EA5E9), // شینی بۆ عمولە
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const CommissionsScreen()),
+                        ),
                       ),
                     ],
                     const SizedBox(width: 12),

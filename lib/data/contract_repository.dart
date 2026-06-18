@@ -243,6 +243,44 @@ class ContractRepository {
     }, SetOptions(merge: true));
   }
 
+  /// Marks a rent contract's guarantee as returned (or not) to the tenant.
+  Future<void> setGuaranteeReturned(String contractId, bool returned) {
+    return _contracts.doc(contractId).update({
+      'guarantee_returned': returned,
+      'guarantee_returned_at':
+          returned ? FieldValue.serverTimestamp() : null,
+    });
+  }
+
+  /// Edits one commission item (by party [side]) on a sale contract — the
+  /// actually-paid amount and/or its confirmed state.
+  Future<void> updateCommissionItem(
+    String contractId,
+    int side, {
+    num? paid,
+    bool? confirmed,
+  }) async {
+    final ref = _contracts.doc(contractId);
+    await _db.runTransaction((txn) async {
+      final snap = await txn.get(ref);
+      if (!snap.exists) throw StateError('Contract $contractId not found.');
+      final data = snap.data()!;
+      if (data['company_id'] != _user.companyId) {
+        throw StateError('Cross-tenant write blocked.');
+      }
+      final items = (data['commission_items'] as List<dynamic>? ?? const [])
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
+      for (final item in items) {
+        if (item['side'] == side) {
+          if (paid != null) item['paid'] = paid;
+          if (confirmed != null) item['confirmed'] = confirmed;
+        }
+      }
+      txn.update(ref, {'commission_items': items});
+    });
+  }
+
   /// Updates a single rent installment's `payment_status` and adjusts the
   /// company stats in the SAME transaction.
   ///

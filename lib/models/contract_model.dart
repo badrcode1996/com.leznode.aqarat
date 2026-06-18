@@ -96,6 +96,8 @@ class RentContract extends Contract {
     required this.installments,
     this.notes = '',
     this.agentName = '',
+    this.guaranteeReturned = false,
+    this.guaranteeReturnedAt,
   }) : super(type: ContractType.rent);
 
   final String party1Name; // لایەنی یەکەم (خاوەن)
@@ -126,6 +128,10 @@ class RentContract extends Contract {
 
   final String notes; // تێبینی (up to 5 lines)
   final String agentName; // name of the user who created the contract
+
+  /// True once the guarantee/deposit has been returned to the tenant.
+  final bool guaranteeReturned;
+  final DateTime? guaranteeReturnedAt;
 
   @override
   String get listTitle => party2Name.isNotEmpty ? party2Name : party1Name;
@@ -171,6 +177,9 @@ class RentContract extends Contract {
           .toList(),
       notes: json['notes'] as String? ?? '',
       agentName: json['agent_name'] as String? ?? '',
+      guaranteeReturned: json['guarantee_returned'] as bool? ?? false,
+      guaranteeReturnedAt:
+          (json['guarantee_returned_at'] as Timestamp?)?.toDate(),
     );
   }
 
@@ -200,6 +209,10 @@ class RentContract extends Contract {
         'installments': installments.map((i) => i.toJson()).toList(),
         'notes': notes,
         'agent_name': agentName,
+        'guarantee_returned': guaranteeReturned,
+        'guarantee_returned_at': guaranteeReturnedAt == null
+            ? null
+            : Timestamp.fromDate(guaranteeReturnedAt!),
       };
 
   /// Builds a 12-period schedule from [start], spaced by [everyMonths].
@@ -256,6 +269,8 @@ class RentContract extends Contract {
         installments: installments ?? this.installments,
         notes: notes,
         agentName: agentName,
+        guaranteeReturned: guaranteeReturned,
+        guaranteeReturnedAt: guaranteeReturnedAt,
       );
 }
 
@@ -320,7 +335,8 @@ class SaleContract extends Contract {
     required this.withdrawalAmount, // بڕی پاشگەزبوونەوە
     required this.lawyer, // پارێزەر
     required this.deliveryDate, // ڕێکەوتی تەسلیم
-    this.commission = 0, // عمولە
+    this.commissionRate = 1, // ڕێژەی عمولە (%)
+    this.commissionItems = const [], // ٢ ئایتم: لایەنی یەکەم + دووەم
     this.notes = '',
     this.agentName = '',
   }) : super(type: ContractType.sale);
@@ -343,7 +359,8 @@ class SaleContract extends Contract {
   final num withdrawalAmount;
   final String lawyer;
   final DateTime deliveryDate;
-  final num commission; // عمولە (sale commission)
+  final num commissionRate; // ڕێژەی عمولە (%) — هەر لایەک
+  final List<CommissionItem> commissionItems; // عمولەی هەر لایەک
 
   final String notes;
   final String agentName; // name of the user who created the contract
@@ -380,7 +397,10 @@ class SaleContract extends Contract {
       lawyer: json['lawyer'] as String? ?? '',
       deliveryDate:
           (json['delivery_date'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      commission: json['commission'] as num? ?? 0,
+      commissionRate: json['commission_rate'] as num? ?? 1,
+      commissionItems: (json['commission_items'] as List<dynamic>? ?? const [])
+          .map((e) => CommissionItem.fromJson(e as Map<String, dynamic>))
+          .toList(),
       notes: json['notes'] as String? ?? '',
       agentName: json['agent_name'] as String? ?? '',
     );
@@ -405,8 +425,39 @@ class SaleContract extends Contract {
         'withdrawal_amount': withdrawalAmount,
         'lawyer': lawyer,
         'delivery_date': Timestamp.fromDate(deliveryDate),
-        'commission': commission,
+        'commission_rate': commissionRate,
+        'commission_items': commissionItems.map((i) => i.toJson()).toList(),
         'notes': notes,
         'agent_name': agentName,
       };
+}
+
+/// One commission entry on a sale contract — one per party (seller + buyer).
+/// [paid] is the actual amount (defaults to the calculated commission, but can
+/// be edited down); [confirmed] marks it as collected.
+class CommissionItem {
+  const CommissionItem({
+    required this.side,
+    required this.paid,
+    this.confirmed = false,
+  });
+
+  final int side; // 1 = party1 (seller), 2 = party2 (buyer)
+  final num paid;
+  final bool confirmed;
+
+  factory CommissionItem.fromJson(Map<String, dynamic> j) => CommissionItem(
+        side: j['side'] as int? ?? 1,
+        paid: j['paid'] as num? ?? 0,
+        confirmed: j['confirmed'] as bool? ?? false,
+      );
+
+  Map<String, dynamic> toJson() =>
+      {'side': side, 'paid': paid, 'confirmed': confirmed};
+
+  CommissionItem copyWith({num? paid, bool? confirmed}) => CommissionItem(
+        side: side,
+        paid: paid ?? this.paid,
+        confirmed: confirmed ?? this.confirmed,
+      );
 }
