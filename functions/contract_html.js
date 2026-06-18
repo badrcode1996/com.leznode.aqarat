@@ -64,6 +64,7 @@ function tokensFor(c, company) {
     delivery_date: fmtDate(c.delivery_date),
     late_fee: money(c.late_fee_per_day),
     withdrawal: money(c.withdrawal_amount),
+    commission: money(c.commission),
     lawyer: c.lawyer || "",
   });
 }
@@ -120,6 +121,9 @@ function buildContractHtml(o) {
     row("پڕۆژە / گەڕەک:", c.project_name),
     row("ژمارەی عەقار:", c.property_number),
     row("ڕووبەر:", (c.area || 0) + " م²"),
+    (c.commission ?
+      row("عمولە:", money(c.commission) + " " +
+        (CURRENCY_LABEL[c.dinar_dolar] || "")) : ""),
   ].join("");
 
   const clausesHtml = clauses
