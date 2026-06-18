@@ -62,6 +62,7 @@ class ListingRepository {
         .map((s) => s.docs
             .map((d) => PropertyListing.fromJson(d.id, d.data()))
             .where((l) => !l.isArchived) // archived listings leave the market
+            .where((l) => l.city == _user.city) // same-city only — don't mix
             .map((l) => l.publicView)
             .toList());
   }
@@ -89,7 +90,9 @@ class ListingRepository {
     final imageUrl = imageBytes == null
         ? ''
         : await _uploadImage(ref.id, imageBytes, imageContentType);
-    final data = listing.toJson()..['image_url'] = imageUrl;
+    final data = listing.toJson()
+      ..['image_url'] = imageUrl
+      ..['city'] = _user.city.wire; // denormalize the company's city
     await ref.set(data);
     return ref.id;
   }

@@ -32,6 +32,7 @@ class PropertyListing {
     this.isArchived = false,
     this.branch = '',
     this.imageUrl = '',
+    this.city = CompanyCity.erbil,
   });
 
   final String id;
@@ -60,6 +61,10 @@ class PropertyListing {
 
   final String imageUrl; // وێنەی خانوو (Storage download URL, optional)
 
+  /// Denormalized from the creating company so the Global Market can be scoped
+  /// to a city without an extra read per listing.
+  final CompanyCity city;
+
   final DateTime createdAt;
 
   /// Normalized key used to match a demand against an offer.
@@ -83,6 +88,7 @@ class PropertyListing {
       agentName: json['agent_name'] as String? ?? '',
       agentPhone: json['agent_phone'] as String? ?? '',
       imageUrl: json['image_url'] as String? ?? '',
+      city: CompanyCity.fromWire(json['city'] as String?),
       createdAt:
           (json['created_at'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
@@ -103,6 +109,7 @@ class PropertyListing {
         'agent_name': agentName,
         'agent_phone': agentPhone,
         'image_url': imageUrl,
+        'city': city.wire,
         'created_at': Timestamp.fromDate(createdAt),
       };
 

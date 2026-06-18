@@ -23,6 +23,24 @@ enum UserRole {
 /// Subscription tier sold to a company. The per-plan feature set + limits live
 /// in the Super-Admin-edited config (`config/plans`, see PlanConfig) — this enum
 /// just identifies which tier a company is on.
+/// The city a company operates in. The Global Market is scoped to a company's
+/// city so listings from different cities don't mix.
+enum CompanyCity {
+  erbil('erbil', 'هەولێر'),
+  sulaymaniyah('sulaymaniyah', 'سلێمانی'),
+  kirkuk('kirkuk', 'کەرکوک'),
+  duhok('duhok', 'دهۆک');
+
+  const CompanyCity(this.wire, this.label);
+  final String wire;
+  final String label;
+
+  static CompanyCity fromWire(String? value) => CompanyCity.values.firstWhere(
+        (c) => c.wire == value,
+        orElse: () => CompanyCity.erbil,
+      );
+}
+
 enum CompanyPlan {
   bronze('bronze', 'بڕۆنز'),
   silver('silver', 'سیلڤەر'),

@@ -26,6 +26,7 @@ class Company {
     this.plan = CompanyPlan.bronze,
     this.webOnly = false,
     this.featureOverrides = const {},
+    this.city = CompanyCity.erbil,
   });
 
   final String id;
@@ -45,6 +46,9 @@ class Company {
   /// Per-company feature overrides on top of the plan. key = feature name,
   /// value = forced on/off. Absent key → inherit the plan value.
   final Map<String, bool> featureOverrides;
+
+  /// The city the company operates in — scopes the Global Market.
+  final CompanyCity city;
 
   /// Preferred label for the UI: Kurdish first, then Arabic, then English.
   String get displayName =>
@@ -71,6 +75,7 @@ class Company {
               (k, v) => MapEntry(k.toString(), v as bool),
             ) ??
             const {},
+        city: CompanyCity.fromWire(json['city'] as String?),
       );
 
   Map<String, dynamic> toJson() => {
@@ -87,6 +92,7 @@ class Company {
         'plan': plan.wire,
         'web_only': webOnly,
         'feature_overrides': featureOverrides,
+        'city': city.wire,
       };
 
   /// Turns an English company name into a safe, readable Firestore document id.

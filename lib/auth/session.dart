@@ -21,6 +21,7 @@ class SessionUser {
     this.plan = CompanyPlan.bronze,
     this.webOnly = false,
     this.featureOverrides = const {},
+    this.city = CompanyCity.erbil,
   });
 
   final String uid;
@@ -37,6 +38,9 @@ class SessionUser {
 
   /// Per-company feature overrides on top of the plan (see Company).
   final Map<String, bool> featureOverrides;
+
+  /// The company's city — scopes the Global Market.
+  final CompanyCity city;
 
   /// The signed-in user's own phone (their Global Market contact number).
   final String phone;
@@ -116,12 +120,14 @@ final sessionProvider = FutureProvider<SessionUser?>((ref) async {
   var plan = CompanyPlan.bronze;
   var webOnly = false;
   var featureOverrides = const <String, bool>{};
+  var city = CompanyCity.erbil;
   if (companyId.isNotEmpty) {
     final companySnap =
         await db.collection('companies').doc(companyId).get();
     final companyData = companySnap.data();
     plan = CompanyPlan.fromWire(companyData?['plan'] as String?);
     webOnly = companyData?['web_only'] as bool? ?? false;
+    city = CompanyCity.fromWire(companyData?['city'] as String?);
     final ov = companyData?['feature_overrides'] as Map?;
     if (ov != null) {
       featureOverrides = ov.map((k, v) => MapEntry(k.toString(), v as bool));
@@ -139,6 +145,7 @@ final sessionProvider = FutureProvider<SessionUser?>((ref) async {
     plan: plan,
     webOnly: webOnly,
     featureOverrides: featureOverrides,
+    city: city,
   );
 });
 

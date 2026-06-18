@@ -87,6 +87,7 @@ class AdminRepository {
     List<String> branches = const [],
     CompanyPlan plan = CompanyPlan.bronze,
     bool webOnly = false,
+    CompanyCity city = CompanyCity.erbil,
   }) async {
     final companyId = Company.slugify(companyNameEn);
     if (companyId.isEmpty) {
@@ -120,6 +121,7 @@ class AdminRepository {
       branches: branches.map((b) => b.trim()).where((b) => b.isNotEmpty).toList(),
       plan: plan,
       webOnly: webOnly,
+      city: city,
     );
     final firstBranch = company.branches.isNotEmpty ? company.branches.first : '';
     final admin = AppUser(
@@ -238,6 +240,14 @@ class AdminRepository {
         .collection('companies')
         .doc(companyId)
         .update({'plan': plan.wire});
+  }
+
+  /// Changes a company's city (scopes the Global Market).
+  Future<void> setCity(String companyId, CompanyCity city) {
+    return _db
+        .collection('companies')
+        .doc(companyId)
+        .update({'city': city.wire});
   }
 
   /// Toggles whether a company is web-only (mobile app blocks login).

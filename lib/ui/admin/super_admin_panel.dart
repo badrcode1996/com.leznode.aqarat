@@ -151,7 +151,7 @@ class SuperAdminPanel extends ConsumerWidget {
                     child: Icon(Icons.business, color: primaryDarkBlue),
                   ),
                   title: Text(c.displayName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  subtitle: Text(c.phone1, style: TextStyle(color: Colors.grey.shade600)),
+                  subtitle: Text('${c.phone1}  ·  ${c.city.label}', style: TextStyle(color: Colors.grey.shade600)),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -388,6 +388,7 @@ class _CreateCompanyScreenState extends ConsumerState<_CreateCompanyScreen> {
   String _logoContentType = 'image/jpeg';
   CompanyPlan _plan = CompanyPlan.bronze;
   bool _webOnly = false;
+  CompanyCity _city = CompanyCity.erbil;
   bool _busy = false;
   String? _error;
 
@@ -440,6 +441,7 @@ class _CreateCompanyScreenState extends ConsumerState<_CreateCompanyScreen> {
         branches: _branches.text.split(','),
         plan: _plan,
         webOnly: _webOnly,
+        city: _city,
       );
       if (mounted) Navigator.pop(context);
     } catch (e) {
@@ -497,6 +499,16 @@ class _CreateCompanyScreenState extends ConsumerState<_CreateCompanyScreen> {
                   TextFormField(controller: _address, decoration: modernInputDecoration(label: 'ناونیشانی کۆمپانیا', icon: Icons.location_on_outlined), validator: _req),
                   const SizedBox(height: 16),
                   TextFormField(controller: _branches, decoration: modernInputDecoration(label: 'لقەکان (بە کۆما جیابکەرەوە)', icon: Icons.account_tree_outlined)),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<CompanyCity>(
+                    isExpanded: true,
+                    initialValue: _city,
+                    decoration: modernInputDecoration(label: 'شار', icon: Icons.location_city_outlined),
+                    items: CompanyCity.values
+                        .map((c) => DropdownMenuItem(value: c, child: Text(c.label)))
+                        .toList(),
+                    onChanged: (v) => setState(() => _city = v ?? CompanyCity.erbil),
+                  ),
                   const SizedBox(height: 20),
                   const Align(
                     alignment: AlignmentDirectional.centerStart,
@@ -623,6 +635,11 @@ class _CompanyUsersScreen extends ConsumerWidget {
           tooltip: 'تایبەتمەندییەکان',
           icon: const Icon(Icons.toggle_on_outlined, color: accentYellow),
           onPressed: () => _editFeatures(context, ref),
+        ),
+        IconButton(
+          tooltip: 'شار',
+          icon: const Icon(Icons.location_city_outlined, color: accentYellow),
+          onPressed: () => _changeCity(context, ref),
         ),
         IconButton(
           tooltip: 'دەرهێنان (Export)',
@@ -970,6 +987,64 @@ class _CompanyUsersScreen extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text('هەڵە: $e'), backgroundColor: Colors.red.shade700));
+      }
+    }
+  }
+
+  Future<void> _changeCity(BuildContext context, WidgetRef ref) async {
+    var selected = company.city;
+    final result = await showDialog<CompanyCity>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialog) => AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('شاری کۆمپانیا',
+              style: TextStyle(
+                  color: primaryDarkBlue, fontWeight: FontWeight.bold)),
+          content: DropdownButtonFormField<CompanyCity>(
+            isExpanded: true,
+            initialValue: selected,
+            decoration: modernInputDecoration(
+                label: 'شار', icon: Icons.location_city_outlined),
+            items: CompanyCity.values
+                .map((c) =>
+                    DropdownMenuItem(value: c, child: Text(c.label)))
+                .toList(),
+            onChanged: (v) => setDialog(() => selected = v ?? selected),
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('پاشگەزبوونەوە',
+                    style: TextStyle(color: Colors.grey))),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryDarkBlue,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10))),
+              onPressed: () => Navigator.pop(ctx, selected),
+              child:
+                  const Text('پاشەکەوت', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (result != null && result != company.city) {
+      try {
+        await ref.read(adminRepositoryProvider).setCity(company.id, result);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text('شار گۆڕدرا بۆ ${result.label}'),
+              backgroundColor: Colors.green));
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text('هەڵە: $e'),
+              backgroundColor: Colors.red.shade700));
+        }
       }
     }
   }
