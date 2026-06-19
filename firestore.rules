@@ -106,19 +106,26 @@ service cloud.firestore {
       allow update, delete: if sameCompany(resource.data.company_id);
     }
 
-    // --- Listings: own company sees full data; any signed-in user can READ a
-    //     public listing (Global Market). Owner fields are hidden in the UI,
-    //     not the rules — see PublicListingView in the app.
+    // --- Listings: STRICTLY company-scoped. These docs hold private owner
+    //     name/phone, so they are NEVER readable cross-company. The Global
+    //     Market reads the separate owner-free `market` collection instead.
     match /properties/{id} {
-      allow read:   if isSuperAdmin() || resource.data.is_public == true ||
-                       sameCompany(resource.data.company_id);
+      allow read:   if isSuperAdmin() || sameCompany(resource.data.company_id);
       allow create: if sameCompany(request.resource.data.company_id);
       allow update, delete: if sameCompany(resource.data.company_id);
     }
 
     match /requests/{id} {
-      allow read:   if isSuperAdmin() || resource.data.is_public == true ||
-                       sameCompany(resource.data.company_id);
+      allow read:   if isSuperAdmin() || sameCompany(resource.data.company_id);
+      allow create: if sameCompany(request.resource.data.company_id);
+      allow update, delete: if sameCompany(resource.data.company_id);
+    }
+
+    // --- Market: the public, owner-free projection of public listings. Any
+    //     signed-in user may READ it (cross-company browsing) — it carries no
+    //     owner name/phone. A company writes only its own market docs.
+    match /market/{id} {
+      allow read:   if isSignedIn();
       allow create: if sameCompany(request.resource.data.company_id);
       allow update, delete: if sameCompany(resource.data.company_id);
     }

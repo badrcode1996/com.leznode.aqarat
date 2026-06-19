@@ -142,6 +142,21 @@ class PublicListingView {
     this.imageUrl = '',
   });
 
+  /// Builds the view from a `market` document (the public, owner-free
+  /// projection stored separately so private owner data is never readable
+  /// cross-company).
+  factory PublicListingView.fromMarket(String id, Map<String, dynamic> j) =>
+      PublicListingView(
+        id: id,
+        kind: ListingKind.fromWire(j['listing_kind'] as String?),
+        propertyType: PropertyType.fromWire(j['property_type'] as String?),
+        projectName: j['project_name'] as String? ?? '',
+        area: j['area'] as num? ?? 0,
+        agentName: j['agent_name'] as String? ?? '',
+        agentPhone: j['agent_phone'] as String? ?? '',
+        imageUrl: j['image_url'] as String? ?? '',
+      );
+
   final String id;
   final ListingKind kind;
   final PropertyType propertyType;
