@@ -46,15 +46,15 @@ service cloud.firestore {
     }
 
     // --- User profiles.
-    //     Super Admin provisions users. A normal user may create only their own
-    //     profile and may never self-assign super_admin or change their
-    //     company_id / role afterwards (no tenant hop / privilege escalation).
+    //     ONLY the Super Admin provisions profiles (the app has no self-signup).
+    //     A self-created profile is forbidden: otherwise anyone who registers an
+    //     auth account could mint themselves a company_admin profile on any
+    //     company and breach that tenant. A user may update only their own
+    //     editable fields and never their company_id / role.
     match /users/{uid} {
       allow read: if isSuperAdmin() || (isSignedIn() &&
         (request.auth.uid == uid || sameCompany(resource.data.company_id)));
-      allow create: if isSuperAdmin() || (isSignedIn()
-        && request.auth.uid == uid
-        && request.resource.data.role != 'super_admin');
+      allow create: if isSuperAdmin();
       allow update: if isSuperAdmin() || (isSignedIn()
         && request.auth.uid == uid
         && request.resource.data.company_id == resource.data.company_id
@@ -62,12 +62,12 @@ service cloud.firestore {
       allow delete: if isSuperAdmin();
     }
 
-    // --- Companies.
+    // --- Companies. Members READ their own company; only the Super Admin may
+    //     create/edit/delete it (plan, city, web_only, feature_overrides,
+    //     branches are all sold/provisioned — a member must not self-upgrade).
     match /companies/{companyId} {
       allow read: if isSuperAdmin() || sameCompany(companyId);
-      allow create: if isSuperAdmin() || (isSignedIn()
-        && request.resource.data.owner_uid == request.auth.uid);
-      allow update, delete: if isSuperAdmin() || sameCompany(companyId);
+      allow create, update, delete: if isSuperAdmin();
     }
 
     // --- Aggregated stats: one doc per company (doc id == company_id).
