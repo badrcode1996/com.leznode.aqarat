@@ -44,21 +44,25 @@ class ListingRepository {
         'created_at': Timestamp.fromDate(l.createdAt),
       };
 
-  /// The current tenant's own listings (private — full owner data visible),
-  /// filtered by archived state. Archived filtering is client-side to avoid an
-  /// extra composite index.
+  /// The current tenant's listings (private — full owner data visible),
+  /// filtered by archived state. Everyone except company-wide admins is scoped
+  /// to their own branch — enforced here (the `branch ==` clause) AND by a
+  /// matching Firestore Security Rule. Archived filtering stays client-side to
+  /// avoid an extra composite index.
   Stream<List<PropertyListing>> watchMyListings(
     ListingKind kind, {
     bool archived = false,
   }) {
-    return _col(kind)
-        .where('company_id', isEqualTo: _user.companyId)
+    var query = _col(kind).where('company_id', isEqualTo: _user.companyId);
+    if (!_user.isCompanyWide) {
+      query = query.where('branch', isEqualTo: _user.branch);
+    }
+    return query
         .orderBy('created_at', descending: true)
         .snapshots()
         .map((s) => s.docs
             .map((d) => PropertyListing.fromJson(d.id, d.data()))
             .where((l) => l.isArchived == archived)
-            .where((l) => !_user.isBranchAdmin || l.branch == _user.branch)
             .toList());
   }
 

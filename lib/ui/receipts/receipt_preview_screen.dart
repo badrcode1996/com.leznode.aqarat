@@ -36,13 +36,43 @@ class ReceiptPreviewScreen extends StatefulWidget {
 class _ReceiptPreviewScreenState extends State<ReceiptPreviewScreen> {
   late final Future<List<Uint8List>> _pages = _render();
 
+  /// The rendered PDF bytes, cached from the preview render so print/share can
+  /// fire synchronously inside the button's tap — on web the browser only opens
+  /// the print dialog while the user gesture is still alive, so we must not
+  /// `await` a network call between the tap and [Printing.layoutPdf].
+  Uint8List? _pdfBytes;
+
   Future<List<Uint8List>> _render() async {
     final bytes = await ReceiptPdfRemote.build(widget.receipt.id);
+    _pdfBytes = bytes;
     final images = <Uint8List>[];
     await for (final page in Printing.raster(bytes, dpi: 110)) {
       images.add(await page.toPng());
     }
     return images;
+  }
+
+  /// Prints the receipt. Uses the cached bytes when available so the call to
+  /// [Printing.layoutPdf] stays inside the tap gesture (required on web).
+  Future<void> _print() async {
+    final bytes = _pdfBytes;
+    if (bytes != null) {
+      await Printing.layoutPdf(onLayout: (_) async => bytes);
+    } else {
+      await ReceiptPdfRemote.printReceipt(widget.receipt.id);
+    }
+  }
+
+  /// Shares the receipt, reusing the cached bytes when available.
+  Future<void> _share() async {
+    final bytes = _pdfBytes;
+    if (bytes != null) {
+      await Printing.sharePdf(
+          bytes: bytes, filename: 'receipt_${widget.receipt.receiptNumber}.pdf');
+    } else {
+      await ReceiptPdfRemote.shareReceipt(
+          widget.receipt.id, widget.receipt.receiptNumber);
+    }
   }
 
   Future<void> _run(Future<void> Function() action) async {
@@ -79,8 +109,7 @@ class _ReceiptPreviewScreenState extends State<ReceiptPreviewScreen> {
           IconButton(
             tooltip: 'هاوبەشکردن',
             icon: const Icon(Icons.share_rounded),
-            onPressed: () => _run(() => ReceiptPdfRemote.shareReceipt(
-                widget.receipt.id, widget.receipt.receiptNumber)),
+            onPressed: () => _run(_share),
           ),
           Padding(
             padding: const EdgeInsets.only(right: 8, left: 8),
@@ -93,8 +122,7 @@ class _ReceiptPreviewScreenState extends State<ReceiptPreviewScreen> {
               child: IconButton(
                 tooltip: 'پرینت',
                 icon: const Icon(Icons.print_rounded, color: primaryDarkBlue),
-                onPressed: () =>
-                    _run(() => ReceiptPdfRemote.printReceipt(widget.receipt.id)),
+                onPressed: () => _run(_print),
               ),
             ),
           ),

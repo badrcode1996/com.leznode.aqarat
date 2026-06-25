@@ -73,22 +73,18 @@ class ReceiptRepository {
     await _receipts.doc(receipt.id).delete();
   }
 
-  /// Company receipts, newest first. Admins are scoped to their branch; plain
-  /// users to their own. (Branch/agent filtering is client-side to avoid an
-  /// extra composite index.)
+  /// Company receipts, newest first. Everyone except company-wide admins is
+  /// scoped to their own branch — enforced BOTH here (the `branch ==` clause)
+  /// and by a matching Firestore Security Rule, so a member can never reach
+  /// another branch's receipts even via a direct API call.
   Stream<List<Receipt>> watchReceipts({ReceiptType? type}) {
-    return _receipts
-        .where('company_id', isEqualTo: _user.companyId)
-        .orderBy('created_at', descending: true)
-        .snapshots()
-        .map((s) {
+    var query = _receipts.where('company_id', isEqualTo: _user.companyId);
+    if (!_user.isCompanyWide) {
+      query = query.where('branch', isEqualTo: _user.branch);
+    }
+    return query.orderBy('created_at', descending: true).snapshots().map((s) {
       var list = s.docs.map((d) => Receipt.fromJson(d.id, d.data())).toList();
       if (type != null) list = list.where((r) => r.type == type).toList();
-      if (_user.role == UserRole.agent) {
-        list = list.where((r) => r.agentId == _user.agentId).toList();
-      } else if (_user.isBranchAdmin) {
-        list = list.where((r) => r.branch == _user.branch).toList();
-      }
       return list;
     });
   }

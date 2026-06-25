@@ -36,6 +36,28 @@ service cloud.firestore {
       return isSignedIn() && profileExists() && userData().company_id == cid;
     }
 
+    // True if the user sees EVERY branch of their company: a company-wide admin
+    // (a company_admin who is NOT branch-scoped). Super admins are handled
+    // separately at each rule. Only called once sameCompany() proved the profile
+    // exists, so userData() is safe here.
+    // Safe field access (.get with default): a user doc created before the
+    // branch system may LACK `branch` / `branch_admin`, and reading a missing
+    // field in rules ERRORS → denies the whole request. Defaults keep such
+    // accounts working (treated as company-wide-eligible / empty branch).
+    function seesAllBranches() {
+      return userData().role == 'company_admin'
+        && userData().get('branch_admin', false) != true;
+    }
+
+    // Branch boundary: a member may touch a doc in company [cid] / branch
+    // [branch] only if they belong to that company AND either see all branches
+    // or sit in the same branch. Agents and branch-scoped admins are thus
+    // confined to their own branch's data.
+    function inBranch(cid, branch) {
+      return sameCompany(cid)
+        && (seesAllBranches() || userData().get('branch', '') == branch);
+    }
+
     // --- Global app config (e.g. the Super-Admin-edited plan matrix). Any
     //     signed-in user may read it (the app gates features off it); only
     //     Super Admins may edit. Plan feature gating is enforced in the app +
@@ -75,19 +97,35 @@ service cloud.firestore {
       allow read, write: if isSuperAdmin() || sameCompany(companyId);
     }
 
-    // --- Contracts: strictly company-scoped.
+    // --- Contracts: company- AND branch-scoped. A member only ever touches
+    //     their own branch's docs (company-wide admins + super admins see all).
+    //     company_id and branch are pinned on update so a doc can never be
+    //     re-tagged into another tenant or branch.
     match /contracts/{id} {
-      allow read:   if isSuperAdmin() || sameCompany(resource.data.company_id);
-      allow create: if sameCompany(request.resource.data.company_id);
-      allow update, delete: if sameCompany(resource.data.company_id);
+      allow read:   if isSuperAdmin()
+        || inBranch(resource.data.company_id, resource.data.branch);
+      allow create: if inBranch(request.resource.data.company_id,
+        request.resource.data.branch);
+      allow update: if (isSuperAdmin()
+          || inBranch(resource.data.company_id, resource.data.branch))
+        && request.resource.data.company_id == resource.data.company_id
+        && request.resource.data.branch == resource.data.branch;
+      allow delete: if isSuperAdmin()
+        || inBranch(resource.data.company_id, resource.data.branch);
     }
 
-    // --- Receipts (وەصڵ): strictly company-scoped. Branch/agent narrowing is
-    //     done client-side; the tenant boundary is enforced here.
+    // --- Receipts (وەصڵ): company- AND branch-scoped, same as contracts.
     match /receipts/{id} {
-      allow read:   if isSuperAdmin() || sameCompany(resource.data.company_id);
-      allow create: if sameCompany(request.resource.data.company_id);
-      allow update, delete: if sameCompany(resource.data.company_id);
+      allow read:   if isSuperAdmin()
+        || inBranch(resource.data.company_id, resource.data.branch);
+      allow create: if inBranch(request.resource.data.company_id,
+        request.resource.data.branch);
+      allow update: if (isSuperAdmin()
+          || inBranch(resource.data.company_id, resource.data.branch))
+        && request.resource.data.company_id == resource.data.company_id
+        && request.resource.data.branch == resource.data.branch;
+      allow delete: if isSuperAdmin()
+        || inBranch(resource.data.company_id, resource.data.branch);
     }
 
     // --- Contract templates (تێمپلەیت): one doc per company (id == company_id).
@@ -103,31 +141,57 @@ service cloud.firestore {
     match /lawyers/{id} {
       allow read:   if isSuperAdmin() || sameCompany(resource.data.company_id);
       allow create: if sameCompany(request.resource.data.company_id);
-      allow update, delete: if sameCompany(resource.data.company_id);
+      allow update: if sameCompany(resource.data.company_id)
+        && request.resource.data.company_id == resource.data.company_id;
+      allow delete: if sameCompany(resource.data.company_id);
     }
 
     // --- Listings: STRICTLY company-scoped. These docs hold private owner
     //     name/phone, so they are NEVER readable cross-company. The Global
     //     Market reads the separate owner-free `market` collection instead.
     match /properties/{id} {
-      allow read:   if isSuperAdmin() || sameCompany(resource.data.company_id);
-      allow create: if sameCompany(request.resource.data.company_id);
-      allow update, delete: if sameCompany(resource.data.company_id);
+      allow read:   if isSuperAdmin()
+        || inBranch(resource.data.company_id, resource.data.branch);
+      allow create: if inBranch(request.resource.data.company_id,
+        request.resource.data.branch);
+      allow update: if (isSuperAdmin()
+          || inBranch(resource.data.company_id, resource.data.branch))
+        && request.resource.data.company_id == resource.data.company_id
+        && request.resource.data.branch == resource.data.branch;
+      allow delete: if isSuperAdmin()
+        || inBranch(resource.data.company_id, resource.data.branch);
     }
 
     match /requests/{id} {
-      allow read:   if isSuperAdmin() || sameCompany(resource.data.company_id);
-      allow create: if sameCompany(request.resource.data.company_id);
-      allow update, delete: if sameCompany(resource.data.company_id);
+      allow read:   if isSuperAdmin()
+        || inBranch(resource.data.company_id, resource.data.branch);
+      allow create: if inBranch(request.resource.data.company_id,
+        request.resource.data.branch);
+      allow update: if (isSuperAdmin()
+          || inBranch(resource.data.company_id, resource.data.branch))
+        && request.resource.data.company_id == resource.data.company_id
+        && request.resource.data.branch == resource.data.branch;
+      allow delete: if isSuperAdmin()
+        || inBranch(resource.data.company_id, resource.data.branch);
     }
 
     // --- Market: the public, owner-free projection of public listings. Any
     //     signed-in user may READ it (cross-company browsing) — it carries no
-    //     owner name/phone. A company writes only its own market docs.
+    //     owner name/phone. A company writes only its own market docs, and the
+    //     owner-free guarantee is enforced here (not just client-side): a market
+    //     doc may never carry the private owner_name / owner_mobile fields.
+    function marketOwnerFree() {
+      return !('owner_name' in request.resource.data)
+        && !('owner_mobile' in request.resource.data);
+    }
     match /market/{id} {
       allow read:   if isSignedIn();
-      allow create: if sameCompany(request.resource.data.company_id);
-      allow update, delete: if sameCompany(resource.data.company_id);
+      allow create: if sameCompany(request.resource.data.company_id)
+        && marketOwnerFree();
+      allow update: if sameCompany(resource.data.company_id)
+        && request.resource.data.company_id == resource.data.company_id
+        && marketOwnerFree();
+      allow delete: if sameCompany(resource.data.company_id);
     }
   }
 }

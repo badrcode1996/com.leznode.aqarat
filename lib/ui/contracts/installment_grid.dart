@@ -168,7 +168,10 @@ class InstallmentGrid extends ConsumerWidget {
     // Watch the live contract from the stream so a status change shows
     // immediately — the passed-in `contract` is only the initial snapshot.
     var live = contract;
-    final contracts = ref.watch(contractsStreamProvider).value;
+    // valueOrNull, not .value: .value rethrows on the stream's error state and
+    // would crash this grid to a grey ErrorWidget; falling back to the passed-in
+    // snapshot is fine.
+    final contracts = ref.watch(contractsStreamProvider).valueOrNull;
     if (contracts != null) {
       for (final c in contracts) {
         if (c.id == contract.id && c is RentContract) {

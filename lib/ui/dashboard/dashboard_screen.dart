@@ -34,11 +34,15 @@ class DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
     final features = ref.watch(currentPlanFeaturesProvider);
-    final company = ref.watch(currentCompanyProvider).value;
-    final stats = ref.watch(companyStatsProvider).value;
-    final contracts = ref.watch(contractsStreamProvider).value ?? const [];
-    final offers = ref.watch(myListingsProvider(ListingKind.offer)).value;
-    final demands = ref.watch(myListingsProvider(ListingKind.demand)).value;
+    // valueOrNull (NOT .value): .value RETHROWS when a provider is in its error
+    // state, which would crash the whole dashboard to a grey ErrorWidget if any
+    // query transiently fails (e.g. a composite index still building). With
+    // valueOrNull a failing query degrades to empty/zero instead.
+    final company = ref.watch(currentCompanyProvider).valueOrNull;
+    final stats = ref.watch(companyStatsProvider).valueOrNull;
+    final contracts = ref.watch(contractsStreamProvider).valueOrNull ?? const [];
+    final offers = ref.watch(myListingsProvider(ListingKind.offer)).valueOrNull;
+    final demands = ref.watch(myListingsProvider(ListingKind.demand)).valueOrNull;
 
     // Matchmaking: a demand and an offer "match" when they share the same
     // property type + project/neighborhood. Matched ones are shown green.

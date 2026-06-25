@@ -132,15 +132,18 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                     const Divider(indent: 60, height: 1),
                   ],
-                  // نوێکردنەوەی قاسە و ئامار (دووبارە حیسابکردن لە گرێبەستەکانەوە)
-                  ListTile(
-                    leading: const Icon(Icons.calculate_outlined, color: primaryDarkBlue),
-                    title: const Text('نوێکردنەوەی قاسە و ئامار', style: TextStyle(fontWeight: FontWeight.w600)),
-                    subtitle: const Text('دووبارە حیسابکردنیان لە گرێبەستەکانەوە',
-                        style: TextStyle(color: Colors.grey)),
-                    trailing: const Icon(Icons.chevron_left_rounded, color: Colors.grey),
-                    onTap: () => _recalcStats(context, ref),
-                  ),
+                  // نوێکردنەوەی قاسە و ئامار (دووبارە حیسابکردن لە گرێبەستەکانەوە).
+                  // تەنها ئادمینی گشتی — حیسابکردنەوە پێویستی بە هەموو گرێبەستەکانی
+                  // کۆمپانیا هەیە، کە ئادمینی لق ناتوانێت بیانخوێنێتەوە.
+                  if (user.isCompanyWide)
+                    ListTile(
+                      leading: const Icon(Icons.calculate_outlined, color: primaryDarkBlue),
+                      title: const Text('نوێکردنەوەی قاسە و ئامار', style: TextStyle(fontWeight: FontWeight.w600)),
+                      subtitle: const Text('دووبارە حیسابکردنیان لە گرێبەستەکانەوە',
+                          style: TextStyle(color: Colors.grey)),
+                      trailing: const Icon(Icons.chevron_left_rounded, color: Colors.grey),
+                      onTap: () => _recalcStats(context, ref),
+                    ),
                 ],
               ),
             ),

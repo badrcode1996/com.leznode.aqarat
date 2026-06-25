@@ -129,12 +129,19 @@ exports.renderReceiptPdf = onCall(
       }
       const r = rSnap.data();
 
-      // Tenant check: caller must belong to the receipt's company (or super).
+      // Tenant + branch check: caller must belong to the receipt's company, and
+      // (unless they see all branches) to the receipt's branch too — mirrors the
+      // Firestore rules so this server-side read path can't bypass them.
       const callerSnap = await db.collection("users").doc(auth.uid).get();
       const caller = callerSnap.data() || {};
       const isSuper = caller.role === "super_admin";
       if (!isSuper && caller.company_id !== r.company_id) {
         throw new HttpsError("permission-denied", "Cross-tenant blocked.");
+      }
+      const seesAllBranches = isSuper ||
+        (caller.role === "company_admin" && caller.branch_admin !== true);
+      if (!seesAllBranches && caller.branch !== r.branch) {
+        throw new HttpsError("permission-denied", "Cross-branch blocked.");
       }
 
       const [cSnap, tSnap] = await Promise.all([
@@ -201,9 +208,14 @@ exports.renderContractPdf = onCall(
 
       const callerSnap = await db.collection("users").doc(auth.uid).get();
       const caller = callerSnap.data() || {};
-      if (caller.role !== "super_admin" &&
-          caller.company_id !== k.company_id) {
+      const isSuper = caller.role === "super_admin";
+      if (!isSuper && caller.company_id !== k.company_id) {
         throw new HttpsError("permission-denied", "Cross-tenant blocked.");
+      }
+      const seesAllBranches = isSuper ||
+        (caller.role === "company_admin" && caller.branch_admin !== true);
+      if (!seesAllBranches && caller.branch !== k.branch) {
+        throw new HttpsError("permission-denied", "Cross-branch blocked.");
       }
 
       const [cSnap, tSnap] = await Promise.all([
