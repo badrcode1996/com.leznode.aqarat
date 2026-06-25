@@ -8,7 +8,9 @@ import '../contracts/create_rent_contract_stepper.dart';
 import '../contracts/create_sale_contract_stepper.dart';
 import '../dashboard/dashboard_screen.dart';
 import '../listings/create_listing_screen.dart';
-import '../market/market_screen.dart';
+// بازار کاتی شاراوەتەوە — بۆ گەڕاندنەوەی، ئەم import ـە + MarketScreen() لە _tabs
+// + دوگمەی navـی 'بازاڕ' ی خوارەوە دووبارە چالاک بکەرەوە.
+// import '../market/market_screen.dart';
 import '../receipts/create_receipt_screen.dart';
 import '../tenants/tenants_screen.dart';
 
@@ -31,7 +33,7 @@ class _MainShellState extends ConsumerState<MainShell> {
     DashboardScreen(),
     TenantsScreen(),
     ArchiveScreen(),
-    MarketScreen(),
+    // MarketScreen(), // بازار کاتی شاراوەتەوە
   ];
 
   void _openQuickActions() {
@@ -115,7 +117,10 @@ class _MainShellState extends ConsumerState<MainShell> {
             _navItem(1, Icons.people_outline, Icons.people_rounded, 'کرێچیەکان'),
             const SizedBox(width: 40), // notch gap
             _navItem(2, Icons.inventory_2_outlined, Icons.inventory_2, 'ئەرشیف'),
-            _navItem(3, Icons.public_outlined, Icons.public_rounded, 'بازاڕ'),
+            // بازار کاتی شاراوەتەوە. بۆشاییەکی بەتاڵ FAB لە ناوەڕاست ڕادەگرێت؛
+            // بۆ گەڕاندنەوەی، ئەمە بگۆڕەوە بۆ:
+            // _navItem(3, Icons.public_outlined, Icons.public_rounded, 'بازاڕ'),
+            const Expanded(child: SizedBox()),
           ],
         ),
       ),
