@@ -68,5 +68,37 @@
 		</array>
 		<key>UIStatusBarHidden</key>
 		<false/>
+
+		<!-- Firebase URL scheme (Encoded iOS App ID from GoogleService-Info.plist) -->
+		<key>CFBundleURLTypes</key>
+		<array>
+			<dict>
+				<key>CFBundleTypeRole</key>
+				<string>Editor</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>app-1-621558994857-ios-0d0ba0aaa7280fa97d96b8</string>
+				</array>
+			</dict>
+		</array>
+
+		<!-- image_picker: gallery + camera -->
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>ئەپ پێویستی بە گەیشتن بە وێنەکانت هەیە بۆ هەڵبژاردنی وێنەی موڵک و لۆگۆ.</string>
+		<key>NSCameraUsageDescription</key>
+		<string>ئەپ پێویستی بە کامێرا هەیە بۆ گرتنی وێنەی موڵک.</string>
+
+		<!-- Push / background -->
+		<key>UIBackgroundModes</key>
+		<array>
+			<string>fetch</string>
+			<string>remote-notification</string>
+		</array>
+		<key>FirebaseAppDelegateProxyEnabled</key>
+		<true/>
+
+		<!-- Export compliance: no non-exempt encryption -->
+		<key>ITSAppUsesNonExemptEncryption</key>
+		<false/>
 	</dict>
 </plist>

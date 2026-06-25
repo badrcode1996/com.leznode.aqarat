@@ -1,0 +1,78 @@
+# Codemagic CI/CD — Aqarat (عقارات) iOS → App Store Connect / TestFlight
+#
+# پێش یەکەم build، ئەم کارانە بە دەستی بکە (لە دەرەوەی کۆد):
+#   A) Apple Developer: Identifier (com.leznode.aqarat) + App Store provisioning
+#      profile دروست بکە. لەبەر ئەوەی push دانراوە، Push Notifications capability
+#      لەسەر ئەو Identifier ـە چالاک بکە — ئەگەرنا signing دەکەوێت.
+#   B) Codemagic → Code signing (iOS): certificate + provisioning profile ئەپلۆد بکە.
+#   C) Codemagic → Integrations: App Store Connect API key زیاد بکە و ناوەکەی بکە
+#      "Aqarat App Store Connect" (یان ناوەکە بگۆڕە لە خوارەوەدا).
+#   D) Codemagic → Environment variables → گرووپی "firebase_credentials":
+#      GOOGLE_SERVICE_INFO_PLIST = ناوەڕۆکی GoogleService-Info.plist بە base64
+#      (Secure بیکە).
+#   E) ئەگەر push بەکاردێت: APNs Auth Key لە Apple Developer دروست بکە و لە
+#      Firebase → Cloud Messaging دایبنێ. (ئەپ هێشتا firebase_messaging ـی نییە —
+#      بۆ وەرگرتنی ڕاستەقینەی push دەبێت دواتر زیادی بکەیت.)
+
+workflows:
+  ios-release:
+    name: Aqarat iOS Release
+    instance_type: mac_mini_m2
+    max_build_duration: 120
+    integrations:
+      app_store_connect: Aqarat App Store Connect   # = ناوی integration لە C
+    environment:
+      groups:
+        - firebase_credentials                       # GOOGLE_SERVICE_INFO_PLIST لێرەیە
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.leznode.aqarat
+      vars:
+        BUNDLE_ID: "com.leznode.aqarat"
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Set up GoogleService-Info.plist (base64 → file)
+        script: |
+          echo "$GOOGLE_SERVICE_INFO_PLIST" | base64 --decode > "$CM_BUILD_DIR/ios/Runner/GoogleService-Info.plist"
+      - name: Create Runner.entitlements (aps-environment = production)
+        script: |
+          cat > "$CM_BUILD_DIR/ios/Runner/Runner.entitlements" <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+          	<key>aps-environment</key>
+          	<string>production</string>
+          </dict>
+          </plist>
+          PLIST
+      - name: Flutter pub get
+        script: |
+          flutter pub get
+      - name: Install CocoaPods dependencies
+        script: |
+          cd ios && pod install --repo-update
+      - name: Set up code signing (provisioning profiles)
+        script: |
+          xcode-project use-profiles
+      - name: Flutter build ipa
+        script: |
+          flutter build ipa --release \
+            --obfuscate --split-debug-info=build/debug-info \
+            --build-number=$BUILD_NUMBER
+      # --- ئیختیاری: تەنها ئەگەر firebase_crashlytics زیاد بکەیت ---
+      # - name: Upload Crashlytics dSYMs
+      #   script: |
+      #     find build/debug-info -name "*.symbols" -exec echo {} \;
+      #     # pod "FirebaseCrashlytics" دەبێت هەبێت بۆ upload-symbols script.
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - build/debug-info/**          # سیمبۆلەکانی obfuscation (بۆ deobfuscate)
+      - /tmp/xcodebuild_logs/*.log
+      - flutter_drive.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
