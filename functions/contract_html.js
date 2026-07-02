@@ -105,22 +105,31 @@ function buildContractHtml(o) {
     `<div class="r"><span class="rl">${esc(label)}</span>` +
     `<span class="rv">${esc(val)}</span></div>`;
 
+  // The four property attributes collapse onto one line ("label: value - ...")
+  // so the info card stays compact. Each pair is kept unbreakable.
+  const propLine = (pairs) =>
+    `<div class="r ri">` +
+    pairs.map((p) => `<span class="pp"><b>${esc(p[0])}</b> ${esc(p[1])}</span>`)
+        .join('<span class="sep"> - </span>') +
+    `</div>`;
+
+  const propPairs = [
+    ["جۆری موڵک:", c.property_type || ""],
+    ["پڕۆژە / گەڕەک:", c.project_name || ""],
+    ["ژمارەی عەقار:", c.property_number || ""],
+    ["ڕووبەر:", (c.area || 0) + " م²"],
+  ];
+
   const card = isRent ? [
     row("ژمارەی گرێبەست:", c.contract_number),
     row("لایەنی یەکەم (خاوەن موڵک):", c.party1_name),
     row("لایەنی دووەم (کرێچی):", c.party2_name),
-    row("جۆری موڵک:", c.property_type),
-    row("پڕۆژە / گەڕەک:", c.project_name),
-    row("ژمارەی عەقار:", c.property_number),
-    row("ڕووبەر:", (c.area || 0) + " م²"),
+    propLine(propPairs),
   ].join("") : [
     row("ژمارەی گرێبەست:", c.contract_number),
     row("لایەنی یەکەم (فرۆشیار):", c.party1_name),
     row("لایەنی دووەم (کڕیار):", c.party2_name),
-    row("جۆری موڵک:", c.property_type),
-    row("پڕۆژە / گەڕەک:", c.project_name),
-    row("ژمارەی عەقار:", c.property_number),
-    row("ڕووبەر:", (c.area || 0) + " م²"),
+    propLine(propPairs),
     (c.commission_rate ?
       row("ڕێژەی عمولە:", c.commission_rate + "% — هەر لایەک " +
         money((Number(c.total_price) || 0) * Number(c.commission_rate) / 100) +
@@ -160,11 +169,16 @@ thead{display:table-header-group;}
 .bandline{border-bottom:1.2px solid ${accent};margin-bottom:8px;}
 .title{text-align:center;font-size:22px;font-weight:bold;color:${accent};
   margin:6px 0 8px;}
-.card{border:1px solid ${accent};border-radius:6px;padding:10px;margin-bottom:12px;}
+.card{border:1px solid ${accent};border-radius:6px;padding:8px 10px;margin-bottom:10px;}
 .card .ct{font-weight:bold;font-size:13px;color:${accent};margin-bottom:6px;}
-.r{display:flex;margin:2px 0;}
-.r .rl{width:160px;font-weight:bold;}
+.r{display:flex;align-items:baseline;margin:3px 0;}
+.r .rl{font-weight:bold;white-space:nowrap;margin-left:6px;}
 .r .rv{flex:1;}
+/* The property line: normal inline flow so pairs wrap only between each
+   other, never mid-pair. */
+.ri{display:block;line-height:1.8;}
+.ri .pp{white-space:nowrap;}
+.ri .sep{color:#aaa;}
 .chead{font-weight:bold;font-size:12px;color:${accent};margin-bottom:6px;}
 .clause{text-align:justify;margin-bottom:6px;}
 .notes{margin-top:8px;}
@@ -191,7 +205,7 @@ ${watermark}
   <tbody><tr><td>
     <div class="title">${esc(title)}</div>
     <div class="card"><div class="ct">زانیاری گرێبەست</div>${card}</div>
-    <div class="chead">هەردوو لایەن ڕێکەوتن لەسەر ئەم خاڵانەی خوارەوە (بەندەکان):</div>
+    <div class="chead">هەردوو لایەن ڕێکەوتن لەسەر ئەم خاڵانەی خوارەوە:</div>
     ${clausesHtml}
     ${notes}
     <div class="signs">
