@@ -25,9 +25,16 @@ function fonts() {
 
 const CURRENCY_LABEL = {IQD: "دیناری عێراقی", USD: "دۆلاری ئەمریکی"};
 
+// Company logos rarely change — cache the fetched data: URI per URL across
+// warm invocations so repeat renders skip the network round-trip.
+const LOGO_TTL_MS = 10 * 60 * 1000;
+const _logoCache = new Map();
+
 /** Fetches a logo URL and returns a data: URI, or "" on any failure. */
 async function logoDataUri(url) {
   if (!url) return "";
+  const hit = _logoCache.get(url);
+  if (hit && Date.now() - hit.at < LOGO_TTL_MS) return hit.uri;
   try {
     const ctrl = new AbortController();
     const tm = setTimeout(() => ctrl.abort(), 6000);
@@ -36,7 +43,9 @@ async function logoDataUri(url) {
     if (!res.ok) return "";
     const buf = Buffer.from(await res.arrayBuffer());
     const mime = res.headers.get("content-type") || "image/png";
-    return `data:${mime};base64,${buf.toString("base64")}`;
+    const uri = `data:${mime};base64,${buf.toString("base64")}`;
+    _logoCache.set(url, {uri, at: Date.now()});
+    return uri;
   } catch (e) {
     return "";
   }
@@ -57,12 +66,21 @@ async function getBrowser() {
   return _browser;
 }
 
+// Warm Chromium while the container is still booting (runtime only — the
+// K_SERVICE guard keeps deploy-time code analysis from launching a browser),
+// so the first render doesn't also pay the ~3s browser launch.
+if (process.env.K_SERVICE) {
+  getBrowser().catch(() => {});
+}
+
 /** Renders an HTML string to a PDF Buffer using headless Chromium. */
 async function htmlToPdf(html) {
   const browser = await getBrowser();
   const page = await browser.newPage();
   try {
-    await page.setContent(html, {waitUntil: "networkidle0"});
+    // Everything (fonts, logo) is inlined as data: URIs, so "load" is enough;
+    // networkidle0 would add a flat 500ms idle wait per render.
+    await page.setContent(html, {waitUntil: "load"});
     await page.evaluateHandle("document.fonts.ready");
     return await page.pdf({format: "A4", printBackground: true});
   } finally {
