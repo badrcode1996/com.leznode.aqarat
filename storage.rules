@@ -39,6 +39,16 @@ service firebase.storage {
         && callerData().company_id == companyId
         && isImageUnder5MB();
     }
+    // Contract document photos (IDs, deeds…) — sensitive, so reads AND writes
+    // are restricted to the owning company (plus the Super Admin).
+    match /contract_docs/{companyId}/{fileName} {
+      allow read: if isSignedIn()
+        && (callerData().role == 'super_admin'
+            || callerData().company_id == companyId);
+      allow write: if isSignedIn()
+        && callerData().company_id == companyId
+        && isImageUnder5MB();
+    }
     match /{allPaths=**} {
       allow read, write: if false;
     }

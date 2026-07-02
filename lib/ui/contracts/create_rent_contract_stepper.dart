@@ -6,6 +6,7 @@ import '../../auth/session.dart';
 import '../../data/contract_repository.dart';
 import '../../models/contract_model.dart';
 import '../../models/enums.dart';
+import 'widgets/contract_docs_field.dart';
 
 // ڕەنگە سەرەکییەکان بۆ یەکپارچەیی دیزاینەکە
 const Color primaryDarkBlue = Color(0xFF0F2C59);
@@ -100,6 +101,7 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
   String _notes = '';
   DateTime _startDate = DateTime.now();
   DateTime _handoverDate = DateTime.now().add(const Duration(days: 365));
+  final _docs = ContractDocsController();
 
   static final _date = DateFormat('yyyy/MM/dd');
 
@@ -131,6 +133,8 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
     _notes = e.notes;
     _startDate = e.startDate;
     _handoverDate = e.handoverDate;
+    _docs.urls.addAll(e.attachmentUrls);
+    _docs.printDocs = e.printAttachments;
   }
 
   /// Renders a num without a trailing ".0" so editing fields stay clean.
@@ -161,6 +165,22 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
     final existing = widget.existing;
     final freq = _i(_paymentFrequency) < 1 ? 1 : _i(_paymentFrequency);
     final prepaid = _i(_downPaymentMonths).clamp(0, 12);
+
+    // Upload any newly captured document photos first, so the contract is
+    // saved with its complete attachment list.
+    final List<String> attachmentUrls;
+    try {
+      attachmentUrls = await _docs
+          .uploadPending(existing?.companyId ?? user.companyId);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('بارکردنی بەڵگەکان سەرکەوتوو نەبوو: $e'),
+            backgroundColor: Colors.red.shade700));
+        setState(() => _saving = false);
+      }
+      return;
+    }
 
     // Rebuild the schedule from the (possibly edited) dates/frequency, then
     // carry over any payment statuses the admin had already recorded so an
@@ -208,6 +228,10 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
       installments: installments,
       notes: _notes.trim(),
       agentName: existing?.agentName ?? user.displayName,
+      guaranteeReturned: existing?.guaranteeReturned ?? false,
+      guaranteeReturnedAt: existing?.guaranteeReturnedAt,
+      attachmentUrls: attachmentUrls,
+      printAttachments: _docs.printDocs,
     );
 
     try {
@@ -458,6 +482,9 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
                           ],
                         ),
                       ),
+
+                      const SizedBox(height: 12),
+                      ContractDocsField(controller: _docs),
 
                       const Padding(
                         padding: EdgeInsets.only(top: 16),

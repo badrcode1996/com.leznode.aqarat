@@ -292,8 +292,17 @@ exports.renderContractPdf = onCall(
         delivery_date: toDate(k.delivery_date),
       };
 
+      // Attachment photos (IDs, deeds…) print as appendix pages when the
+      // contract's print_attachments toggle is on.
+      let attachments = [];
+      if (k.print_attachments !== false && Array.isArray(k.attachment_urls)) {
+        attachments = (await Promise.all(
+            k.attachment_urls.slice(0, 20).map((u) => logoDataUri(u)),
+        )).filter(Boolean);
+      }
+
       const html = buildContractHtml({
-        ...fonts(), contract, company, template: t,
+        ...fonts(), contract, company, template: t, attachments,
       });
       const pdf = await htmlToPdf(html);
       return {pdf_base64: Buffer.from(pdf).toString("base64")};

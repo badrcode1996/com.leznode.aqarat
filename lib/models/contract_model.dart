@@ -98,6 +98,8 @@ class RentContract extends Contract {
     this.agentName = '',
     this.guaranteeReturned = false,
     this.guaranteeReturnedAt,
+    this.attachmentUrls = const [],
+    this.printAttachments = true,
   }) : super(type: ContractType.rent);
 
   final String party1Name; // لایەنی یەکەم (خاوەن)
@@ -132,6 +134,12 @@ class RentContract extends Contract {
   /// True once the guarantee/deposit has been returned to the tenant.
   final bool guaranteeReturned;
   final DateTime? guaranteeReturnedAt;
+
+  /// Photos of supporting documents (IDs, deeds…) — Storage download URLs.
+  final List<String> attachmentUrls;
+
+  /// Whether the attachment photos are appended to the printed PDF.
+  final bool printAttachments;
 
   @override
   String get listTitle => party2Name.isNotEmpty ? party2Name : party1Name;
@@ -180,6 +188,9 @@ class RentContract extends Contract {
       guaranteeReturned: json['guarantee_returned'] as bool? ?? false,
       guaranteeReturnedAt:
           (json['guarantee_returned_at'] as Timestamp?)?.toDate(),
+      attachmentUrls: (json['attachment_urls'] as List<dynamic>? ?? const [])
+          .cast<String>(),
+      printAttachments: json['print_attachments'] as bool? ?? true,
     );
   }
 
@@ -213,6 +224,8 @@ class RentContract extends Contract {
         'guarantee_returned_at': guaranteeReturnedAt == null
             ? null
             : Timestamp.fromDate(guaranteeReturnedAt!),
+        'attachment_urls': attachmentUrls,
+        'print_attachments': printAttachments,
       };
 
   /// Builds a 12-period schedule from [start], spaced by [everyMonths].
@@ -271,6 +284,8 @@ class RentContract extends Contract {
         agentName: agentName,
         guaranteeReturned: guaranteeReturned,
         guaranteeReturnedAt: guaranteeReturnedAt,
+        attachmentUrls: attachmentUrls,
+        printAttachments: printAttachments,
       );
 }
 
@@ -339,6 +354,8 @@ class SaleContract extends Contract {
     this.commissionItems = const [], // ٢ ئایتم: لایەنی یەکەم + دووەم
     this.notes = '',
     this.agentName = '',
+    this.attachmentUrls = const [],
+    this.printAttachments = true,
   }) : super(type: ContractType.sale);
 
   final String party1Name;
@@ -364,6 +381,12 @@ class SaleContract extends Contract {
 
   final String notes;
   final String agentName; // name of the user who created the contract
+
+  /// Photos of supporting documents (IDs, deeds…) — Storage download URLs.
+  final List<String> attachmentUrls;
+
+  /// Whether the attachment photos are appended to the printed PDF.
+  final bool printAttachments;
 
   @override
   String get listTitle => party2Name.isNotEmpty ? party2Name : party1Name;
@@ -403,6 +426,9 @@ class SaleContract extends Contract {
           .toList(),
       notes: json['notes'] as String? ?? '',
       agentName: json['agent_name'] as String? ?? '',
+      attachmentUrls: (json['attachment_urls'] as List<dynamic>? ?? const [])
+          .cast<String>(),
+      printAttachments: json['print_attachments'] as bool? ?? true,
     );
   }
 
@@ -429,6 +455,8 @@ class SaleContract extends Contract {
         'commission_items': commissionItems.map((i) => i.toJson()).toList(),
         'notes': notes,
         'agent_name': agentName,
+        'attachment_urls': attachmentUrls,
+        'print_attachments': printAttachments,
       };
 }
 

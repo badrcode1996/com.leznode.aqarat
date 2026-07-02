@@ -73,7 +73,9 @@ const applyTokens = (s, tokens) =>
   String(s).replace(/\{(\w+)\}/g, (m, k) => (k in tokens ? tokens[k] : m));
 
 /**
- * @param {object} o {contract, company, template, fontRegB64, fontBoldB64}
+ * @param {object} o {contract, company, template, fontRegB64, fontBoldB64,
+ *   attachments} — attachments is an array of image data: URIs appended as
+ *   one-per-page appendix pages.
  * @return {string} HTML document
  */
 function buildContractHtml(o) {
@@ -153,6 +155,13 @@ function buildContractHtml(o) {
     company.address,
   ].filter(Boolean);
 
+  // Each attachment photo gets its own page after the contract (the company
+  // band still repeats on top via the table thead).
+  const attachments = Array.isArray(o.attachments) ? o.attachments : [];
+  const attachmentsHtml = attachments
+      .map((uri) => `<div class="attach"><img src="${uri}"></div>`)
+      .join("");
+
   return `<!doctype html><html lang="ckb"><head><meta charset="utf-8">
 <style>
 @font-face{font-family:'Speda';src:url(data:font/ttf;base64,${o.fontRegB64}) format('truetype');font-weight:normal;}
@@ -190,6 +199,9 @@ thead{display:table-header-group;}
 .foot{position:fixed;bottom:0;left:0;right:0;padding-top:6px;
   border-top:.8px solid #bbb;display:flex;justify-content:space-between;
   font-size:9px;background:#fff;}
+/* Appendix pages: one attachment photo per page, scaled to fit. */
+.attach{page-break-before:always;text-align:center;}
+.attach img{max-width:100%;max-height:215mm;object-fit:contain;}
 /* Company-logo watermark: fixed + centred so it repeats faintly behind the
    text on every printed page. Available on all plans. */
 .watermark{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
@@ -213,6 +225,7 @@ ${watermark}
       ${sign("کارمەندی بەرپرس", c.agent_name)}
       ${sign("لایەنی دووەم", c.party2_name)}
     </div>
+    ${attachmentsHtml}
   </td></tr></tbody>
 </table>
 ${footerCells.length ? `<div class="foot">${footerCells.map((x) =>

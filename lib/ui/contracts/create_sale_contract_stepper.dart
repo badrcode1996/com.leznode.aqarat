@@ -8,6 +8,7 @@ import '../../data/lawyer_repository.dart';
 import '../../models/contract_model.dart';
 import '../../models/enums.dart';
 import '../../models/lawyer_model.dart';
+import 'widgets/contract_docs_field.dart';
 
 // ڕەنگە سەرەکییەکان بۆ یەکپارچەیی دیزاینەکە
 const Color primaryDarkBlue = Color(0xFF0F2C59);
@@ -98,6 +99,7 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
 
   Currency _currency = Currency.iqd;
   DateTime _deliveryDate = DateTime.now();
+  final _docs = ContractDocsController();
 
   static final _date = DateFormat('yyyy/MM/dd');
 
@@ -125,6 +127,8 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
     _lawyer.text = e.lawyer;
     _currency = e.currency;
     _deliveryDate = e.deliveryDate;
+    _docs.urls.addAll(e.attachmentUrls);
+    _docs.printDocs = e.printAttachments;
   }
 
   /// Renders a num without a trailing ".0" so editing fields stay clean.
@@ -151,6 +155,23 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
 
     final user = ref.read(currentUserProvider);
     final existing = widget.existing;
+
+    // Upload any newly captured document photos first, so the contract is
+    // saved with its complete attachment list.
+    final List<String> attachmentUrls;
+    try {
+      attachmentUrls = await _docs
+          .uploadPending(existing?.companyId ?? user.companyId);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('بارکردنی بەڵگەکان سەرکەوتوو نەبوو: $e'),
+            backgroundColor: Colors.red.shade700));
+        setState(() => _saving = false);
+      }
+      return;
+    }
+
     // Commission: a percentage of the sale price taken from BOTH parties, so two
     // items (seller + buyer), each = price × rate%. Preserved on edit.
     final rate = _n(_commission);
@@ -186,7 +207,10 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
       commissionItems: items,
       lawyer: _lawyer.text.trim(),
       deliveryDate: _deliveryDate,
+      notes: existing?.notes ?? '',
       agentName: existing?.agentName ?? user.displayName,
+      attachmentUrls: attachmentUrls,
+      printAttachments: _docs.printDocs,
     );
 
     try {
@@ -366,6 +390,9 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
                       _lawyerField(),
 
                       _datePicker('ڕێکەوتی تەسلیم', _deliveryDate, (d) => setState(() => _deliveryDate = d)),
+
+                      const SizedBox(height: 12),
+                      ContractDocsField(controller: _docs),
                     ],
                   ),
                 ),

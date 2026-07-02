@@ -13,6 +13,7 @@ import 'contract_preview_screen.dart';
 import 'create_rent_contract_stepper.dart';
 import 'create_sale_contract_stepper.dart';
 import 'installment_grid.dart';
+import 'widgets/contract_docs_field.dart';
 
 // ڕەنگە سەرەکییەکان بۆ یەکپارچەیی دیزاینەکە
 const Color primaryDarkBlue = Color(0xFF0F2C59);
@@ -247,20 +248,30 @@ class _ContractCard extends ConsumerWidget {
               ? () => Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => Scaffold(
-                backgroundColor: appBackgroundColor,
-                appBar: AppBar(
-                  title: Text(contract.listTitle, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  backgroundColor: primaryDarkBlue,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  centerTitle: true,
-                ),
-                body: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(vertical: 20),
-                  child: InstallmentGrid(contract: contract as RentContract),
-                ),
-              ),
+              builder: (_) {
+                final rent = contract as RentContract;
+                return Scaffold(
+                  backgroundColor: appBackgroundColor,
+                  appBar: AppBar(
+                    title: Text(contract.listTitle, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    backgroundColor: primaryDarkBlue,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    centerTitle: true,
+                  ),
+                  body: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    child: Column(
+                      children: [
+                        InstallmentGrid(contract: rent),
+                        // بەڵگە هاوپێچەکانی گرێبەستەکە (ئەگەر هەبن).
+                        ContractDocsViewer(urls: rent.attachmentUrls),
+                        const SizedBox(height: 20),
+                      ],
+                    ),
+                  ),
+                );
+              },
             ),
           )
               : null,
