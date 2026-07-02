@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../services/pdf/pdf_warmup.dart';
 import '../contracts/contracts_screen.dart';
 import '../receipts/receipts_screen.dart';
 
@@ -14,6 +15,9 @@ class ArchiveScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Warm the PDF render functions as soon as the archive opens, so a print
+    // tap moments later doesn't hit a cold instance (throttled internally).
+    PdfWarmup.ping();
     return DefaultTabController(
       length: 2,
       child: Scaffold(

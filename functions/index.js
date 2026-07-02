@@ -1,4 +1,5 @@
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
+const {onSchedule} = require("firebase-functions/v2/scheduler");
 const admin = require("firebase-admin");
 const fs = require("fs");
 const path = require("path");
@@ -53,17 +54,35 @@ async function logoDataUri(url) {
 
 // Reuse one Chromium across warm invocations — launching it is most of the
 // per-call latency, so we keep it alive and only open/close a page each time.
-let _browser;
+// Single-flight: concurrent callers (boot warm-up + first request) must share
+// one launch promise — two parallel @sparticuz/chromium extractions corrupt
+// the /tmp binary and every spawn then fails with EFAULT.
+let _browserP = null;
+
+function _launchBrowser() {
+  return (async () => {
+    const chromium = require("@sparticuz/chromium");
+    const puppeteer = require("puppeteer-core");
+    return puppeteer.launch({
+      args: chromium.args,
+      executablePath: await chromium.executablePath(),
+      headless: chromium.headless,
+    });
+  })();
+}
+
 async function getBrowser() {
-  if (_browser && _browser.connected) return _browser;
-  const chromium = require("@sparticuz/chromium");
-  const puppeteer = require("puppeteer-core");
-  _browser = await puppeteer.launch({
-    args: chromium.args,
-    executablePath: await chromium.executablePath(),
-    headless: chromium.headless,
-  });
-  return _browser;
+  for (;;) {
+    if (!_browserP) _browserP = _launchBrowser();
+    try {
+      const browser = await _browserP;
+      if (browser.connected) return browser;
+      _browserP = null; // browser died — relaunch on next loop
+    } catch (e) {
+      _browserP = null;
+      throw e;
+    }
+  }
 }
 
 // Warm Chromium while the container is still booting (runtime only — the
@@ -132,6 +151,13 @@ exports.renderReceiptPdf = onCall(
     // (Add minInstances: 1 to also remove cold starts — it raises the bill.)
     {memory: "1GiB", timeoutSeconds: 120, concurrency: 1},
     async (request) => {
+      // Warm-up ping (app screen-open or the keepPdfWarm schedule): just make
+      // sure Chromium is running and return — touches no data, so no auth.
+      if (request.data && request.data.warmup === true) {
+        await getBrowser();
+        return {warm: true};
+      }
+
       const auth = request.auth;
       if (!auth) throw new HttpsError("unauthenticated", "Sign in required.");
 
@@ -209,6 +235,12 @@ const toDate = (v) => (v && v.toDate ? v.toDate() : v);
 exports.renderContractPdf = onCall(
     {memory: "1GiB", timeoutSeconds: 120, concurrency: 1},
     async (request) => {
+      // Warm-up ping — see renderReceiptPdf.
+      if (request.data && request.data.warmup === true) {
+        await getBrowser();
+        return {warm: true};
+      }
+
       const auth = request.auth;
       if (!auth) throw new HttpsError("unauthenticated", "Sign in required.");
 
@@ -321,3 +353,23 @@ exports.renderExportPdf = onCall(
       return {pdf_base64: Buffer.from(pdf).toString("base64")};
     },
 );
+
+/**
+ * Pings the two PDF render functions every 5 minutes with a warmup request
+ * so their instances (and Chromium) stay alive — avoids the 10-20s cold
+ * start on the first print after an idle period. Costs pennies a month.
+ */
+exports.keepPdfWarm = onSchedule("every 5 minutes", async () => {
+  const base =
+    `https://us-central1-${process.env.GCLOUD_PROJECT}.cloudfunctions.net`;
+  const ping = (name) =>
+    fetch(`${base}/${name}`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({data: {warmup: true}}),
+    });
+  await Promise.allSettled([
+    ping("renderReceiptPdf"),
+    ping("renderContractPdf"),
+  ]);
+});
