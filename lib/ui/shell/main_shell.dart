@@ -11,6 +11,7 @@ import '../listings/create_listing_screen.dart';
 // بازار کاتی شاراوەتەوە — بۆ گەڕاندنەوەی، ئەم import ـە + MarketScreen() لە _tabs
 // + دوگمەی navـی 'بازاڕ' ی خوارەوە دووبارە چالاک بکەرەوە.
 // import '../market/market_screen.dart';
+import '../listings/my_listings_screen.dart';
 import '../receipts/create_receipt_screen.dart';
 import '../tenants/tenants_screen.dart';
 
@@ -33,6 +34,7 @@ class _MainShellState extends ConsumerState<MainShell> {
     DashboardScreen(),
     TenantsScreen(),
     ArchiveScreen(),
+    MyListingsScreen(), // داواکاری و خستنەڕوو
     // MarketScreen(), // بازار کاتی شاراوەتەوە
   ];
 
@@ -117,10 +119,8 @@ class _MainShellState extends ConsumerState<MainShell> {
             _navItem(1, Icons.people_outline, Icons.people_rounded, 'کرێچیەکان'),
             const SizedBox(width: 40), // notch gap
             _navItem(2, Icons.inventory_2_outlined, Icons.inventory_2, 'ئەرشیف'),
-            // بازار کاتی شاراوەتەوە. بۆشاییەکی بەتاڵ FAB لە ناوەڕاست ڕادەگرێت؛
-            // بۆ گەڕاندنەوەی، ئەمە بگۆڕەوە بۆ:
-            // _navItem(3, Icons.public_outlined, Icons.public_rounded, 'بازاڕ'),
-            const Expanded(child: SizedBox()),
+            _navItem(3, Icons.storefront_outlined, Icons.storefront_rounded,
+                'داواکاری و خستنەڕوو'),
           ],
         ),
       ),
@@ -138,13 +138,22 @@ class _MainShellState extends ConsumerState<MainShell> {
           children: [
             Icon(selected ? active : icon, size: 24, color: selected ? primaryDarkBlue : Colors.grey.shade500),
             const SizedBox(height: 2),
-            Text(
-                label,
-                style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-                    color: selected ? primaryDarkBlue : Colors.grey.shade500
-                )
+            // FittedBox ناوە درێژەکان بچووک دەکاتەوە بۆ پانی خانەکە
+            // (بۆ نموونە «داواکاری و خستنەڕوو») بەبێ شکان یان بڕان.
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                    label,
+                    maxLines: 1,
+                    style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                        color: selected ? primaryDarkBlue : Colors.grey.shade500
+                    )
+                ),
+              ),
             ),
           ],
         ),
