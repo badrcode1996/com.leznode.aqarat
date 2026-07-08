@@ -85,10 +85,12 @@ async function getBrowser() {
   }
 }
 
-// Warm Chromium while the container is still booting (runtime only — the
-// K_SERVICE guard keeps deploy-time code analysis from launching a browser),
-// so the first render doesn't also pay the ~3s browser launch.
-if (process.env.K_SERVICE) {
+// Warm Chromium while the container is still booting, so the first render
+// doesn't also pay the ~3s browser launch. Only in the render* functions'
+// instances: this module is shared by ALL functions in the codebase, and
+// launching Chromium inside a small 256MiB instance (keepPdfWarm etc.) blows
+// its memory limit. K_SERVICE is also absent during deploy-time analysis.
+if ((process.env.K_SERVICE || "").toLowerCase().startsWith("render")) {
   getBrowser().catch(() => {});
 }
 

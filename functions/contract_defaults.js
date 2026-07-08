@@ -1,11 +1,9 @@
 "use strict";
 // Auto-extracted from lib/models/contract_template_model.dart — keep in sync.
-const DEFAULTS = {
-  rent_title: "گرێبەستی کرێ",
-  sale_title: "گرێبەستی کڕین و فرۆشتن",
-  primary_color: "0F2C59",
-  clause_font_size: 16,
-  rent_clauses: [
+// Rent clauses are per property kind (house/apartment/shop/other = خانوو/
+// شوقە/دوکان/هیتر). All four currently share the same base list; replace a
+// kind's entry with its own array when its clauses diverge.
+const RENT_CLAUSES = [
   "لایەنی یەکەم ڕەزامەندە لەسەر بەکرێدانی ئەم موڵکەی سەرەوە بە لایەنی دووەم بۆ ماوەی ({period_months}) مانگ.",
   "هەردوو لایەن ڕەزامەندن لەسەر کرێی مانگانە بە بڕی {rent_amount} {currency}.",
   "ئەم گرێبەستە دەست پێدەکات لە بەرواری: {start_date} تاکو {end_date}.",
@@ -33,7 +31,18 @@ const DEFAULTS = {
   "لەسەر لایەنی دووەم پێویستە موڵکەکە بۆ ئەو مەبەستە بەکاربهێنێت کە لەسەری ڕێکەوتوون، کە نەبێتە مایەی ئەزیەت و ئازار بۆ هاوسێیەکانی، بە پێچەوانەوە بەرپرسیار دەبێت بەرامبەر یاسا و گرێبەستەکە هەڵدەوەشێتەوە.",
   "لەکاتی چارەسەر نەبوونی کێشەی نێوان دوو لایەنەکە (ئەگەر هەبوو) {company} بەرپرس نیە و کێشەکە دەبردرێتە دادگا بۆ چارەسەرکردنی بە شاهێدی کارمەندانی بەرپرس.",
   "ئەگەر لایەنی یەکەم خۆی کڕیی وەرگرت لە کرێچی ئەوا {company} بەرپرس نیە لە هیچ جۆرە کێشەیەک."
-],
+];
+
+const DEFAULTS = {
+  rent_title: "گرێبەستی کرێ",
+  sale_title: "گرێبەستی کڕین و فرۆشتن",
+  primary_color: "0F2C59",
+  clause_font_size: 16,
+  rent_clauses: RENT_CLAUSES,
+  rent_clauses_house: RENT_CLAUSES,
+  rent_clauses_apartment: RENT_CLAUSES,
+  rent_clauses_shop: RENT_CLAUSES,
+  rent_clauses_other: RENT_CLAUSES,
   sale_clauses: [
   "لایەنی یەکەم {party1} ڕەزامەندە لەسەر فرۆشتنی ئەم موڵکەی سەرەوە بە لایەنی دووەم بە نرخی {total_price} {currency}.",
   "لایەنی دووەم {party2} ڕەزامەندە لەسەر کڕینی ئەم موڵکەی سەرەوە بە نرخی {total_price} {currency}.",

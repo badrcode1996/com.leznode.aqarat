@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import 'company_model.dart';
 import 'contract_model.dart';
+import 'enums.dart';
 
 /// Per-company document template (collection: `templates`, doc id == company_id).
 ///
@@ -14,7 +15,7 @@ import 'contract_model.dart';
 /// [ContractTemplate.defaults] — the built-in clauses + design.
 class ContractTemplate {
   const ContractTemplate({
-    required this.rentClauses,
+    required this.rentClausesByKind,
     required this.saleClauses,
     required this.rentTitle,
     required this.saleTitle,
@@ -24,7 +25,10 @@ class ContractTemplate {
     required this.receiptFontSize,
   });
 
-  final List<String> rentClauses;
+  /// One rent clause list per property kind (خانوو/شوقە/دوکان/هیتر) —
+  /// stored as `rent_clauses_<wire>`, falling back to the legacy single
+  /// `rent_clauses` list, then to the built-in defaults.
+  final Map<RentPropertyKind, List<String>> rentClausesByKind;
   final List<String> saleClauses;
   final String rentTitle;
   final String saleTitle;
@@ -38,7 +42,7 @@ class ContractTemplate {
   final double receiptFontSize;
 
   ContractTemplate copyWith({
-    List<String>? rentClauses,
+    Map<RentPropertyKind, List<String>>? rentClausesByKind,
     List<String>? saleClauses,
     String? rentTitle,
     String? saleTitle,
@@ -48,7 +52,7 @@ class ContractTemplate {
     double? receiptFontSize,
   }) =>
       ContractTemplate(
-        rentClauses: rentClauses ?? this.rentClauses,
+        rentClausesByKind: rentClausesByKind ?? this.rentClausesByKind,
         saleClauses: saleClauses ?? this.saleClauses,
         rentTitle: rentTitle ?? this.rentTitle,
         saleTitle: saleTitle ?? this.saleTitle,
@@ -75,7 +79,12 @@ class ContractTemplate {
     }
 
     return ContractTemplate(
-      rentClauses: list('rent_clauses', d.rentClauses),
+      // Per-kind list → legacy single rent_clauses → built-in default.
+      rentClausesByKind: {
+        for (final kind in RentPropertyKind.values)
+          kind: list('rent_clauses_${kind.wire}',
+              list('rent_clauses', d.rentClausesByKind[kind]!)),
+      },
       saleClauses: list('sale_clauses', d.saleClauses),
       rentTitle: str('rent_title', d.rentTitle),
       saleTitle: str('sale_title', d.saleTitle),
@@ -89,7 +98,8 @@ class ContractTemplate {
   }
 
   Map<String, dynamic> toJson() => {
-        'rent_clauses': rentClauses,
+        for (final e in rentClausesByKind.entries)
+          'rent_clauses_${e.key.wire}': e.value,
         'sale_clauses': saleClauses,
         'rent_title': rentTitle,
         'sale_title': saleTitle,
@@ -219,7 +229,14 @@ class ContractTemplate {
         clauseFontSize: 16,
         receiptColorHex: '1E4D8B',
         receiptFontSize: 10,
-        rentClauses: _defaultRentClauses,
+        // All four kinds start from the same base clauses; per-kind texts
+        // are edited in the template editor (or new defaults added here).
+        rentClausesByKind: {
+          RentPropertyKind.house: _defaultRentClauses,
+          RentPropertyKind.apartment: _defaultRentClauses,
+          RentPropertyKind.shop: _defaultRentClauses,
+          RentPropertyKind.other: _defaultRentClauses,
+        },
         saleClauses: _defaultSaleClauses,
       );
 

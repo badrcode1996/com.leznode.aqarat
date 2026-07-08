@@ -89,10 +89,15 @@ function buildContractHtml(o) {
   const title = isRent ?
     (t.rent_title || DEFAULTS.rent_title) :
     (t.sale_title || DEFAULTS.sale_title);
-  let clauses = isRent ? t.rent_clauses : t.sale_clauses;
-  if (!Array.isArray(clauses) || clauses.length === 0) {
-    clauses = isRent ? DEFAULTS.rent_clauses : DEFAULTS.sale_clauses;
-  }
+  // Rent clauses are per property kind (خانوو/شوقە/دوکان/هیتر): the
+  // company's per-kind list → its legacy single list → built-in defaults.
+  const pick = (...lists) =>
+    lists.find((l) => Array.isArray(l) && l.length > 0) || [];
+  const kind = c.property_kind || "other";
+  const clauses = isRent ?
+    pick(t["rent_clauses_" + kind], t.rent_clauses,
+        DEFAULTS["rent_clauses_" + kind], DEFAULTS.rent_clauses) :
+    pick(t.sale_clauses, DEFAULTS.sale_clauses);
   const tokens = tokensFor(c, company);
 
   const names = [company.nameKu, company.nameAr, company.nameEn]

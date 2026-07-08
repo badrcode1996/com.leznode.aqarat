@@ -141,6 +141,26 @@ enum ListingKind {
       );
 }
 
+/// Rent-contract property kind — each kind prints with its own clause
+/// template (`rent_clauses_<wire>` on the company template, falling back to
+/// the generic `rent_clauses` then the built-in defaults).
+enum RentPropertyKind {
+  house('house', 'خانوو'),
+  apartment('apartment', 'شوقە'),
+  shop('shop', 'دوکان'),
+  other('other', 'هیتر');
+
+  const RentPropertyKind(this.wire, this.label);
+  final String wire;
+  final String label;
+
+  static RentPropertyKind fromWire(String? value) =>
+      RentPropertyKind.values.firstWhere(
+        (k) => k.wire == value,
+        orElse: () => RentPropertyKind.other,
+      );
+}
+
 /// Dropdown-backed property type.
 enum PropertyType {
   house('house', 'خانوو'),

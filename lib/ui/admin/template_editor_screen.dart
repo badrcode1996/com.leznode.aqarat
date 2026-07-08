@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/template_repository.dart';
 import '../../models/company_model.dart';
 import '../../models/contract_template_model.dart';
+import '../../models/enums.dart';
 
 const Color _primaryDarkBlue = Color(0xFF0F2C59);
 const Color _accentYellow = Color(0xFFF8B115);
@@ -27,7 +28,10 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
   final _saleTitle = TextEditingController();
   final _color = TextEditingController();
   final _receiptColor = TextEditingController();
-  final _rent = <TextEditingController>[];
+  // One clause-controller list per rent property kind (خانوو/شوقە/دوکان/هیتر).
+  final _rentByKind = {
+    for (final k in RentPropertyKind.values) k: <TextEditingController>[],
+  };
   final _sale = <TextEditingController>[];
   double _fontSize = 11;
   double _receiptFontSize = 10;
@@ -56,17 +60,22 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
     _fontSize = tpl.clauseFontSize;
     _receiptFontSize = tpl.receiptFontSize;
     _disposeLists();
-    _rent
-      ..clear()
-      ..addAll(tpl.rentClauses.map((c) => TextEditingController(text: c)));
+    for (final kind in RentPropertyKind.values) {
+      _rentByKind[kind]!
+        ..clear()
+        ..addAll(tpl.rentClausesByKind[kind]!
+            .map((c) => TextEditingController(text: c)));
+    }
     _sale
       ..clear()
       ..addAll(tpl.saleClauses.map((c) => TextEditingController(text: c)));
   }
 
   void _disposeLists() {
-    for (final c in _rent) {
-      c.dispose();
+    for (final list in _rentByKind.values) {
+      for (final c in list) {
+        c.dispose();
+      }
     }
     for (final c in _sale) {
       c.dispose();
@@ -91,7 +100,9 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
     final hex = _color.text.trim().replaceAll('#', '');
     final rHex = _receiptColor.text.trim().replaceAll('#', '');
     return ContractTemplate(
-      rentClauses: clean(_rent),
+      rentClausesByKind: {
+        for (final e in _rentByKind.entries) e.key: clean(e.value),
+      },
       saleClauses: clean(_sale),
       rentTitle: _rentTitle.text.trim(),
       saleTitle: _saleTitle.text.trim(),
@@ -206,8 +217,11 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
                 _receiptSection(),
                 const SizedBox(height: 16),
                 _tokenLegend(),
-                const SizedBox(height: 16),
-                _clauseSection('بەندەکانی گرێبەستی کرێ', _rent),
+                for (final kind in RentPropertyKind.values) ...[
+                  const SizedBox(height: 16),
+                  _collapsibleClauseSection(
+                      'بەندەکانی کرێ — ${kind.label}', _rentByKind[kind]!),
+                ],
                 const SizedBox(height: 16),
                 _clauseSection('بەندەکانی گرێبەستی فرۆشتن', _sale),
               ],
@@ -369,6 +383,38 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
       );
 
   // --------------------------- clauses ---------------------------
+  /// Collapsed-by-default clause list — used for the four per-kind rent
+  /// sections so the screen isn't 100+ text fields tall.
+  Widget _collapsibleClauseSection(
+      String title, List<TextEditingController> list) {
+    return Container(
+      decoration: BoxDecoration(
+          color: Colors.white, borderRadius: BorderRadius.circular(16)),
+      child: ExpansionTile(
+        shape: const Border(),
+        leading: const Icon(Icons.list_alt_rounded, color: _primaryDarkBlue),
+        title: Text('$title (${list.length})',
+            style: const TextStyle(
+                fontWeight: FontWeight.bold, color: _primaryDarkBlue)),
+        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        children: [
+          for (var i = 0; i < list.length; i++) _clauseRow(list, i),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              icon: const Icon(Icons.add, color: _primaryDarkBlue),
+              label: const Text('بەندی نوێ',
+                  style: TextStyle(
+                      color: _primaryDarkBlue, fontWeight: FontWeight.bold)),
+              onPressed: () =>
+                  setState(() => list.add(TextEditingController())),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _clauseSection(String title, List<TextEditingController> list) {
     return _panel(title, [
       for (var i = 0; i < list.length; i++) _clauseRow(list, i),

@@ -77,6 +77,7 @@ class RentContract extends Contract {
     required this.party2Mobile,
     // Property
     required this.propertyType,
+    this.propertyKind = RentPropertyKind.other,
     required this.projectName,
     required this.propertyNumber,
     required this.area,
@@ -107,7 +108,8 @@ class RentContract extends Contract {
   final String party2Name; // لایەنی دووەم (کرێچی)
   final String party2Mobile;
 
-  final String propertyType; // جۆری موڵک
+  final String propertyType; // جۆری موڵک (display text; custom when هیتر)
+  final RentPropertyKind propertyKind; // picks the clause template
   final String projectName; // پڕۆژە/گەرەک
   final String propertyNumber; // ژمارەی عەقار
   final num area; // ڕووبەر (م²)
@@ -162,6 +164,7 @@ class RentContract extends Contract {
       party2Name: json['party2_name'] as String? ?? '',
       party2Mobile: json['party2_mobile'] as String? ?? '',
       propertyType: json['property_type'] as String? ?? '',
+      propertyKind: RentPropertyKind.fromWire(json['property_kind'] as String?),
       projectName: json['project_name'] as String? ?? '',
       propertyNumber: json['property_number'] as String? ?? '',
       area: json['area'] as num? ?? 0,
@@ -202,6 +205,7 @@ class RentContract extends Contract {
         'party2_name': party2Name,
         'party2_mobile': party2Mobile,
         'property_type': propertyType,
+        'property_kind': propertyKind.wire,
         'project_name': projectName,
         'property_number': propertyNumber,
         'area': area,
@@ -264,6 +268,7 @@ class RentContract extends Contract {
         party2Name: party2Name,
         party2Mobile: party2Mobile,
         propertyType: propertyType,
+        propertyKind: propertyKind,
         projectName: projectName,
         propertyNumber: propertyNumber,
         area: area,
