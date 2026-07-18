@@ -1,10 +1,13 @@
 "use strict";
 
 /**
- * Builds the trilingual receipt (وەصڵ/پسولە) voucher HTML — two copies on one
- * A4 page — rendered to PDF by headless Chrome so Kurdish/Arabic shaping
- * (especially ێ) is correct. Mirrors the old on-device pdf layout.
+ * Builds the receipt (وەصڵ/پسولە) voucher HTML — two copies on one A4 page —
+ * rendered to PDF by headless Chrome so Kurdish/Arabic shaping (especially ێ)
+ * is correct. The banner title and signature captions are trilingual; the
+ * per-field labels are Kurdish/Arabic only.
  */
+
+const {resolveDesign} = require("./designs");
 
 const TYPE = {
   external_receive: ["پسولەی پارە وەرگرتن", "وصل قبض", "RECEIPT VOUCHER", false],
@@ -34,35 +37,73 @@ function fmtDate(d) {
  * @param {object} o data: {receipt, company, template, fontRegB64, fontBoldB64}
  * @return {string} full HTML document
  */
+/**
+ * Prepared receipt values for a per-company layout in designs/ — the money
+ * direction, the trilingual labels and the formatted date resolved once, so a
+ * bespoke design only writes markup. See designs/index.js.
+ *
+ * @param {object} o {receipt, company, template, fontRegB64, fontBoldB64,
+ *   companyId}
+ * @return {object} prepared values
+ */
+function receiptViewModel(o) {
+  const r = o.receipt || {};
+  const c = o.company || {};
+  const t = o.template || {};
+  const ty = TYPE[r.type] || TYPE.external_receive;
+  const isPay = ty[3];
+
+  return {
+    receipt: r,
+    company: c,
+    template: t,
+    /** true when money leaves the company (پارەدان). */
+    isPay,
+    accent: "#" + (t.receipt_color || "1E4D8B"),
+    fontSize: (t.receipt_font_size || 10) + "px",
+    /** Voucher title in Kurdish / Arabic / English. */
+    titleKu: ty[0],
+    titleAr: ty[1],
+    titleEn: ty[2],
+    personLabelKuAr: isPay ?
+      "پێدرا بە بەڕێز / دُفِع إلى السید/ة" :
+      "وەرمگرت لە بەڕێز / استلمت من السید/ة",
+    receivedBy: isPay ? r.agent_name : r.person_name,
+    deliveredTo: isPay ? r.person_name : r.agent_name,
+    dateText: fmtDate(r.date),
+    amountText: money(r.amount) + " " + (r.currency_label || ""),
+    logoUri: c.logo_data_uri || "",
+    footerCells: [c.phone1, c.phone2, c.address].filter(Boolean),
+    fontRegB64: o.fontRegB64,
+    fontBoldB64: o.fontBoldB64,
+    esc, money, fmtDate,
+  };
+}
+
 function buildReceiptHtml(o) {
   const r = o.receipt || {};
   const c = o.company || {};
   const t = o.template || {};
-  const accent = "#" + (t.receipt_color || "1E4D8B");
-  const fs = (t.receipt_font_size || 10) + "px";
+  // Per-company design — see designs/index.js.
+  const design = resolveDesign(o.companyId);
+  const vm = receiptViewModel(o);
+  if (typeof design.receiptHtml === "function") {
+    return design.receiptHtml(vm, o);
+  }
 
-  const ty = TYPE[r.type] || TYPE.external_receive;
-  const isPay = ty[3];
-  const personKuAr = isPay
-    ? "پێدرا بە بەڕێز / دُفِع إلى السید/ة"
-    : "وەرمگرت لە بەڕێز / استلمت من السید/ة";
-  const personEn = isPay ? "Paid To Mr/Mrs" : "Received From Mr/Mrs";
-  // Signature auto-fill from money direction.
-  const receivedBy = isPay ? r.agent_name : r.person_name;
-  const deliveredTo = isPay ? r.person_name : r.agent_name;
+  const {accent, isPay, receivedBy, deliveredTo, footerCells} = vm;
+  const fs = vm.fontSize;
+  const personKuAr = vm.personLabelKuAr;
+  const ty = [vm.titleKu, vm.titleAr, vm.titleEn];
 
   const phones = [c.phone1, c.phone2].filter(Boolean).join(" / ");
-  const footerCells = [c.phone1, c.phone2, c.address].filter(Boolean);
 
-  const field = (kuAr, en, val, opts) => {
+  const field = (kuAr, val, opts) => {
     opts = opts || {};
     const labelColor = opts.red ? "#D64545" : "#0F2C59";
-    const en2 = opts.showEn === false ? "" :
-      `<div class="en">${esc(en)} :</div>`;
     return `<div class="field">
       <div class="kuar" style="color:${labelColor}">${esc(kuAr)} :</div>
       <div class="val">${esc(val)}</div>
-      ${en2}
     </div>`;
   };
 
@@ -89,21 +130,20 @@ function buildReceiptHtml(o) {
     </div>
     <div class="copylabel">${esc(copyLabel)}</div>
     <div class="row2">
-      ${field("التأريخ / بەروار / DATE", "", fmtDate(r.date),
-      {showEn: false})}
+      ${field("التأريخ / بەروار / DATE", fmtDate(r.date))}
       <div class="sp"></div>
-      ${field("لق", "", r.branch, {showEn: false})}
+      ${field("لق", r.branch)}
     </div>
-    ${field("ژمارەی پسوله / رقم الوصل", "Voucher No.", r.receipt_number)}
-    ${field(personKuAr, personEn, r.person_name)}
-    ${field("بڕی پارە / مبلغ وقدره", "Amount",
+    ${field("ژمارەی پسوله / رقم الوصل", r.receipt_number)}
+    ${field(personKuAr, r.person_name)}
+    ${field("بڕی پارە / مبلغ وقدره",
       money(r.amount) + " " + (r.currency_label || ""))}
-    ${field("لەبڕی / وذلك لقاء", "Payment Purpose", r.payment_purpose)}
-    ${field("تێبینی / ملاحظة", "Note", r.note, {red: true})}
+    ${field("لەبڕی / وذلك لقاء", r.payment_purpose)}
+    ${field("تێبینی / ملاحظة", r.note, {red: true})}
     <div class="spacer"></div>
     <div class="signs">
       ${sign("کارمەندی بەرپرس / المحاسب", "Acountant", r.agent_name)}
-      ${sign("لێوەرگیراو / المستلم", "Received By", receivedBy)}
+      ${sign("لێوەرگیراو / المستلم", "Received From", receivedBy)}
       ${sign("پێدراو / تسلیم الی", "Delivered To", deliveredTo)}
     </div>
     ${footerCells.length ? `<div class="footer" style="background:${accent}">
@@ -145,7 +185,6 @@ body{font-family:'Speda';direction:rtl;color:#111;font-size:${fs};}
 .field .kuar{font-weight:bold;white-space:nowrap;}
 .field .val{flex:1;border-bottom:1px dotted #888;min-height:1.3em;
   padding:0 4px 1px;}
-.field .en{color:#666;font-size:9px;white-space:nowrap;}
 .spacer{flex:1;}
 .signs{display:flex;gap:10px;margin-top:10px;}
 .sign{flex:1;text-align:center;}
@@ -157,10 +196,11 @@ body{font-family:'Speda';direction:rtl;color:#111;font-size:${fs};}
   display:flex;align-items:center;justify-content:space-between;
   padding:0 14px;margin-top:8px;}
 .footer .sep{width:1px;height:12px;background:rgba(255,255,255,.4);}
+${design.css || ""}
 </style></head><body>
 ${copy("کۆپی کۆمپانیا")}
 ${copy("کۆپی زەبوون")}
 </body></html>`;
 }
 
-module.exports = {buildReceiptHtml};
+module.exports = {buildReceiptHtml, receiptViewModel};
