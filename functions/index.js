@@ -221,7 +221,9 @@ exports.renderReceiptPdf = onCall(
         receipt_font_size: t.receipt_font_size || 10,
       };
 
-      const html = buildReceiptHtml({...fonts(), company, receipt, template});
+      const html = buildReceiptHtml({
+        ...fonts(), company, receipt, template, companyId: r.company_id,
+      });
       const pdf = await htmlToPdf(html);
       // puppeteer returns a Uint8Array; wrap in Buffer for real base64.
       return {pdf_base64: Buffer.from(pdf).toString("base64")};
@@ -305,6 +307,7 @@ exports.renderContractPdf = onCall(
 
       const html = buildContractHtml({
         ...fonts(), contract, company, template: t, attachments,
+        companyId: k.company_id,
       });
       const pdf = await htmlToPdf(html);
       return {pdf_base64: Buffer.from(pdf).toString("base64")};

@@ -8,6 +8,7 @@
  */
 
 const {DEFAULTS} = require("./contract_defaults");
+const {resolveDesign} = require("./designs");
 
 const CURRENCY_LABEL = {IQD: "دیناری عێراقی", USD: "دۆلاری ئەمریکی"};
 
@@ -73,6 +74,68 @@ const applyTokens = (s, tokens) =>
   String(s).replace(/\{(\w+)\}/g, (m, k) => (k in tokens ? tokens[k] : m));
 
 /**
+ * Everything a contract layout needs, with the data work already done: tokens
+ * substituted into the clauses, dates and money formatted, the logo turned
+ * into a data URI. A per-company design in designs/ calls this and emits its
+ * own markup, so a bespoke layout never re-implements the data handling — see
+ * designs/index.js.
+ *
+ * @param {object} o {contract, company, template, fontRegB64, fontBoldB64,
+ *   attachments, companyId}
+ * @return {object} prepared values (see the returned object's keys)
+ */
+function contractViewModel(o) {
+  const c = o.contract || {};
+  const company = o.company || {};
+  const t = o.template || {};
+  const isRent = c.contract_type === "rent";
+  const tokens = tokensFor(c, company);
+
+  const pick = (...lists) =>
+    lists.find((l) => Array.isArray(l) && l.length > 0) || [];
+  // Migration shim: rent_clauses_house is the newest edit on templates saved
+  // while clauses were split per property kind. Drop once all are re-saved.
+  const rawClauses = isRent ?
+    pick(t.rent_clauses_house, t.rent_clauses, DEFAULTS.rent_clauses) :
+    pick(t.sale_clauses, DEFAULTS.sale_clauses);
+
+  return {
+    contract: c,
+    company,
+    template: t,
+    isRent,
+    tokens,
+    accent: "#" + (t.primary_color || DEFAULTS.primary_color),
+    fontSize: (t.clause_font_size || DEFAULTS.clause_font_size) + "px",
+    title: isRent ?
+      (t.rent_title || DEFAULTS.rent_title) :
+      (t.sale_title || DEFAULTS.sale_title),
+    /** Clause texts with every {token} already substituted. */
+    clauses: rawClauses.map((cl) => applyTokens(cl, tokens)),
+    /** Company name lines, blanks dropped. */
+    names: [company.nameKu, company.nameAr, company.nameEn].filter(Boolean),
+    logoUri: company.logo_data_uri || "",
+    /** Attachment photos as data: URIs, for appendix pages. */
+    attachments: Array.isArray(o.attachments) ? o.attachments : [],
+    /** [label, value] pairs describing the property. */
+    propertyPairs: [
+      ["جۆری موڵک:", c.property_type || ""],
+      ["پڕۆژە / گەڕەک:", c.project_name || ""],
+      ["ژمارەی عەقار:", c.property_number || ""],
+      ["ڕووبەر:", (c.area || 0) + " م²"],
+    ],
+    footerCells: [
+      [company.phone1, company.phone2].filter(Boolean).join(" / "),
+      company.address,
+    ].filter(Boolean),
+    fontRegB64: o.fontRegB64,
+    fontBoldB64: o.fontBoldB64,
+    // Helpers, so a design doesn't re-implement them.
+    esc, money, fmtDate, applyTokens,
+  };
+}
+
+/**
  * @param {object} o {contract, company, template, fontRegB64, fontBoldB64,
  *   attachments} — attachments is an array of image data: URIs appended as
  *   one-per-page appendix pages.
@@ -84,24 +147,16 @@ function buildContractHtml(o) {
   const t = o.template || {};
   const isRent = c.contract_type === "rent";
 
-  const accent = "#" + (t.primary_color || DEFAULTS.primary_color);
-  const fs = (t.clause_font_size || DEFAULTS.clause_font_size) + "px";
-  const title = isRent ?
-    (t.rent_title || DEFAULTS.rent_title) :
-    (t.sale_title || DEFAULTS.sale_title);
-  // Rent clauses are per property kind (خانوو/شوقە/دوکان/هیتر): the
-  // company's per-kind list → its legacy single list → built-in defaults.
-  const pick = (...lists) =>
-    lists.find((l) => Array.isArray(l) && l.length > 0) || [];
-  const kind = c.property_kind || "other";
-  const clauses = isRent ?
-    pick(t["rent_clauses_" + kind], t.rent_clauses,
-        DEFAULTS["rent_clauses_" + kind], DEFAULTS.rent_clauses) :
-    pick(t.sale_clauses, DEFAULTS.sale_clauses);
-  const tokens = tokensFor(c, company);
+  // Per-company design: a full layout takeover wins outright; otherwise its
+  // css is appended to the base stylesheet below and overrides it.
+  const design = resolveDesign(o.companyId);
+  if (typeof design.contractHtml === "function") {
+    return design.contractHtml(contractViewModel(o), o);
+  }
 
-  const names = [company.nameKu, company.nameAr, company.nameEn]
-      .filter(Boolean);
+  const vm = contractViewModel(o);
+  const {accent, title, names, propertyPairs: propPairs} = vm;
+  const fs = vm.fontSize;
   const logo = company.logo_data_uri ?
     `<img class="logo" src="${company.logo_data_uri}">` : "";
   // Faint full-page watermark of the company logo (all plans).
@@ -120,13 +175,6 @@ function buildContractHtml(o) {
         .join('<span class="sep"> - </span>') +
     `</div>`;
 
-  const propPairs = [
-    ["جۆری موڵک:", c.property_type || ""],
-    ["پڕۆژە / گەڕەک:", c.project_name || ""],
-    ["ژمارەی عەقار:", c.property_number || ""],
-    ["ڕووبەر:", (c.area || 0) + " م²"],
-  ];
-
   const card = isRent ? [
     row("ژمارەی گرێبەست:", c.contract_number),
     row("لایەنی یەکەم (خاوەن موڵک):", c.party1_name),
@@ -143,9 +191,9 @@ function buildContractHtml(o) {
         " " + (CURRENCY_LABEL[c.dinar_dolar] || "")) : ""),
   ].join("");
 
-  const clausesHtml = clauses
-      .map((cl, i) =>
-        `<div class="clause">${i + 1}- ${esc(applyTokens(cl, tokens))}</div>`)
+  // vm.clauses already has its {token}s substituted.
+  const clausesHtml = vm.clauses
+      .map((cl, i) => `<div class="clause">${i + 1}- ${esc(cl)}</div>`)
       .join("");
 
   const notes = (c.notes && c.notes.trim()) ?
@@ -155,15 +203,11 @@ function buildContractHtml(o) {
     `<div class="sg"><div class="sgl">${esc(label)}</div>` +
     `<div class="sgline"></div><div class="sgn">${esc(name)}</div></div>`;
 
-  const footerCells = [
-    [company.phone1, company.phone2].filter(Boolean).join(" / "),
-    company.address,
-  ].filter(Boolean);
+  const footerCells = vm.footerCells;
 
   // Each attachment photo gets its own page after the contract (the company
   // band still repeats on top via the table thead).
-  const attachments = Array.isArray(o.attachments) ? o.attachments : [];
-  const attachmentsHtml = attachments
+  const attachmentsHtml = vm.attachments
       .map((uri) => `<div class="attach"><img src="${uri}"></div>`)
       .join("");
 
@@ -211,6 +255,7 @@ thead{display:table-header-group;}
    text on every printed page. Available on all plans. */
 .watermark{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
   width:62%;opacity:.06;z-index:-1;pointer-events:none;}
+${design.css || ""}
 </style></head><body>
 ${watermark}
 <table class="page">
@@ -238,4 +283,4 @@ ${footerCells.length ? `<div class="foot">${footerCells.map((x) =>
 </body></html>`;
 }
 
-module.exports = {buildContractHtml};
+module.exports = {buildContractHtml, contractViewModel};
