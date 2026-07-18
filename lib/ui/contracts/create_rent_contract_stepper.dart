@@ -82,8 +82,7 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
   final _party2Name = TextEditingController();
   final _party2Mobile = TextEditingController();
   // Step 2 — property
-  RentPropertyKind _propertyKind = RentPropertyKind.house;
-  final _propertyTypeOther = TextEditingController(); // when هیتر is picked
+  final _propertyType = TextEditingController();
   final _projectName = TextEditingController();
   final _propertyNumber = TextEditingController();
   final _area = TextEditingController();
@@ -117,10 +116,7 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
     _party1Mobile.text = e.party1Mobile;
     _party2Name.text = e.party2Name;
     _party2Mobile.text = e.party2Mobile;
-    _propertyKind = e.propertyKind;
-    if (e.propertyKind == RentPropertyKind.other) {
-      _propertyTypeOther.text = e.propertyType;
-    }
+    _propertyType.text = e.propertyType;
     _projectName.text = e.projectName;
     _propertyNumber.text = e.propertyNumber;
     _area.text = _numText(e.area);
@@ -148,8 +144,7 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
   @override
   void dispose() {
     for (final c in [
-      _party1Name, _party1Mobile, _party2Name, _party2Mobile,
-      _propertyTypeOther,
+      _party1Name, _party1Mobile, _party2Name, _party2Mobile, _propertyType,
       _projectName, _propertyNumber, _area, _rentAmount, _rentalPeriod,
       _downPayment, _downPaymentMonths, _paymentFrequency, _guarantee,
       _gracePeriod, _rentalPurpose, _lateFee,
@@ -214,11 +209,7 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
       party1Mobile: _party1Mobile.text.trim(),
       party2Name: _party2Name.text.trim(),
       party2Mobile: _party2Mobile.text.trim(),
-      // For هیتر the typed text prints; otherwise the kind's label.
-      propertyType: _propertyKind == RentPropertyKind.other
-          ? _propertyTypeOther.text.trim()
-          : _propertyKind.label,
-      propertyKind: _propertyKind,
+      propertyType: _propertyType.text.trim(),
       projectName: _projectName.text.trim(),
       propertyNumber: _propertyNumber.text.trim(),
       area: _n(_area),
@@ -395,22 +386,7 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
                   padding: const EdgeInsets.only(top: 16),
                   child: Column(
                     children: [
-                      // جۆری موڵک: کۆمبۆ بۆکس — هەر جۆرێک قاڵبی خاڵەکانی خۆی
-                      // هەیە لە PDF. «هیتر» خانەی نووسین دەردەخات.
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: DropdownButtonFormField<RentPropertyKind>(
-                          isExpanded: true,
-                          initialValue: _propertyKind,
-                          decoration: modernInputDecoration(label: 'جۆری موڵک', icon: Icons.home_work_outlined),
-                          items: RentPropertyKind.values
-                              .map((k) => DropdownMenuItem(value: k, child: Text(k.label, style: const TextStyle(fontWeight: FontWeight.bold))))
-                              .toList(),
-                          onChanged: (v) => setState(() => _propertyKind = v ?? RentPropertyKind.house),
-                        ),
-                      ),
-                      if (_propertyKind == RentPropertyKind.other)
-                        _text(_propertyTypeOther, 'جۆری موڵک بنووسە', icon: Icons.edit_outlined),
+                      _text(_propertyType, 'جۆری موڵک (بۆ نموونە: خانوو)', icon: Icons.home_work_outlined),
                       _text(_projectName, 'پڕۆژە / گەرەک', icon: Icons.location_city_outlined),
                       _text(_propertyNumber, 'ژمارەی عەقار', icon: Icons.numbers),
                       _text(_area, 'ڕووبەر (م²)', keyboard: const TextInputType.numberWithOptions(decimal: true), icon: Icons.square_foot),

@@ -1,8 +1,5 @@
 "use strict";
 // Auto-extracted from lib/models/contract_template_model.dart — keep in sync.
-// Rent clauses are per property kind (house/apartment/shop/other = خانوو/
-// شوقە/دوکان/هیتر). All four currently share the same base list; replace a
-// kind's entry with its own array when its clauses diverge.
 const RENT_CLAUSES = [
   "لایەنی یەکەم ڕەزامەندە لەسەر بەکرێدانی ئەم موڵکەی سەرەوە بە لایەنی دووەم بۆ ماوەی ({period_months}) مانگ.",
   "هەردوو لایەن ڕەزامەندن لەسەر کرێی مانگانە بە بڕی {rent_amount} {currency}.",
@@ -39,10 +36,6 @@ const DEFAULTS = {
   primary_color: "0F2C59",
   clause_font_size: 16,
   rent_clauses: RENT_CLAUSES,
-  rent_clauses_house: RENT_CLAUSES,
-  rent_clauses_apartment: RENT_CLAUSES,
-  rent_clauses_shop: RENT_CLAUSES,
-  rent_clauses_other: RENT_CLAUSES,
   sale_clauses: [
   "لایەنی یەکەم {party1} ڕەزامەندە لەسەر فرۆشتنی ئەم موڵکەی سەرەوە بە لایەنی دووەم بە نرخی {total_price} {currency}.",
   "لایەنی دووەم {party2} ڕەزامەندە لەسەر کڕینی ئەم موڵکەی سەرەوە بە نرخی {total_price} {currency}.",

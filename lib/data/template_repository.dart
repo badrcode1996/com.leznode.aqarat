@@ -24,9 +24,15 @@ class TemplateRepository {
     return ContractTemplate.fromJson(snap.data()!);
   }
 
-  /// Super-admin save.
+  /// Super-admin save. Merges, so it also clears the per-property-kind clause
+  /// lists left behind by the short-lived split-template version — otherwise
+  /// they'd shadow `rent_clauses` on the next read.
   Future<void> save(String companyId, ContractTemplate template) {
-    return _doc(companyId).set(template.toJson(), SetOptions(merge: true));
+    return _doc(companyId).set({
+      ...template.toJson(),
+      for (final kind in const ['house', 'apartment', 'shop', 'other'])
+        'rent_clauses_$kind': FieldValue.delete(),
+    }, SetOptions(merge: true));
   }
 
   /// Resets a company back to the built-in default by deleting its override.
