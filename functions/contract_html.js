@@ -18,6 +18,10 @@ const esc = (s) =>
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;");
 
+// esc() is for text nodes; a value going into an attribute must also have its
+// quotes escaped or it can close the attribute and inject markup.
+const escAttr = (s) => esc(s).replace(/"/g, "&quot;");
+
 const money = (n) => Number(n || 0).toLocaleString("en-US");
 
 function fmtDate(d) {
@@ -158,10 +162,10 @@ function buildContractHtml(o) {
   const {accent, title, names, propertyPairs: propPairs} = vm;
   const fs = vm.fontSize;
   const logo = company.logo_data_uri ?
-    `<img class="logo" src="${company.logo_data_uri}">` : "";
+    `<img class="logo" src="${escAttr(company.logo_data_uri)}">` : "";
   // Faint full-page watermark of the company logo (all plans).
   const watermark = company.logo_data_uri ?
-    `<img class="watermark" src="${company.logo_data_uri}">` : "";
+    `<img class="watermark" src="${escAttr(company.logo_data_uri)}">` : "";
 
   const row = (label, val) =>
     `<div class="r"><span class="rl">${esc(label)}</span>` +
@@ -208,7 +212,7 @@ function buildContractHtml(o) {
   // Each attachment photo gets its own page after the contract (the company
   // band still repeats on top via the table thead).
   const attachmentsHtml = vm.attachments
-      .map((uri) => `<div class="attach"><img src="${uri}"></div>`)
+      .map((uri) => `<div class="attach"><img src="${escAttr(uri)}"></div>`)
       .join("");
 
   return `<!doctype html><html lang="ckb"><head><meta charset="utf-8">

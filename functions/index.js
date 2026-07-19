@@ -31,19 +31,47 @@ const CURRENCY_LABEL = {IQD: "دیناری عێراقی", USD: "دۆلاری ئ�
 const LOGO_TTL_MS = 10 * 60 * 1000;
 const _logoCache = new Map();
 
-/** Fetches a logo URL and returns a data: URI, or "" on any failure. */
+// The renderer only ever embeds images the app itself uploaded to our Storage
+// bucket. Anything else is a URL a caller put in the document — attachment_urls
+// is member-writable — so fetching it would turn the renderer into an SSRF
+// proxy with the function's network position.
+const IMAGE_HOSTS = new Set([
+  "firebasestorage.googleapis.com",
+  "storage.googleapis.com",
+  "aqarat-49fc2.firebasestorage.app",
+]);
+
+// The response's content-type is remote input and ends up inside a data: URI
+// that is interpolated into src="…". An unconstrained value can close the
+// attribute and inject markup, so only a known image type is ever emitted.
+const IMAGE_MIME = new Set([
+  "image/png", "image/jpeg", "image/jpg", "image/webp", "image/gif",
+]);
+
+/** Fetches an image URL and returns a data: URI, or "" on any failure. */
 async function logoDataUri(url) {
   if (!url) return "";
+  let host;
+  try {
+    const u = new URL(url);
+    if (u.protocol !== "https:") return "";
+    host = u.hostname.toLowerCase();
+  } catch (e) {
+    return "";
+  }
+  if (!IMAGE_HOSTS.has(host)) return "";
   const hit = _logoCache.get(url);
   if (hit && Date.now() - hit.at < LOGO_TTL_MS) return hit.uri;
   try {
     const ctrl = new AbortController();
     const tm = setTimeout(() => ctrl.abort(), 6000);
-    const res = await fetch(url, {signal: ctrl.signal});
+    const res = await fetch(url, {signal: ctrl.signal, redirect: "error"});
     clearTimeout(tm);
     if (!res.ok) return "";
     const buf = Buffer.from(await res.arrayBuffer());
-    const mime = res.headers.get("content-type") || "image/png";
+    const declared = (res.headers.get("content-type") || "")
+        .split(";")[0].trim().toLowerCase();
+    const mime = IMAGE_MIME.has(declared) ? declared : "image/png";
     const uri = `data:${mime};base64,${buf.toString("base64")}`;
     _logoCache.set(url, {uri, at: Date.now()});
     return uri;

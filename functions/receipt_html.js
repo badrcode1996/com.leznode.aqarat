@@ -16,6 +16,8 @@ const TYPE = {
   rent_pay: ["پسولەی دانەوەی کرێ", "وصل صرف الإيجار", "RENT PAYMENT", true],
 };
 
+const escAttr = (s) => esc(s).replace(/"/g, "&quot;");
+
 const esc = (s) =>
   String(s == null ? "" : s)
       .replace(/&/g, "&amp;")
@@ -115,7 +117,7 @@ function buildReceiptHtml(o) {
     </div>`;
 
   const logo = c.logo_data_uri
-    ? `<img class="logo" src="${c.logo_data_uri}">`
+    ? `<img class="logo" src="${escAttr(c.logo_data_uri)}">`
     : `<div class="logo logotext">LOGO</div>`;
 
   const copy = (copyLabel) => `<div class="copy">

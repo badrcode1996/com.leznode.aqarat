@@ -38,7 +38,12 @@ const EMPTY = {};
  * @return {{css?: string, contractHtml?: Function, receiptHtml?: Function}}
  */
 function resolveDesign(companyId) {
-  return (companyId && REGISTRY[companyId]) || EMPTY;
+  // Own-property check: a company id like "constructor" or "toString" would
+  // otherwise resolve to something off Object.prototype.
+  if (!companyId || !Object.prototype.hasOwnProperty.call(REGISTRY, companyId)) {
+    return EMPTY;
+  }
+  return REGISTRY[companyId] || EMPTY;
 }
 
 module.exports = {resolveDesign, REGISTRY};
