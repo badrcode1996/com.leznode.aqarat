@@ -8,6 +8,11 @@ service firebase.storage {
     function isSignedIn() {
       return request.auth != null;
     }
+    // Cross-service Rules: reading Firestore from Storage Rules needs the
+    // Firebase Rules service agent to hold roles/firebaserules.firestoreServiceAgent.
+    // Without that grant every firestore.get() below fails and EVERY write is
+    // denied — the CLI offers to add the role the first time it uploads a
+    // ruleset that uses these functions.
     function callerData() {
       return firestore.get(
         /databases/(default)/documents/users/$(request.auth.uid)).data;
