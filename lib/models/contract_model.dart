@@ -56,6 +56,12 @@ sealed class Contract {
 
   String get listTitle;
   String get listSubtitle;
+
+  /// Photos of supporting documents (IDs, deeds…) — Storage download URLs.
+  /// Both subtypes already hold the field; declaring it here lets the list
+  /// screen reach a contract's documents without switching on the type.
+  List<String> get attachmentUrls;
+
   Map<String, dynamic> toJson();
 }
 
@@ -135,7 +141,7 @@ class RentContract extends Contract {
   final bool guaranteeReturned;
   final DateTime? guaranteeReturnedAt;
 
-  /// Photos of supporting documents (IDs, deeds…) — Storage download URLs.
+  @override
   final List<String> attachmentUrls;
 
   /// Whether the attachment photos are appended to the printed PDF.

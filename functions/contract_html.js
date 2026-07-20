@@ -209,10 +209,18 @@ function buildContractHtml(o) {
 
   const footerCells = vm.footerCells;
 
-  // Each attachment photo gets its own page after the contract (the company
-  // band still repeats on top via the table thead).
-  const attachmentsHtml = vm.attachments
-      .map((uri) => `<div class="attach"><img src="${escAttr(uri)}"></div>`)
+  // Attachments print four-up on plain pages after the contract. They sit
+  // OUTSIDE table.page on purpose: inside it the thead company band would
+  // repeat over every photo page.
+  const attachmentPages = [];
+  for (let i = 0; i < vm.attachments.length; i += 4) {
+    attachmentPages.push(vm.attachments.slice(i, i + 4));
+  }
+  const attachmentsHtml = attachmentPages
+      .map((page) => `<div class="attachpage">` +
+        page.map((uri) => `<div class="attachcell">` +
+          `<img src="${escAttr(uri)}"></div>`).join("") +
+        `</div>`)
       .join("");
 
   return `<!doctype html><html lang="ckb"><head><meta charset="utf-8">
@@ -252,9 +260,17 @@ thead{display:table-header-group;}
 .foot{position:fixed;bottom:0;left:0;right:0;padding-top:6px;
   border-top:.8px solid #bbb;display:flex;justify-content:space-between;
   font-size:9px;background:#fff;}
-/* Appendix pages: one attachment photo per page, scaled to fit. */
-.attach{page-break-before:always;text-align:center;}
-.attach img{max-width:100%;max-height:215mm;object-fit:contain;}
+/* Appendix: four photos to a plain page, 2x2. Each page is its own grid so
+   the break lands between pages, never inside a row. The opaque white
+   background + z-index cover the fixed watermark and footer, which would
+   otherwise repeat onto these pages — the appendix is meant to be bare
+   paper, with no company design on it. */
+.attachpage{page-break-before:always;display:grid;
+  grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:8mm;height:259mm;
+  position:relative;z-index:5;background:#fff;}
+.attachcell{display:flex;align-items:center;justify-content:center;
+  overflow:hidden;}
+.attachcell img{max-width:100%;max-height:100%;object-fit:contain;}
 /* Company-logo watermark: fixed + centred so it repeats faintly behind the
    text on every printed page. Available on all plans. */
 .watermark{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
@@ -279,9 +295,9 @@ ${watermark}
       ${sign("کارمەندی بەرپرس", c.agent_name)}
       ${sign("لایەنی دووەم", c.party2_name)}
     </div>
-    ${attachmentsHtml}
   </td></tr></tbody>
 </table>
+${attachmentsHtml}
 ${footerCells.length ? `<div class="foot">${footerCells.map((x) =>
     `<span>${esc(x)}</span>`).join("")}</div>` : ""}
 </body></html>`;

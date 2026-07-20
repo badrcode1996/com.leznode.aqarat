@@ -155,6 +155,32 @@ class _ContractCard extends ConsumerWidget {
     }
   }
 
+  /// The contract's attachment photos on their own screen. Reachable for rent
+  /// AND sale contracts — the installments screen that used to host them only
+  /// exists for rent, so a sale contract's documents had nowhere to be seen.
+  void _openDocs(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute<void>(
+        builder: (_) => Scaffold(
+          backgroundColor: appBackgroundColor,
+          appBar: AppBar(
+            title: const Text('بەڵگەکان',
+                style: TextStyle(fontWeight: FontWeight.bold)),
+            backgroundColor: primaryDarkBlue,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            centerTitle: true,
+          ),
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            child: ContractDocsViewer(urls: contract.attachmentUrls),
+          ),
+        ),
+      ),
+    );
+  }
+
   void _edit(BuildContext context) {
     final c = contract;
     Navigator.push(
@@ -343,6 +369,31 @@ class _ContractCard extends ConsumerWidget {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    // هەمیشە دەردەکەوێت — بە بەتاڵی ڕەنگخنکاو دەبێت، تا
+                    // بەکارهێنەر بزانێت بەڵگەکان لەکوێن.
+                    if (contract.attachmentUrls.isNotEmpty)
+                      IconButton(
+                        tooltip: 'بەڵگەکان (${contract.attachmentUrls.length})',
+                        icon: Badge.count(
+                          count: contract.attachmentUrls.length,
+                          backgroundColor: accentYellow,
+                          textColor: primaryDarkBlue,
+                          child: const Icon(Icons.photo_library_outlined,
+                              color: primaryDarkBlue),
+                        ),
+                        onPressed: () => _openDocs(context),
+                      )
+                    else
+                      IconButton(
+                        tooltip: 'بەڵگەکان (بەتاڵ)',
+                        icon: Icon(Icons.photo_library_outlined,
+                            color: Colors.grey.shade400),
+                        onPressed: () => ScaffoldMessenger.of(context)
+                            .showSnackBar(const SnackBar(
+                          content: Text(
+                              'هیچ بەڵگەیەک زیاد نەکراوە — لە دەستکاریدا دەتوانیت زیادی بکەیت'),
+                        )),
+                      ),
                     IconButton(
                       tooltip: 'پێشبینین',
                       icon: const Icon(Icons.visibility_outlined, color: primaryDarkBlue),

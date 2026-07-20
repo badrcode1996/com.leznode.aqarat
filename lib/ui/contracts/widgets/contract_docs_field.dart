@@ -3,6 +3,8 @@ import 'dart:typed_data';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 const Color _primaryDarkBlue = Color(0xFF0F2C59);
 
@@ -210,6 +212,93 @@ class _ContractDocsFieldState extends State<ContractDocsField> {
   }
 }
 
+/// Full-screen swipeable viewer for the attachment images, with share and
+/// open-in-browser (download) actions for the page currently on screen.
+class _DocsGallery extends StatefulWidget {
+  const _DocsGallery({required this.urls, required this.initialIndex});
+
+  final List<String> urls;
+  final int initialIndex;
+
+  @override
+  State<_DocsGallery> createState() => _DocsGalleryState();
+}
+
+class _DocsGalleryState extends State<_DocsGallery> {
+  late final PageController _controller =
+      PageController(initialPage: widget.initialIndex);
+  late int _index = widget.initialIndex;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _snack(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(message), backgroundColor: Colors.red.shade700));
+  }
+
+  Future<void> _share() async {
+    try {
+      await Share.share(widget.urls[_index]);
+    } catch (e) {
+      _snack('هاوبەشکردن سەرکەوتوو نەبوو: $e');
+    }
+  }
+
+  Future<void> _download() async {
+    final uri = Uri.parse(widget.urls[_index]);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      _snack('نەتوانرا بەڵگەکە بکرێتەوە');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        title: Text('${_index + 1} / ${widget.urls.length}',
+            style: const TextStyle(fontSize: 15)),
+        actions: [
+          IconButton(
+            tooltip: 'هاوبەشکردن',
+            icon: const Icon(Icons.share_outlined),
+            onPressed: _share,
+          ),
+          IconButton(
+            tooltip: 'دابەزاندن',
+            icon: const Icon(Icons.download_outlined),
+            onPressed: _download,
+          ),
+        ],
+      ),
+      body: PageView.builder(
+        controller: _controller,
+        itemCount: widget.urls.length,
+        onPageChanged: (i) => setState(() => _index = i),
+        itemBuilder: (_, i) => InteractiveViewer(
+          maxScale: 5,
+          child: Center(
+            child: Image.network(
+              widget.urls[i],
+              fit: BoxFit.contain,
+              loadingBuilder: (_, child, p) => p == null
+                  ? child
+                  : const CircularProgressIndicator(color: Colors.white),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Read-only attachments viewer (e.g. on the rent contract's installment
 /// screen). Thumbnails open a full-screen zoomable view.
 class ContractDocsViewer extends StatelessWidget {
@@ -221,27 +310,7 @@ class ContractDocsViewer extends StatelessWidget {
     Navigator.push(
       context,
       MaterialPageRoute<void>(
-        builder: (_) => Scaffold(
-          backgroundColor: Colors.black,
-          appBar: AppBar(
-              backgroundColor: Colors.black, foregroundColor: Colors.white),
-          body: PageView.builder(
-            controller: PageController(initialPage: index),
-            itemCount: urls.length,
-            itemBuilder: (_, i) => InteractiveViewer(
-              maxScale: 5,
-              child: Center(
-                child: Image.network(
-                  urls[i],
-                  fit: BoxFit.contain,
-                  loadingBuilder: (_, child, p) => p == null
-                      ? child
-                      : const CircularProgressIndicator(color: Colors.white),
-                ),
-              ),
-            ),
-          ),
-        ),
+        builder: (_) => _DocsGallery(urls: urls, initialIndex: index),
       ),
     );
   }
@@ -270,25 +339,45 @@ class ContractDocsViewer extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (var i = 0; i < urls.length; i++)
-                InkWell(
-                  onTap: () => _open(context, i),
-                  borderRadius: BorderRadius.circular(10),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: SizedBox(
-                      width: 80,
-                      height: 80,
-                      child: Image.network(urls[i], fit: BoxFit.cover),
+          // یەک بەڵگە لە هەر ڕیزێکدا، بە پانی تەواو
+          for (var i = 0; i < urls.length; i++) ...[
+            if (i > 0) const SizedBox(height: 16),
+            Row(
+              children: [
+                Text('${i + 1} / ${urls.length}',
+                    style: TextStyle(
+                        fontSize: 12, color: Colors.grey.shade600)),
+              ],
+            ),
+            const SizedBox(height: 6),
+            InkWell(
+              onTap: () => _open(context, i),
+              borderRadius: BorderRadius.circular(12),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  width: double.infinity,
+                  color: Colors.grey.shade100,
+                  child: Image.network(
+                    urls[i],
+                    fit: BoxFit.contain,
+                    loadingBuilder: (_, child, p) => p == null
+                        ? child
+                        : const SizedBox(
+                            height: 200,
+                            child: Center(child: CircularProgressIndicator())),
+                    errorBuilder: (_, __, ___) => SizedBox(
+                      height: 120,
+                      child: Center(
+                        child: Icon(Icons.broken_image_outlined,
+                            color: Colors.grey.shade400),
+                      ),
                     ),
                   ),
                 ),
-            ],
-          ),
+              ),
+            ),
+          ],
         ],
       ),
     );
