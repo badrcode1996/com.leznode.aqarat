@@ -318,6 +318,17 @@ class ContractDocsViewer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (urls.isEmpty) return const SizedBox.shrink();
+    // Cap the width so attachments don't stretch across a wide desktop
+    // window — keep them a readable, page-like column, centred.
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 600),
+        child: _card(context),
+      ),
+    );
+  }
+
+  Widget _card(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),

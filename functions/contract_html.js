@@ -216,11 +216,17 @@ function buildContractHtml(o) {
   for (let i = 0; i < vm.attachments.length; i += 4) {
     attachmentPages.push(vm.attachments.slice(i, i + 4));
   }
+  // Full pages keep the 2x2 grid. A trailing page with 1 or 2 photos drops
+  // to a 1-column layout so those photos fill the page instead of sitting
+  // tiny in a quarter cell (portrait scans especially).
   const attachmentsHtml = attachmentPages
-      .map((page) => `<div class="attachpage">` +
-        page.map((uri) => `<div class="attachcell">` +
-          `<img src="${escAttr(uri)}"></div>`).join("") +
-        `</div>`)
+      .map((page) => {
+        const cls = page.length <= 2 ? "attachpage sparse" : "attachpage";
+        return `<div class="${cls}">` +
+          page.map((uri) => `<div class="attachcell">` +
+            `<img src="${escAttr(uri)}"></div>`).join("") +
+          `</div>`;
+      })
       .join("");
 
   return `<!doctype html><html lang="ckb"><head><meta charset="utf-8">
@@ -268,6 +274,8 @@ thead{display:table-header-group;}
 .attachpage{page-break-before:always;display:grid;
   grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:8mm;height:259mm;
   position:relative;z-index:5;background:#fff;}
+/* Trailing page with 1-2 photos: one column so each fills the page. */
+.attachpage.sparse{grid-template-columns:1fr;}
 .attachcell{display:flex;align-items:center;justify-content:center;
   overflow:hidden;}
 .attachcell img{max-width:100%;max-height:100%;object-fit:contain;}
