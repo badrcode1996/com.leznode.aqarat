@@ -47,6 +47,15 @@ class ContractRepository {
     return snap.docs.map((d) => Contract.fromJson(d.id, d.data())).toList();
   }
 
+  /// A single contract, or null if it's gone. Used right after a create to
+  /// read back the fields the server assigned (contract_number, branch).
+  Future<Contract?> fetchContract(String id) async {
+    final snap = await _contracts.doc(id).get();
+    final data = snap.data();
+    if (data == null) return null;
+    return Contract.fromJson(snap.id, data);
+  }
+
   /// Creates a contract AND increments the company_stats counters in ONE
   /// atomic transaction. Either both succeed or neither does.
   Future<String> createContract(Contract contract) async {

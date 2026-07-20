@@ -5,10 +5,13 @@ import 'package:intl/intl.dart';
 import '../../auth/session.dart';
 import '../../data/contract_repository.dart';
 import '../../data/lawyer_repository.dart';
+import '../../data/template_repository.dart';
 import '../../models/contract_model.dart';
 import '../../models/enums.dart';
 import '../../models/lawyer_model.dart';
+import 'contract_preview_screen.dart';
 import 'widgets/contract_docs_field.dart';
+import 'widgets/saving_dialog.dart';
 
 // ڕەنگە سەرەکییەکان بۆ یەکپارچەیی دیزاینەکە
 const Color primaryDarkBlue = Color(0xFF0F2C59);
@@ -73,6 +76,15 @@ class CreateSaleContractStepper extends ConsumerStatefulWidget {
 class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractStepper> {
   int _step = 0;
   bool _saving = false;
+  bool _savingDialogOpen = false;
+
+  /// Pops the progress dialog exactly once, so later navigation (preview, or
+  /// popping this screen) doesn't tear down the wrong route.
+  void _closeSavingDialog() {
+    if (!_savingDialogOpen || !mounted) return;
+    _savingDialogOpen = false;
+    Navigator.of(context, rootNavigator: true).pop();
+  }
 
   final _partiesKey = GlobalKey<FormState>();
   final _propertyKey = GlobalKey<FormState>();
@@ -152,6 +164,12 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
   Future<void> _submit() async {
     if (!_financialsKey.currentState!.validate()) return;
     setState(() => _saving = true);
+    // Blocking dialog for the whole save — uploads + transaction. Closed in
+    // _closeSavingDialog on every exit path, success or failure.
+    showSavingDialog(context, widget.existing == null
+        ? 'چاوەڕێ بە، گرێبەستەکە دروست دەکرێت...'
+        : 'چاوەڕێ بە، گرێبەستەکە نوێ دەکرێتەوە...');
+    _savingDialogOpen = true;
 
     final user = ref.read(currentUserProvider);
     final existing = widget.existing;
@@ -163,6 +181,7 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
       attachmentUrls = await _docs
           .uploadPending(existing?.companyId ?? user.companyId);
     } catch (e) {
+      _closeSavingDialog();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text('بارکردنی بەڵگەکان سەرکەوتوو نەبوو: $e'),
@@ -217,6 +236,7 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
       final repo = ref.read(contractRepositoryProvider);
       if (existing != null) {
         await repo.updateContract(contract);
+        _closeSavingDialog();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('گرێبەستی فرۆشتن نوێکرایەوە'), backgroundColor: Colors.green));
@@ -225,12 +245,28 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
         return;
       }
       final id = await repo.createContract(contract);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('گرێبەستی فرۆشتن دروستکرا ($id)'), backgroundColor: Colors.green));
-        Navigator.of(context).pop(id);
+      // Read the contract back so the preview shows the server-assigned
+      // contract_number and branch rather than the placeholders sent up.
+      final saved = await repo.fetchContract(id);
+      _closeSavingDialog();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('گرێبەستی فرۆشتن دروستکرا ($id)'), backgroundColor: Colors.green));
+      // Replace the stepper with the new contract's preview, so going back
+      // lands on the list instead of a filled-in form.
+      if (saved != null) {
+        await Navigator.of(context).pushReplacement(MaterialPageRoute(
+          builder: (_) => ContractPreviewScreen(
+            contract: saved,
+            company: ref.read(currentCompanyProvider).value,
+            template: ref.read(contractTemplateProvider(saved.companyId)).value,
+          ),
+        ));
+        return;
       }
+      Navigator.of(context).pop(id);
     } catch (e) {
+      _closeSavingDialog();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('سەرکەوتوو نەبوو: $e'), backgroundColor: Colors.red.shade700));
