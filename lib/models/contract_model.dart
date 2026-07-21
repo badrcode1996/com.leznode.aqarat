@@ -62,6 +62,21 @@ sealed class Contract {
   /// screen reach a contract's documents without switching on the type.
   List<String> get attachmentUrls;
 
+  /// Everything the archive search matches on — both party names, both
+  /// mobiles, the property/project and the contract number — lower-cased and
+  /// joined. Built per subtype so the list screen needn't switch on the type.
+  String get searchIndex;
+
+  /// True when every whitespace-separated term in [query] appears somewhere in
+  /// [searchIndex], so "ahmed 0770" matches a contract with both.
+  bool matches(String query) {
+    final terms = query.toLowerCase().split(RegExp(r'\s+'))
+      ..removeWhere((t) => t.isEmpty);
+    if (terms.isEmpty) return true;
+    final haystack = searchIndex;
+    return terms.every(haystack.contains);
+  }
+
   Map<String, dynamic> toJson();
 }
 
@@ -152,6 +167,19 @@ class RentContract extends Contract {
   @override
   String get listSubtitle =>
       [projectName, propertyNumber].where((s) => s.isNotEmpty).join(' / ');
+
+  @override
+  String get searchIndex => [
+        party1Name,
+        party2Name,
+        party1Mobile,
+        party2Mobile,
+        propertyNumber,
+        projectName,
+        propertyType,
+        agentName,
+        '$contractNumber',
+      ].join(' ').toLowerCase();
 
   factory RentContract.fromJson(String id, Map<String, dynamic> json) {
     final rawList = (json['installments'] as List<dynamic>? ?? const []);
@@ -389,6 +417,7 @@ class SaleContract extends Contract {
   final String agentName; // name of the user who created the contract
 
   /// Photos of supporting documents (IDs, deeds…) — Storage download URLs.
+  @override
   final List<String> attachmentUrls;
 
   /// Whether the attachment photos are appended to the printed PDF.
@@ -399,6 +428,20 @@ class SaleContract extends Contract {
   @override
   String get listSubtitle =>
       [projectName, propertyNumber].where((s) => s.isNotEmpty).join(' / ');
+
+  @override
+  String get searchIndex => [
+        party1Name,
+        party2Name,
+        party1Mobile,
+        party2Mobile,
+        propertyNumber,
+        projectName,
+        propertyType,
+        agentName,
+        lawyer,
+        '$contractNumber',
+      ].join(' ').toLowerCase();
 
   factory SaleContract.fromJson(String id, Map<String, dynamic> json) {
     return SaleContract(

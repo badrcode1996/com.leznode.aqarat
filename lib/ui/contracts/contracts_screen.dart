@@ -61,33 +61,101 @@ class ContractsArchiveBody extends StatelessWidget {
   }
 }
 
-class _ContractsList extends ConsumerWidget {
+class _ContractsList extends ConsumerStatefulWidget {
   const _ContractsList({required this.type});
   final ContractType type;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_ContractsList> createState() => _ContractsListState();
+}
+
+class _ContractsListState extends ConsumerState<_ContractsList> {
+  final _searchCtrl = TextEditingController();
+  String _query = '';
+
+  ContractType get type => widget.type;
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final async = ref.watch(contractsStreamProvider);
     return async.when(
       loading: () => const Center(child: CircularProgressIndicator(color: primaryDarkBlue)),
       error: (e, _) => Center(child: Text('هەڵە: $e', style: const TextStyle(color: Colors.red))),
       data: (all) {
-        final contracts = all.where((c) => c.type == type).toList();
-        if (contracts.isEmpty) {
+        final ofType = all.where((c) => c.type == type).toList();
+        if (ofType.isEmpty) {
           return _emptyBox(
             type == ContractType.rent ? 'هیچ گرێبەستێکی کرێ نییە' : 'هیچ گرێبەستێکی فرۆشتن نییە',
             type == ContractType.rent ? Icons.key_outlined : Icons.sell_outlined,
           );
         }
-        return ListView.separated(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-          itemCount: contracts.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
-          itemBuilder: (_, i) => _ContractCard(contract: contracts[i]),
+        final contracts =
+            _query.isEmpty ? ofType : ofType.where((c) => c.matches(_query)).toList();
+        return Column(
+          children: [
+            _searchField(),
+            Expanded(
+              child: contracts.isEmpty
+                  ? _emptyBox('هیچ ئەنجامێک نەدۆزرایەوە بۆ «$_query»',
+                      Icons.search_off_rounded)
+                  : ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
+                      itemCount: contracts.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      itemBuilder: (_, i) => _ContractCard(contract: contracts[i]),
+                    ),
+            ),
+          ],
         );
       },
     );
   }
+
+  /// Matches on either party's name or mobile, the property/project and the
+  /// contract number — see Contract.searchIndex.
+  Widget _searchField() => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+        child: TextField(
+          controller: _searchCtrl,
+          onChanged: (v) => setState(() => _query = v.trim()),
+          textInputAction: TextInputAction.search,
+          decoration: InputDecoration(
+            hintText: 'گەڕان بە ناو، ژمارەی مۆبایل، ژمارەی عەقار…',
+            hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+            prefixIcon: const Icon(Icons.search_rounded, color: primaryDarkBlue),
+            suffixIcon: _query.isEmpty
+                ? null
+                : IconButton(
+                    icon: Icon(Icons.close_rounded, color: Colors.grey.shade600),
+                    onPressed: () {
+                      _searchCtrl.clear();
+                      setState(() => _query = '');
+                    },
+                  ),
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding: const EdgeInsets.symmetric(vertical: 4),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: primaryDarkBlue, width: 1.5),
+            ),
+          ),
+        ),
+      );
 
   // دیزاینی مۆدێرن بۆ شاشەی بەتاڵ
   Widget _emptyBox(String text, IconData icon) => Center(
