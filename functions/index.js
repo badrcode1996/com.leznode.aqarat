@@ -48,6 +48,57 @@ const IMAGE_MIME = new Set([
   "image/png", "image/jpeg", "image/jpg", "image/webp", "image/gif",
 ]);
 
+// Attachments are addressed by Storage object path ("contract_docs/<co>/x.jpg")
+// so no tokenised download URL — a bearer capability that bypasses Storage
+// Rules for anyone who gets the link — ever has to exist. Contracts written
+// before that change still hold a full https URL, so pull the object path back
+// out of those rather than fetching them over the network.
+function objectPathFrom(ref) {
+  if (!ref) return "";
+  if (!/^https?:/i.test(ref)) return ref.replace(/^\/+/, "");
+  let u;
+  try {
+    u = new URL(ref);
+  } catch (e) {
+    return "";
+  }
+  if (!IMAGE_HOSTS.has(u.hostname.toLowerCase())) return "";
+  // What getDownloadURL() actually produced:
+  // firebasestorage.googleapis.com/v0/b/<bucket>/o/<encoded path>?alt=media&…
+  const m = u.pathname.match(/\/o\/(.+)$/);
+  if (m) return decodeURIComponent(m[1]);
+  const rest = u.pathname.replace(/^\/+/, "");
+  // storage.googleapis.com puts the bucket first; <bucket>.firebasestorage.app
+  // does not, so only drop a leading segment for the former.
+  if (u.hostname.toLowerCase() === "storage.googleapis.com") {
+    const parts = rest.split("/");
+    return parts.length > 1 ? parts.slice(1).join("/") : "";
+  }
+  return rest;
+}
+
+/**
+ * Reads an attachment straight from our bucket with the Admin SDK and returns
+ * a data: URI. Never leaves the project's network and needs no token.
+ *
+ * @param {string} ref Storage object path, or a legacy https download URL.
+ * @return {Promise<string>} data: URI, or "" on any failure.
+ */
+async function attachmentDataUri(ref) {
+  const objectPath = objectPathFrom(ref);
+  if (!objectPath.startsWith("contract_docs/")) return "";
+  try {
+    const file = admin.storage().bucket().file(objectPath);
+    const [meta] = await file.getMetadata();
+    const declared = String(meta.contentType || "").toLowerCase();
+    if (!IMAGE_MIME.has(declared)) return "";
+    const [buf] = await file.download();
+    return `data:${declared};base64,${buf.toString("base64")}`;
+  } catch (e) {
+    return "";
+  }
+}
+
 /** Fetches an image URL and returns a data: URI, or "" on any failure. */
 async function logoDataUri(url) {
   if (!url) return "";
@@ -329,7 +380,7 @@ exports.renderContractPdf = onCall(
       let attachments = [];
       if (k.print_attachments !== false && Array.isArray(k.attachment_urls)) {
         attachments = (await Promise.all(
-            k.attachment_urls.slice(0, 20).map((u) => logoDataUri(u)),
+            k.attachment_urls.slice(0, 20).map((u) => attachmentDataUri(u)),
         )).filter(Boolean);
       }
 

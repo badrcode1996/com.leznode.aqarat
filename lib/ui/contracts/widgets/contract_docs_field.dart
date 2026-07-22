@@ -4,7 +4,6 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 const Color _primaryDarkBlue = Color(0xFF0F2C59);
 
@@ -19,7 +18,8 @@ class ContractDocsController {
   })  : urls = List.of(urls ?? const []),
         pending = [];
 
-  /// Storage download URLs already saved on the contract.
+  /// Storage object paths already saved on the contract. Older contracts hold
+  /// a full https download URL here instead — [attachmentBytes] reads both.
   final List<String> urls;
 
   /// Picked in this session — uploaded on submit.
@@ -29,19 +29,95 @@ class ContractDocsController {
   bool printDocs;
 
   /// Uploads the pending images under the company's private folder and
-  /// returns the full URL list (existing + new).
+  /// returns the full reference list (existing + new).
+  ///
+  /// Stores the object *path*, never `getDownloadURL()`. A download URL
+  /// carries a token that grants permanent unauthenticated access to the
+  /// object, bypassing the company scoping in storage.rules — so one leaked
+  /// link would expose an ID or deed to anyone. Paths are meaningless without
+  /// credentials.
   Future<List<String>> uploadPending(String companyId) async {
     var seq = 0;
     while (pending.isNotEmpty) {
       final bytes = await pending.first.readAsBytes();
       final name = '${DateTime.now().millisecondsSinceEpoch}_${seq++}.jpg';
-      final ref =
-          FirebaseStorage.instance.ref('contract_docs/$companyId/$name');
-      await ref.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
-      urls.add(await ref.getDownloadURL());
+      final path = 'contract_docs/$companyId/$name';
+      await FirebaseStorage.instance
+          .ref(path)
+          .putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
+      urls.add(path);
       pending.removeAt(0);
     }
     return urls;
+  }
+}
+
+/// Attachment bytes, keyed by the stored reference. Storage reads are
+/// authenticated round-trips, so hold the result for the session rather than
+/// re-fetching on every rebuild.
+final Map<String, Uint8List> _attachmentCache = {};
+
+/// Reads an attachment through the Storage SDK, so the caller's credentials
+/// are checked against storage.rules on every fetch.
+///
+/// [ref] is an object path for anything uploaded since attachments stopped
+/// using download URLs, or a legacy https URL on older contracts — both
+/// resolve to a Reference and neither is fetched anonymously.
+Future<Uint8List> attachmentBytes(String ref) async {
+  final cached = _attachmentCache[ref];
+  if (cached != null) return cached;
+  final storage = FirebaseStorage.instance;
+  final r = ref.startsWith('http')
+      ? storage.refFromURL(ref)
+      : storage.ref(ref);
+  final bytes = await r.getData(6 * 1024 * 1024) ?? Uint8List(0);
+  _attachmentCache[ref] = bytes;
+  return bytes;
+}
+
+/// An attachment rendered from authenticated bytes — the replacement for
+/// `Image.network`, which would need a publicly fetchable URL.
+class AttachmentImage extends StatelessWidget {
+  const AttachmentImage({
+    super.key,
+    required this.reference,
+    this.fit = BoxFit.cover,
+    this.loadingHeight = 120,
+  });
+
+  final String reference;
+  final BoxFit fit;
+  final double loadingHeight;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<Uint8List>(
+      future: attachmentBytes(reference),
+      builder: (_, snap) {
+        if (snap.hasError) {
+          return SizedBox(
+            height: loadingHeight,
+            child: Center(
+              child: Icon(Icons.broken_image_outlined,
+                  color: Colors.grey.shade400),
+            ),
+          );
+        }
+        if (!snap.hasData) {
+          return SizedBox(
+            height: loadingHeight,
+            child: const Center(
+              child: SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+          );
+        }
+        return Image.memory(snap.data!, fit: fit);
+      },
+    );
   }
 }
 
@@ -180,7 +256,7 @@ class _ContractDocsFieldState extends State<ContractDocsField> {
               children: [
                 for (final url in List.of(_c.urls))
                   _thumb(
-                    Image.network(url, fit: BoxFit.cover),
+                    AttachmentImage(reference: url, loadingHeight: 80),
                     () => setState(() => _c.urls.remove(url)),
                   ),
                 for (final file in List.of(_c.pending))
@@ -241,18 +317,25 @@ class _DocsGalleryState extends State<_DocsGallery> {
         content: Text(message), backgroundColor: Colors.red.shade700));
   }
 
+  /// Shares the decoded image itself. Never the stored reference: when that
+  /// is a legacy download URL it is a bearer token that would hand the
+  /// recipient permanent, unauthenticated access to the original object.
   Future<void> _share() async {
     try {
-      await Share.share(widget.urls[_index]);
+      final bytes = await attachmentBytes(widget.urls[_index]);
+      if (bytes.isEmpty) {
+        _snack('بەڵگەکە دانەبەزێنرا');
+        return;
+      }
+      await Share.shareXFiles([
+        XFile.fromData(
+          bytes,
+          mimeType: 'image/jpeg',
+          name: 'belge_${_index + 1}.jpg',
+        ),
+      ]);
     } catch (e) {
       _snack('هاوبەشکردن سەرکەوتوو نەبوو: $e');
-    }
-  }
-
-  Future<void> _download() async {
-    final uri = Uri.parse(widget.urls[_index]);
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      _snack('نەتوانرا بەڵگەکە بکرێتەوە');
     }
   }
 
@@ -267,14 +350,9 @@ class _DocsGalleryState extends State<_DocsGallery> {
             style: const TextStyle(fontSize: 15)),
         actions: [
           IconButton(
-            tooltip: 'هاوبەشکردن',
-            icon: const Icon(Icons.share_outlined),
+            tooltip: 'هاوبەشکردن / پاشەکەوتکردن',
+            icon: const Icon(Icons.ios_share_rounded),
             onPressed: _share,
-          ),
-          IconButton(
-            tooltip: 'دابەزاندن',
-            icon: const Icon(Icons.download_outlined),
-            onPressed: _download,
           ),
         ],
       ),
@@ -285,12 +363,10 @@ class _DocsGalleryState extends State<_DocsGallery> {
         itemBuilder: (_, i) => InteractiveViewer(
           maxScale: 5,
           child: Center(
-            child: Image.network(
-              widget.urls[i],
+            child: AttachmentImage(
+              reference: widget.urls[i],
               fit: BoxFit.contain,
-              loadingBuilder: (_, child, p) => p == null
-                  ? child
-                  : const CircularProgressIndicator(color: Colors.white),
+              loadingHeight: 200,
             ),
           ),
         ),
@@ -369,21 +445,10 @@ class ContractDocsViewer extends StatelessWidget {
                 child: Container(
                   width: double.infinity,
                   color: Colors.grey.shade100,
-                  child: Image.network(
-                    urls[i],
+                  child: AttachmentImage(
+                    reference: urls[i],
                     fit: BoxFit.contain,
-                    loadingBuilder: (_, child, p) => p == null
-                        ? child
-                        : const SizedBox(
-                            height: 200,
-                            child: Center(child: CircularProgressIndicator())),
-                    errorBuilder: (_, __, ___) => SizedBox(
-                      height: 120,
-                      child: Center(
-                        child: Icon(Icons.broken_image_outlined,
-                            color: Colors.grey.shade400),
-                      ),
-                    ),
+                    loadingHeight: 200,
                   ),
                 ),
               ),
