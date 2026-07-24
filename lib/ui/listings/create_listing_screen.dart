@@ -56,11 +56,15 @@ ButtonStyle modernButtonStyle() {
   );
 }
 
-/// Create an Offer (`properties`) or a Demand (`requests`).
+/// Create — or, when [existing] is passed, edit — an Offer (`properties`) or a
+/// Demand (`requests`).
 class CreateListingScreen extends ConsumerStatefulWidget {
-  const CreateListingScreen({super.key, required this.kind});
+  const CreateListingScreen({super.key, required this.kind, this.existing});
 
   final ListingKind kind;
+
+  /// The listing being edited, or null when creating a new one.
+  final PropertyListing? existing;
 
   @override
   ConsumerState<CreateListingScreen> createState() => _CreateListingScreenState();
@@ -74,6 +78,7 @@ class _CreateListingScreenState extends ConsumerState<CreateListingScreen> {
   final _area = TextEditingController();
 
   PropertyType _propertyType = PropertyType.house;
+  DealKind _deal = DealKind.sale;
   bool _isPublic = true;
   bool _busy = false;
   String? _error;
@@ -82,6 +87,21 @@ class _CreateListingScreenState extends ConsumerState<CreateListingScreen> {
   String _imageContentType = 'image/jpeg';
 
   bool get _isOffer => widget.kind == ListingKind.offer;
+  bool get _isEdit => widget.existing != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final e = widget.existing;
+    if (e == null) return;
+    _ownerName.text = e.ownerName;
+    _ownerMobile.text = e.ownerMobile;
+    _projectName.text = e.projectName;
+    _area.text = '${e.area}';
+    _propertyType = e.propertyType;
+    _deal = e.deal;
+    _isPublic = e.isPublic;
+  }
 
   @override
   void dispose() {
@@ -99,29 +119,45 @@ class _CreateListingScreenState extends ConsumerState<CreateListingScreen> {
       _error = null;
     });
     final user = ref.read(currentUserProvider);
+    final old = widget.existing;
     final listing = PropertyListing(
-      id: '',
-      companyId: user.companyId,
-      agentId: user.agentId,
+      id: old?.id ?? '',
+      companyId: old?.companyId ?? user.companyId,
+      // On an edit these stay as first saved: the creator owns the listing, and
+      // the branch is pinned by the security rules anyway.
+      agentId: old?.agentId ?? user.agentId,
       kind: widget.kind,
+      deal: _deal,
       ownerName: _ownerName.text.trim(),
       ownerMobile: _ownerMobile.text.trim(),
       projectName: _projectName.text.trim(),
       propertyType: _propertyType,
       area: num.tryParse(_area.text.trim()) ?? 0,
       isPublic: _isPublic,
+      isArchived: old?.isArchived ?? false,
       // Denormalized creator contact for the Global Market.
-      agentName: user.displayName,
-      agentPhone: user.phone,
-      createdAt: DateTime.now(),
-      branch: user.branch,
+      agentName: old?.agentName ?? user.displayName,
+      agentPhone: old?.agentPhone ?? user.phone,
+      createdAt: old?.createdAt ?? DateTime.now(),
+      branch: old?.branch ?? user.branch,
+      imageUrl: old?.imageUrl ?? '',
+      city: old?.city ?? user.city,
     );
     try {
-      await ref.read(listingRepositoryProvider).create(
-            listing,
-            imageBytes: _imageBytes,
-            imageContentType: _imageContentType,
-          );
+      final repo = ref.read(listingRepositoryProvider);
+      if (_isEdit) {
+        await repo.update(
+          listing,
+          imageBytes: _imageBytes,
+          imageContentType: _imageContentType,
+        );
+      } else {
+        await repo.create(
+          listing,
+          imageBytes: _imageBytes,
+          imageContentType: _imageContentType,
+        );
+      }
       if (mounted) Navigator.pop(context);
     } catch (e) {
       setState(() => _error = '$e');
@@ -136,7 +172,9 @@ class _CreateListingScreenState extends ConsumerState<CreateListingScreen> {
       backgroundColor: appBackgroundColor,
       appBar: AppBar(
         title: Text(
-          _isOffer ? 'خستنەڕووی نوێ' : 'داواکاری نوێ',
+          _isEdit
+              ? (_isOffer ? 'دەستکاری خستنەڕوو' : 'دەستکاری داواکاری')
+              : (_isOffer ? 'خستنەڕووی نوێ' : 'داواکاری نوێ'),
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         backgroundColor: primaryDarkBlue,
@@ -167,6 +205,7 @@ class _CreateListingScreenState extends ConsumerState<CreateListingScreen> {
                 // وێنەی خانوو (ئارەزوومەندانە) — لە کامێرا یان گەلەری
                 Center(
                   child: HouseImagePicker(
+                    initialImageUrl: widget.existing?.imageUrl ?? '',
                     onChanged: (bytes, contentType) => setState(() {
                       _imageBytes = bytes;
                       _imageContentType = contentType;
@@ -174,6 +213,43 @@ class _CreateListingScreenState extends ConsumerState<CreateListingScreen> {
                   ),
                 ),
                 const SizedBox(height: 32),
+
+                // فرۆشتن یان کرێ — سەرەتای فۆڕمەکە، چونکە هەموو شتەکانی تری
+                // خوارەوە بەپێی ئەم هەڵبژاردنە لێکدەدرێنەوە.
+                SizedBox(
+                  width: double.infinity,
+                  child: SegmentedButton<DealKind>(
+                    style: SegmentedButton.styleFrom(
+                      backgroundColor: inputFillColor,
+                      selectedForegroundColor: Colors.white,
+                      selectedBackgroundColor: primaryDarkBlue,
+                      side: BorderSide(color: Colors.grey.shade200),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    segments: const [
+                      ButtonSegment(
+                        value: DealKind.sale,
+                        label: Text('فرۆشتن',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 15)),
+                        icon: Icon(Icons.sell_outlined),
+                      ),
+                      ButtonSegment(
+                        value: DealKind.rent,
+                        label: Text('کرێ',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 15)),
+                        icon: Icon(Icons.vpn_key_outlined),
+                      ),
+                    ],
+                    selected: {_deal},
+                    onSelectionChanged: (s) => setState(() => _deal = s.first),
+                  ),
+                ),
+
+                const SizedBox(height: 24),
 
                 _text(_ownerName, 'ناوی خاوەن', icon: Icons.person_outline),
                 _text(_ownerMobile, 'مۆبایلی خاوەن', keyboard: TextInputType.phone, icon: Icons.phone_iphone),
@@ -267,7 +343,9 @@ class _CreateListingScreenState extends ConsumerState<CreateListingScreen> {
                   style: modernButtonStyle(),
                   child: _busy
                       ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-                      : const Text('دروستکردن', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      : Text(_isEdit ? 'پاشەکەوتکردن' : 'دروستکردن',
+                          style: const TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold)),
                 ),
               ],
             ),

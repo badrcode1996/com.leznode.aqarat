@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/listing_repository.dart';
 import '../../models/enums.dart';
 import '../../models/property_model.dart';
+import '../widgets/deal_filter_bar.dart';
 import '../widgets/house_cover_image.dart';
+import 'create_listing_screen.dart';
 
 // ڕەنگە سەرەکییەکان بۆ یەکپارچەیی دیزاینەکە
 const Color primaryDarkBlue = Color(0xFF0F2C59);
@@ -65,6 +67,7 @@ class _ListingsTab extends ConsumerStatefulWidget {
 
 class _ListingsTabState extends ConsumerState<_ListingsTab> {
   bool _showArchived = false;
+  DealKind _deal = DealKind.sale;
 
   @override
   Widget build(BuildContext context) {
@@ -74,9 +77,18 @@ class _ListingsTabState extends ConsumerState<_ListingsTab> {
 
     return Column(
       children: [
+        // فرۆشتن / کرێ — دابەشکردنی سەرەکی. لە سەرەوەی فلتەری ئەرشیفە چونکە
+        // بەشێکی جیایە، نەک دۆخێکی لیستەکە.
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          child: DealFilterBar(
+            selected: _deal,
+            onChanged: (d) => setState(() => _deal = d),
+          ),
+        ),
         // دیزاینی مۆدێرن بۆ دوگمەی فلتەرکردن
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
           child: SizedBox(
             width: double.infinity,
             child: SegmentedButton<bool>(
@@ -109,10 +121,15 @@ class _ListingsTabState extends ConsumerState<_ListingsTab> {
           child: async.when(
             loading: () => const Center(child: CircularProgressIndicator(color: primaryDarkBlue)),
             error: (e, _) => Center(child: Text('هەڵە: $e', style: const TextStyle(color: Colors.red))),
-            data: (items) {
+            data: (all) {
+              // وەک فلتەری ئەرشیف، ئەمەش لای کلاینت دەکرێت — بۆ ئەوەی
+              // ئیندێکسێکی composite ی نوێ نەوێت.
+              final items = all.where((l) => l.deal == _deal).toList();
               if (items.isEmpty) {
                 return _emptyBox(
-                  _showArchived ? 'ئەرشیف بەتاڵە' : 'هیچ بڵاوکراوەیەکی چالاک نییە',
+                  _showArchived
+                      ? 'ئەرشیفی ${_deal.label} بەتاڵە'
+                      : 'هیچ بڵاوکراوەیەکی چالاکی ${_deal.label} نییە',
                   _showArchived ? Icons.inbox_outlined : Icons.search_off_rounded,
                 );
               }
@@ -177,6 +194,60 @@ class _ListingCard extends ConsumerWidget {
   final PropertyListing listing;
   final ListingKind kind;
   final bool archived;
+
+  void _edit(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CreateListingScreen(kind: kind, existing: listing),
+      ),
+    );
+  }
+
+  Future<void> _delete(BuildContext context, WidgetRef ref) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('سڕینەوە',
+            style: TextStyle(fontWeight: FontWeight.bold, color: primaryDarkBlue)),
+        content: Text(
+          'دڵنیایت لە سڕینەوەی "${listing.ownerName}"؟ ئەم کردارە ناگەڕێتەوە.',
+          style: const TextStyle(height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('پاشگەزبوونەوە', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade700,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('سڕینەوە'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await ref.read(listingRepositoryProvider).delete(kind, listing.id);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('سڕایەوە'),
+          backgroundColor: primaryDarkBlue,
+        ));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('هەڵە: $e'), backgroundColor: Colors.red.shade700));
+      }
+    }
+  }
 
   Future<void> _setArchived(BuildContext context, WidgetRef ref, bool value) async {
     try {
@@ -256,24 +327,31 @@ class _ListingCard extends ConsumerWidget {
                     ],
                   ),
                 ),
-                // تاگی گشتی/تایبەت
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: listing.isPublic ? const Color(0xFF10B981).withValues(alpha: 0.1) : Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(listing.isPublic ? Icons.public : Icons.public_off, size: 12, color: listing.isPublic ? const Color(0xFF10B981) : Colors.grey.shade600),
-                      const SizedBox(width: 4),
-                      Text(
-                        listing.isPublic ? 'گشتی' : 'تایبەت',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: listing.isPublic ? const Color(0xFF10B981) : Colors.grey.shade600),
+                // تاگی فرۆشتن/کرێ و گشتی/تایبەت
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    DealBadge(deal: listing.deal),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: listing.isPublic ? const Color(0xFF10B981).withValues(alpha: 0.1) : Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(6),
                       ),
-                    ],
-                  ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(listing.isPublic ? Icons.public : Icons.public_off, size: 12, color: listing.isPublic ? const Color(0xFF10B981) : Colors.grey.shade600),
+                          const SizedBox(width: 4),
+                          Text(
+                            listing.isPublic ? 'گشتی' : 'تایبەت',
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: listing.isPublic ? const Color(0xFF10B981) : Colors.grey.shade600),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -296,8 +374,33 @@ class _ListingCard extends ConsumerWidget {
 
             const SizedBox(height: 16),
 
-            // دوگمەی کردارەکان (تەواوکردن / گەڕاندنەوە)
-            SizedBox(
+            // دوگمەی کردارەکان (تەواوکردن / گەڕاندنەوە، دەستکاری، سڕینەوە)
+            Row(
+              children: [
+                Expanded(child: _mainAction(context, ref)),
+                const SizedBox(width: 8),
+                _iconAction(
+                  icon: Icons.edit_outlined,
+                  color: primaryDarkBlue,
+                  tooltip: 'دەستکاری',
+                  onPressed: () => _edit(context),
+                ),
+                const SizedBox(width: 8),
+                _iconAction(
+                  icon: Icons.delete_outline,
+                  color: Colors.red.shade700,
+                  tooltip: 'سڕینەوە',
+                  onPressed: () => _delete(context, ref),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _mainAction(BuildContext context, WidgetRef ref) => SizedBox(
               width: double.infinity,
               child: archived
                   ? OutlinedButton.icon(
@@ -323,12 +426,34 @@ class _ListingCard extends ConsumerWidget {
                 label: const Text('مامەڵەکە تەواوبوو', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                 onPressed: () => _setArchived(context, ref, true),
               ),
+      );
+
+  /// A square, outlined counterpart to the wide primary action, so edit and
+  /// delete stay reachable without competing with it for attention.
+  Widget _iconAction({
+    required IconData icon,
+    required Color color,
+    required String tooltip,
+    required VoidCallback onPressed,
+  }) =>
+      Tooltip(
+        message: tooltip,
+        child: SizedBox(
+          width: 46,
+          height: 46,
+          child: OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: color,
+              side: BorderSide(color: color.withValues(alpha: 0.4)),
+              padding: EdgeInsets.zero,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
             ),
-          ],
+            onPressed: onPressed,
+            child: Icon(icon, size: 20),
+          ),
         ),
-      ),
-    );
-  }
+      );
 
   // یارمەتیدەرێک بۆ دروستکردنی تاگەکانی زانیاری موڵک
   Widget _infoChip(IconData icon, String text) {
