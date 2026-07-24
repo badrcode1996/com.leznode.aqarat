@@ -7,7 +7,7 @@
 		<key>CFBundleDevelopmentRegion</key>
 		<string>$(DEVELOPMENT_LANGUAGE)</string>
 		<key>CFBundleDisplayName</key>
-		<string>Aqarat</string>
+		<string>گرێبەست</string>
 		<key>CFBundleExecutable</key>
 		<string>$(EXECUTABLE_NAME)</string>
 		<key>CFBundleIdentifier</key>
@@ -68,7 +68,6 @@
 		</array>
 		<key>UIStatusBarHidden</key>
 		<false/>
-
 		<!-- Firebase URL scheme (Encoded iOS App ID from GoogleService-Info.plist) -->
 		<key>CFBundleURLTypes</key>
 		<array>
@@ -81,13 +80,11 @@
 				</array>
 			</dict>
 		</array>
-
 		<!-- image_picker: gallery + camera -->
 		<key>NSPhotoLibraryUsageDescription</key>
 		<string>ئەپ پێویستی بە گەیشتن بە وێنەکانت هەیە بۆ هەڵبژاردنی وێنەی موڵک و لۆگۆ.</string>
 		<key>NSCameraUsageDescription</key>
 		<string>ئەپ پێویستی بە کامێرا هەیە بۆ گرتنی وێنەی موڵک.</string>
-
 		<!-- Push / background -->
 		<key>UIBackgroundModes</key>
 		<array>
@@ -96,7 +93,6 @@
 		</array>
 		<key>FirebaseAppDelegateProxyEnabled</key>
 		<true/>
-
 		<!-- Export compliance: no non-exempt encryption -->
 		<key>ITSAppUsesNonExemptEncryption</key>
 		<false/>
