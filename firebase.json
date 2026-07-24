@@ -42,6 +42,13 @@
         "headers": [
           { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
         ]
+      },
+      {
+        "//": "The icon font is tree-shaken to just the glyphs the build uses, and ships at a fixed path with no content hash. Cached, it pairs an old subset with new code and every newly-added icon renders blank. Flutter's service worker does the real caching, so revalidating here costs nothing.",
+        "source": "/assets/**",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache, must-revalidate" }
+        ]
       }
     ]
   },
