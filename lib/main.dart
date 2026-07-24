@@ -48,7 +48,7 @@ class AqaratApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp(
-      title: 'عقارات',
+      title: 'گرێبەست',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
 
