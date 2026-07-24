@@ -258,6 +258,24 @@ class AdminRepository {
         .update({'web_only': webOnly});
   }
 
+  /// Turns a company's trial on or off.
+  ///
+  /// Switching it ON stamps the expiry at now + [Company.demoDuration], so
+  /// re-enabling a lapsed demo grants a fresh week rather than resurrecting an
+  /// expired one. Switching it OFF clears the expiry, which is what promotes a
+  /// trial to a normal paying company.
+  ///
+  /// The deadline is stored, not the start, because the security rules compare
+  /// `request.time` against it directly.
+  Future<void> setDemo(String companyId, bool demo) {
+    return _db.collection('companies').doc(companyId).update({
+      'demo': demo,
+      'demo_expires_at': demo
+          ? Timestamp.fromDate(DateTime.now().add(Company.demoDuration))
+          : null,
+    });
+  }
+
   /// Replaces a company's per-feature overrides (on top of its plan). Only keys
   /// the Super Admin forced on/off are stored; the rest inherit the plan.
   Future<void> setFeatureOverrides(
@@ -266,6 +284,70 @@ class AdminRepository {
         .collection('companies')
         .doc(companyId)
         .update({'feature_overrides': overrides});
+  }
+
+  /// Edits a company's identity: the three names, phones, address, and
+  /// optionally the logo.
+  ///
+  /// The English name is NOT editable here. It was slugified into the document
+  /// id, which is shared by `companies`, `company_stats`, `templates` and the
+  /// logo's Storage path — renaming it would mean migrating all four, so this
+  /// only edits the label the English name produced, never the id itself.
+  ///
+  /// Passing [logoBytes] replaces the logo at the same Storage path, so the
+  /// download URL changes and every cached copy is invalidated. Passing none
+  /// leaves the current logo alone.
+  Future<void> updateCompany(
+    String companyId, {
+    required String nameKu,
+    required String nameAr,
+    required String nameEn,
+    required String phone1,
+    required String phone2,
+    required String address,
+    Uint8List? logoBytes,
+    String logoContentType = 'image/png',
+  }) async {
+    final data = <String, dynamic>{
+      'name_ku': nameKu.trim(),
+      'name_ar': nameAr.trim(),
+      'name_en': nameEn.trim(),
+      'phone1': phone1.trim(),
+      'phone2': phone2.trim(),
+      'address': address.trim(),
+    };
+    if (logoBytes != null) {
+      data['logo_url'] =
+          await _uploadLogo(companyId, logoBytes, logoContentType);
+    }
+    await _db.collection('companies').doc(companyId).update(data);
+  }
+
+  /// Edits a user's profile.
+  ///
+  /// `company_id` is deliberately absent: moving a user between tenants would
+  /// hand them the new company's data while their old company's documents still
+  /// carry their uid, so that is a delete-and-recreate, not an edit. `email` is
+  /// absent too — it is the Auth login identity, and changing it takes an Admin
+  /// SDK call rather than a Firestore write.
+  ///
+  /// `branch_admin` only means anything for a company admin; it is forced off
+  /// for an agent so a demoted admin cannot leave a stale flag behind.
+  Future<void> updateUser(
+    String uid, {
+    required String displayName,
+    required String phone,
+    required UserRole role,
+    required String branch,
+    required bool branchAdmin,
+  }) {
+    return _db.collection('users').doc(uid).update({
+      'display_name': displayName.trim(),
+      'phone': phone.trim(),
+      'role': role.wire,
+      'branch': branch.trim(),
+      'branch_admin': role == UserRole.companyAdmin && branchAdmin,
+    });
   }
 
   /// Changes a user's password via the `setUserPassword` Cloud Function

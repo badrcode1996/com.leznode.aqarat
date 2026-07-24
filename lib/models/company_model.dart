@@ -27,7 +27,12 @@ class Company {
     this.webOnly = false,
     this.featureOverrides = const {},
     this.city = CompanyCity.erbil,
+    this.demo = false,
+    this.demoExpiresAt,
   });
+
+  /// How long a demo profile stays usable once the Super Admin switches it on.
+  static const demoDuration = Duration(days: 7);
 
   final String id;
   final String nameKu;
@@ -49,6 +54,26 @@ class Company {
 
   /// The city the company operates in — scopes the Global Market.
   final CompanyCity city;
+
+  /// Trial account: usable only until [demoExpiresAt], after which every screen
+  /// is blocked and the security rules stop serving the company's data.
+  final bool demo;
+
+  /// When the trial runs out. Set to now + [demoDuration] the moment [demo] is
+  /// switched on, so re-enabling restarts the week. Null while [demo] is false.
+  final DateTime? demoExpiresAt;
+
+  /// True once a demo company's week is up. A demo with no expiry stored is
+  /// treated as expired rather than unlimited — the safe direction to fail.
+  bool get demoExpired =>
+      demo && !DateTime.now().isBefore(demoExpiresAt ?? DateTime(0));
+
+  /// Whole days left on the trial, floored at zero. Null when not a demo.
+  int? get demoDaysLeft {
+    if (!demo) return null;
+    final left = (demoExpiresAt ?? DateTime(0)).difference(DateTime.now());
+    return left.isNegative ? 0 : left.inDays;
+  }
 
   /// Preferred label for the UI: Kurdish first, then Arabic, then English.
   String get displayName =>
@@ -76,6 +101,8 @@ class Company {
             ) ??
             const {},
         city: CompanyCity.fromWire(json['city'] as String?),
+        demo: json['demo'] as bool? ?? false,
+        demoExpiresAt: (json['demo_expires_at'] as Timestamp?)?.toDate(),
       );
 
   Map<String, dynamic> toJson() => {
@@ -93,6 +120,9 @@ class Company {
         'web_only': webOnly,
         'feature_overrides': featureOverrides,
         'city': city.wire,
+        'demo': demo,
+        'demo_expires_at':
+            demoExpiresAt == null ? null : Timestamp.fromDate(demoExpiresAt!),
       };
 
   /// Turns an English company name into a safe, readable Firestore document id.

@@ -22,6 +22,8 @@ class SessionUser {
     this.webOnly = false,
     this.featureOverrides = const {},
     this.city = CompanyCity.erbil,
+    this.demo = false,
+    this.demoExpiresAt,
   });
 
   final String uid;
@@ -41,6 +43,19 @@ class SessionUser {
 
   /// The company's city — scopes the Global Market.
   final CompanyCity city;
+
+  /// The company is a trial (see Company.demo). Read off the same company
+  /// document the plan comes from, so gating costs no extra read.
+  final bool demo;
+
+  /// When the trial expires; null when [demo] is false.
+  final DateTime? demoExpiresAt;
+
+  /// True once the trial week is up. A demo with no expiry stored counts as
+  /// expired — the security rules take the same view, so the app must not
+  /// promise access the server will refuse.
+  bool get demoExpired =>
+      demo && !DateTime.now().isBefore(demoExpiresAt ?? DateTime(0));
 
   /// The signed-in user's own phone (their Global Market contact number).
   final String phone;
@@ -121,6 +136,8 @@ final sessionProvider = FutureProvider<SessionUser?>((ref) async {
   var webOnly = false;
   var featureOverrides = const <String, bool>{};
   var city = CompanyCity.erbil;
+  var demo = false;
+  DateTime? demoExpiresAt;
   if (companyId.isNotEmpty) {
     final companySnap =
         await db.collection('companies').doc(companyId).get();
@@ -128,6 +145,9 @@ final sessionProvider = FutureProvider<SessionUser?>((ref) async {
     plan = CompanyPlan.fromWire(companyData?['plan'] as String?);
     webOnly = companyData?['web_only'] as bool? ?? false;
     city = CompanyCity.fromWire(companyData?['city'] as String?);
+    demo = companyData?['demo'] as bool? ?? false;
+    demoExpiresAt =
+        (companyData?['demo_expires_at'] as Timestamp?)?.toDate();
     final ov = companyData?['feature_overrides'] as Map?;
     if (ov != null) {
       featureOverrides = ov.map((k, v) => MapEntry(k.toString(), v as bool));
@@ -146,6 +166,8 @@ final sessionProvider = FutureProvider<SessionUser?>((ref) async {
     webOnly: webOnly,
     featureOverrides: featureOverrides,
     city: city,
+    demo: demo,
+    demoExpiresAt: demoExpiresAt,
   );
 });
 

@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../admin/admin_repository.dart';
 import '../../auth/session.dart';
+import '../../models/app_user_model.dart';
 import '../../models/company_model.dart';
 import '../../models/enums.dart';
 import '../../models/plan_config_model.dart';
@@ -611,6 +612,219 @@ class _CreateCompanyScreenState extends ConsumerState<_CreateCompanyScreen> {
 }
 
 /// List + add users for a specific company
+/// Edits an existing company's identity + logo.
+///
+/// A full screen rather than a dialog: it carries the same six fields as the
+/// creation form, which do not fit an AlertDialog on a phone.
+class _EditCompanyScreen extends ConsumerStatefulWidget {
+  const _EditCompanyScreen({required this.company});
+  final Company company;
+
+  @override
+  ConsumerState<_EditCompanyScreen> createState() => _EditCompanyScreenState();
+}
+
+class _EditCompanyScreenState extends ConsumerState<_EditCompanyScreen> {
+  final _formKey = GlobalKey<FormState>();
+  late final _nameKu = TextEditingController(text: widget.company.nameKu);
+  late final _nameAr = TextEditingController(text: widget.company.nameAr);
+  late final _nameEn = TextEditingController(text: widget.company.nameEn);
+  late final _phone1 = TextEditingController(text: widget.company.phone1);
+  late final _phone2 = TextEditingController(text: widget.company.phone2);
+  late final _address = TextEditingController(text: widget.company.address);
+
+  Uint8List? _logoBytes;
+  String _logoContentType = 'image/jpeg';
+  bool _busy = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    for (final c in [_nameKu, _nameAr, _nameEn, _phone1, _phone2, _address]) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  Future<void> _pickLogo() async {
+    final picked = await ImagePicker()
+        .pickImage(source: ImageSource.gallery, maxWidth: 1024, imageQuality: 85);
+    if (picked == null) return;
+    final bytes = await picked.readAsBytes();
+    setState(() {
+      _logoBytes = bytes;
+      _logoContentType =
+          picked.name.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
+    });
+  }
+
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await ref.read(adminRepositoryProvider).updateCompany(
+            widget.company.id,
+            nameKu: _nameKu.text,
+            nameAr: _nameAr.text,
+            nameEn: _nameEn.text,
+            phone1: _phone1.text,
+            phone2: _phone2.text,
+            address: _address.text,
+            logoBytes: _logoBytes,
+            logoContentType: _logoContentType,
+          );
+      if (mounted) {
+        // Resolved before the pop: afterwards this context is defunct and the
+        // lookup throws instead of showing anything.
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('زانیاری کۆمپانیا نوێ کرایەوە'),
+            backgroundColor: Colors.green));
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      setState(() => _error = '$e');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // The saved logo shows until a new one is picked, so the picker always
+    // previews what will actually be stored.
+    final DecorationImage? logo = _logoBytes != null
+        ? DecorationImage(image: MemoryImage(_logoBytes!), fit: BoxFit.cover)
+        : (widget.company.logoUrl.isNotEmpty
+            ? DecorationImage(
+                image: NetworkImage(widget.company.logoUrl), fit: BoxFit.cover)
+            : null);
+
+    return Scaffold(
+      backgroundColor: appBackgroundColor,
+      appBar: modernAppBar('زانیاری کۆمپانیا'),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Form(
+          key: _formKey,
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4))
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: GestureDetector(
+                    onTap: _busy ? null : _pickLogo,
+                    child: Container(
+                      height: 100,
+                      width: 100,
+                      decoration: BoxDecoration(
+                        color: inputFillColor,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: accentYellow, width: 2),
+                        image: logo,
+                      ),
+                      child: logo == null
+                          ? const Icon(Icons.add_a_photo,
+                              size: 32, color: primaryDarkBlue)
+                          : null,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Center(
+                    child: Text('بۆ گۆڕین کلیک بکە',
+                        style: TextStyle(fontSize: 13, color: Colors.black54))),
+                const SizedBox(height: 24),
+                TextFormField(
+                    controller: _nameKu,
+                    decoration:
+                        modernInputDecoration(label: 'ناوی کۆمپانیا (کوردی)'),
+                    validator: _req),
+                const SizedBox(height: 12),
+                TextFormField(
+                    controller: _nameAr,
+                    decoration:
+                        modernInputDecoration(label: 'ناوی کۆمپانیا (عەرەبی)'),
+                    validator: _req),
+                const SizedBox(height: 12),
+                TextFormField(
+                    controller: _nameEn,
+                    textDirection: TextDirection.ltr,
+                    decoration: modernInputDecoration(
+                        label: 'ناوی کۆمپانیا (ئینگلیزی)',
+                        helper: 'ناسنامەی کۆمپانیا ناگۆڕدرێت: ${widget.company.id}'),
+                    validator: _req),
+                const SizedBox(height: 12),
+                TextFormField(
+                    controller: _phone1,
+                    keyboardType: TextInputType.phone,
+                    textDirection: TextDirection.ltr,
+                    decoration: modernInputDecoration(
+                        label: 'ژمارەی یەکەم', icon: Icons.phone),
+                    validator: _req),
+                const SizedBox(height: 12),
+                TextFormField(
+                    controller: _phone2,
+                    keyboardType: TextInputType.phone,
+                    textDirection: TextDirection.ltr,
+                    decoration: modernInputDecoration(
+                        label: 'ژمارەی دووەم', icon: Icons.phone_outlined)),
+                const SizedBox(height: 12),
+                TextFormField(
+                    controller: _address,
+                    decoration: modernInputDecoration(
+                        label: 'ناونیشان', icon: Icons.location_on_outlined),
+                    validator: _req),
+                if (_error != null) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(12)),
+                    child: Text(_error!,
+                        style: TextStyle(color: Colors.red.shade700),
+                        textAlign: TextAlign.center),
+                  ),
+                ],
+                const SizedBox(height: 28),
+                ElevatedButton(
+                  onPressed: _busy ? null : _save,
+                  style: modernButtonStyle(),
+                  child: _busy
+                      ? const SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2.5))
+                      : const Text('پاشەکەوتکردن',
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  String? _req(String? v) => (v == null || v.trim().isEmpty) ? 'پێویستە' : null;
+}
+
 class _CompanyUsersScreen extends ConsumerWidget {
   const _CompanyUsersScreen({required this.company});
   final Company company;
@@ -622,6 +836,15 @@ class _CompanyUsersScreen extends ConsumerWidget {
       backgroundColor: appBackgroundColor,
       appBar: modernAppBar(company.displayName, actions: [
         IconButton(
+          tooltip: 'زانیاری کۆمپانیا',
+          icon: const Icon(Icons.business_outlined, color: accentYellow),
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (_) => _EditCompanyScreen(company: company)),
+          ),
+        ),
+        IconButton(
           tooltip: 'پلانی بەژداری',
           icon: const Icon(Icons.workspace_premium_outlined, color: accentYellow),
           onPressed: () => _changePlan(context, ref),
@@ -630,6 +853,12 @@ class _CompanyUsersScreen extends ConsumerWidget {
           tooltip: 'دەستگەیشتن (ئەپ/وێب)',
           icon: const Icon(Icons.devices_outlined, color: accentYellow),
           onPressed: () => _changeAccess(context, ref),
+        ),
+        IconButton(
+          tooltip: 'دیمۆ (٧ ڕۆژ)',
+          icon: Icon(Icons.timelapse_outlined,
+              color: company.demo ? const Color(0xFFEF4444) : accentYellow),
+          onPressed: () => _changeDemo(context, ref),
         ),
         IconButton(
           tooltip: 'تایبەتمەندییەکان',
@@ -710,7 +939,12 @@ class _CompanyUsersScreen extends ConsumerWidget {
                         ),
                         child: Text(isAdmin ? 'ئەدمین' : 'کارمەند', style: TextStyle(color: isAdmin ? accentYellow : primaryDarkBlue, fontSize: 12, fontWeight: FontWeight.bold)),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 4),
+                      IconButton(
+                        tooltip: 'دەستکاری زانیاری',
+                        icon: const Icon(Icons.edit_outlined, color: Colors.grey),
+                        onPressed: () => _editUser(context, ref, u),
+                      ),
                       IconButton(
                         tooltip: 'گۆڕینی وشەی نهێنی',
                         icon: const Icon(Icons.key_outlined, color: Colors.grey),
@@ -725,6 +959,139 @@ class _CompanyUsersScreen extends ConsumerWidget {
         },
       ),
     );
+  }
+
+  /// Edits a user's profile: name, phone, role, branch.
+  ///
+  /// Email is shown read-only — it is the Auth login identity, not a profile
+  /// field, so changing it needs an Admin SDK call rather than this write.
+  Future<void> _editUser(
+      BuildContext context, WidgetRef ref, AppUser user) async {
+    final name = TextEditingController(text: user.displayName);
+    final phone = TextEditingController(text: user.phone);
+    var role = user.role;
+    var branch = user.branch;
+    var branchAdmin = user.branchAdmin;
+
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialog) => AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('دەستکاری بەکارهێنەر',
+              style: TextStyle(
+                  color: primaryDarkBlue, fontWeight: FontWeight.bold)),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(user.email,
+                    textDirection: TextDirection.ltr,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: name,
+                  decoration:
+                      modernInputDecoration(label: 'ناوی تەواو', icon: Icons.person_outline),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: phone,
+                  keyboardType: TextInputType.phone,
+                  textDirection: TextDirection.ltr,
+                  decoration: modernInputDecoration(
+                      label: 'ژمارەی مۆبایل', icon: Icons.phone_iphone),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<UserRole>(
+                  isExpanded: true,
+                  initialValue: role,
+                  decoration: modernInputDecoration(
+                      label: 'ڕۆڵ', icon: Icons.badge_outlined),
+                  // superAdmin is absent on purpose: it belongs to no company,
+                  // so promoting someone here would orphan them.
+                  items: const [
+                    DropdownMenuItem(
+                        value: UserRole.companyAdmin, child: Text('ئەدمین')),
+                    DropdownMenuItem(
+                        value: UserRole.agent, child: Text('کارمەند')),
+                  ],
+                  onChanged: (v) =>
+                      setDialog(() => role = v ?? UserRole.agent),
+                ),
+                if (company.branches.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    isExpanded: true,
+                    initialValue:
+                        company.branches.contains(branch) ? branch : null,
+                    decoration: modernInputDecoration(
+                        label: 'لق', icon: Icons.account_tree_outlined),
+                    items: company.branches
+                        .map((b) =>
+                            DropdownMenuItem(value: b, child: Text(b)))
+                        .toList(),
+                    onChanged: (v) => setDialog(() => branch = v ?? ''),
+                  ),
+                ],
+                if (role == UserRole.companyAdmin)
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('ئادمینی لق',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    subtitle: const Text('تەنها داتای لقی خۆی دەبینێت',
+                        style: TextStyle(fontSize: 11)),
+                    value: branchAdmin,
+                    activeThumbColor: Colors.white,
+                    activeTrackColor: primaryDarkBlue,
+                    onChanged: (v) => setDialog(() => branchAdmin = v),
+                  ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('پاشگەزبوونەوە',
+                    style: TextStyle(color: Colors.grey))),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryDarkBlue,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10))),
+              onPressed: () => Navigator.pop(ctx, true),
+              child:
+                  const Text('پاشەکەوت', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (saved != true) return;
+    try {
+      await ref.read(adminRepositoryProvider).updateUser(
+            user.uid,
+            displayName: name.text,
+            phone: phone.text,
+            role: role,
+            branch: branch,
+            branchAdmin: branchAdmin,
+          );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('زانیارییەکان نوێ کرانەوە'),
+            backgroundColor: Colors.green));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('هەڵە: $e'),
+            backgroundColor: Colors.red.shade700));
+      }
+    }
   }
 
   /// Bottom sheet to pick the export format.
@@ -1109,6 +1476,104 @@ class _CompanyUsersScreen extends ConsumerWidget {
               content: Text('هەڵە: $e'),
               backgroundColor: Colors.red.shade700));
         }
+      }
+    }
+  }
+
+  /// Switches the company's 7-day trial on or off.
+  ///
+  /// Saving with the switch already ON re-stamps the deadline, which is the
+  /// only way to extend a trial — so, unlike the other dialogs here, this one
+  /// does not skip the write when the value is unchanged.
+  Future<void> _changeDemo(BuildContext context, WidgetRef ref) async {
+    var demo = company.demo;
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialog) => AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('ئەکاونتی دیمۆ',
+              style: TextStyle(
+                  color: primaryDarkBlue, fontWeight: FontWeight.bold)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('دیمۆ چالاک بێت',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: const Text('٧ ڕۆژ لە ئێستاوە',
+                    style: TextStyle(fontSize: 12)),
+                value: demo,
+                activeThumbColor: Colors.white,
+                activeTrackColor: const Color(0xFFEF4444),
+                onChanged: (v) => setDialog(() => demo = v),
+              ),
+              if (company.demo) ...[
+                const Divider(height: 20),
+                Text(
+                  company.demoExpired
+                      ? 'ماوەکە تەواو بووە — ئەم کۆمپانیایە ئێستا بەستراوەتەوە.'
+                      : '${company.demoDaysLeft} ڕۆژ ماوە.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: company.demoExpired
+                        ? const Color(0xFFEF4444)
+                        : primaryDarkBlue,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'پاشەکەوتکردن بە چالاکی، ماوەکە لە سەرەتاوە دەستپێدەکاتەوە.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                ),
+              ],
+              const SizedBox(height: 12),
+              Text(
+                'کاتێک ماوەکە تەواو بێت، یوزەرەکانی ئەم کۆمپانیایە ناتوانن هیچ داتایەک ببینن یان دروست بکەن — نە لە ئەپ و نە لە وێب.',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('پاشگەزبوونەوە',
+                    style: TextStyle(color: Colors.grey))),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryDarkBlue,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10))),
+              onPressed: () => Navigator.pop(ctx, demo),
+              child:
+                  const Text('پاشەکەوت', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (result == null) return;
+    try {
+      await ref.read(adminRepositoryProvider).setDemo(company.id, result);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(result
+                ? 'دیمۆ چالاک کرا — ٧ ڕۆژ لە ئێستاوە'
+                : 'دیمۆ لابرا — ئەکاونتێکی ئاسایی'),
+            backgroundColor: Colors.green));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('هەڵە: $e'),
+            backgroundColor: Colors.red.shade700));
       }
     }
   }

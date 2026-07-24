@@ -32,8 +32,33 @@ service cloud.firestore {
     }
 
     // True if the signed-in user has a profile and belongs to company [cid].
+    // Membership ONLY — see activeMember() for the check that also enforces the
+    // trial deadline.
     function sameCompany(cid) {
       return isSignedIn() && profileExists() && userData().company_id == cid;
+    }
+
+    // A demo (trial) company stops serving data once `demo_expires_at` passes.
+    // Enforced here and not merely in the app, since a client that skips its
+    // own expiry screen would otherwise keep full access.
+    //
+    // Safe field access: a company provisioned before the demo flag existed has
+    // neither field, and reading a missing field ERRORS → denies everything.
+    // A company marked demo with NO deadline stored is treated as expired
+    // (default `request.time`, which is never < itself) — failing closed.
+    function companyActive(cid) {
+      return !get(/databases/$(database)/documents/companies/$(cid))
+          .data.get('demo', false)
+        || request.time < get(/databases/$(database)/documents/companies/$(cid))
+          .data.get('demo_expires_at', request.time);
+    }
+
+    // Membership AND a live subscription. This is the gate for every data
+    // collection. `users` and `companies` reads deliberately stay on plain
+    // sameCompany(), so an expired tenant can still resolve its session and be
+    // TOLD it expired instead of hitting an opaque permission error.
+    function activeMember(cid) {
+      return sameCompany(cid) && companyActive(cid);
     }
 
     // True if the user sees EVERY branch of their company: a company-wide admin
@@ -54,7 +79,7 @@ service cloud.firestore {
     // or sit in the same branch. Agents and branch-scoped admins are thus
     // confined to their own branch's data.
     function inBranch(cid, branch) {
-      return sameCompany(cid)
+      return activeMember(cid)
         && (seesAllBranches() || userData().get('branch', '') == branch);
     }
 
@@ -94,7 +119,7 @@ service cloud.firestore {
 
     // --- Aggregated stats: one doc per company (doc id == company_id).
     match /company_stats/{companyId} {
-      allow read, write: if isSuperAdmin() || sameCompany(companyId);
+      allow read, write: if isSuperAdmin() || activeMember(companyId);
     }
 
     // --- Contracts: company- AND branch-scoped. A member only ever touches
@@ -131,7 +156,7 @@ service cloud.firestore {
     // --- Contract templates (تێمپلەیت): one doc per company (id == company_id).
     //     The owning company reads it to render PDFs; only super admins edit.
     match /templates/{companyId} {
-      allow read:  if isSuperAdmin() || sameCompany(companyId);
+      allow read:  if isSuperAdmin() || activeMember(companyId);
       allow write: if isSuperAdmin();
     }
 
@@ -139,11 +164,11 @@ service cloud.firestore {
     //     admin (admin restriction enforced client-side). Agents read them to
     //     pick a lawyer on the sale contract form.
     match /lawyers/{id} {
-      allow read:   if isSuperAdmin() || sameCompany(resource.data.company_id);
-      allow create: if sameCompany(request.resource.data.company_id);
-      allow update: if sameCompany(resource.data.company_id)
+      allow read:   if isSuperAdmin() || activeMember(resource.data.company_id);
+      allow create: if activeMember(request.resource.data.company_id);
+      allow update: if activeMember(resource.data.company_id)
         && request.resource.data.company_id == resource.data.company_id;
-      allow delete: if sameCompany(resource.data.company_id);
+      allow delete: if activeMember(resource.data.company_id);
     }
 
     // --- Listings: STRICTLY company-scoped. These docs hold private owner
@@ -185,13 +210,19 @@ service cloud.firestore {
         && !('owner_mobile' in request.resource.data);
     }
     match /market/{id} {
-      allow read:   if isSignedIn();
-      allow create: if sameCompany(request.resource.data.company_id)
+      // Reading is cross-company by design, so it cannot be gated on the
+      // document's own company. It is gated on the READER's company instead —
+      // an expired tenant loses the market along with everything else.
+      // profileExists() first: userData() on a signed-in account with no
+      // profile ERRORS, which would deny even the super-admin branch.
+      allow read:   if isSignedIn() && profileExists()
+        && (isSuperAdmin() || activeMember(userData().company_id));
+      allow create: if activeMember(request.resource.data.company_id)
         && marketOwnerFree();
-      allow update: if sameCompany(resource.data.company_id)
+      allow update: if activeMember(resource.data.company_id)
         && request.resource.data.company_id == resource.data.company_id
         && marketOwnerFree();
-      allow delete: if sameCompany(resource.data.company_id);
+      allow delete: if activeMember(resource.data.company_id);
     }
   }
 }

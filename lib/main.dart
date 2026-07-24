@@ -110,6 +110,10 @@ class _SessionGate extends ConsumerWidget {
       data: (user) {
         if (user == null) return const _NoAccessScreen();
         if (user.role == UserRole.superAdmin) return const SuperAdminPanel();
+        // A lapsed trial is stopped on every platform. This screen is the
+        // courtesy message; the security rules are what actually withhold the
+        // data, so a patched client gains nothing but empty screens.
+        if (user.demoExpired) return const _DemoExpiredScreen();
         // Web-only is blocked in the mobile app — set per company OR per plan.
         final planWebOnly = ref
                 .watch(planConfigProvider)
@@ -122,6 +126,46 @@ class _SessionGate extends ConsumerWidget {
         }
         return const MainShell();
       },
+    );
+  }
+}
+
+/// Shown once a demo company's 7 days are up, on every platform.
+class _DemoExpiredScreen extends ConsumerWidget {
+  const _DemoExpiredScreen();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Scaffold(
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.timelapse_outlined,
+                  size: 64, color: Color(0xFFEF4444)),
+              const SizedBox(height: 16),
+              const Text(
+                'ماوەی دیمۆ تەواو بوو',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'ماوەی ٧ ڕۆژی تاقیکردنەوەی ئەم هەژمارە کۆتایی هات.\n'
+                'بۆ بەردەوامبوون پەیوەندی بە لەزنۆدەوە بکە.',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              TextButton.icon(
+                icon: const Icon(Icons.logout),
+                label: const Text('دەرچوون'),
+                onPressed: () => ref.read(authRepositoryProvider).signOut(),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

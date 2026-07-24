@@ -227,6 +227,29 @@ exports.setUserPassword = onCall(async (request) => {
  * shaping is correct. Takes a saved receipt's id, verifies the caller belongs
  * to the receipt's company, and returns the PDF as base64.
  */
+/**
+ * Blocks a company whose 7-day trial has run out.
+ *
+ * The Firestore rules already stop an expired tenant from reading its own
+ * data, but these callables run on the Admin SDK, which ignores rules — so the
+ * same deadline has to be re-checked here, or the PDF endpoints would keep
+ * serving a company the rest of the product has locked out.
+ *
+ * A company flagged `demo` with no deadline stored counts as expired, matching
+ * companyActive() in firestore.rules.
+ *
+ * @param {object} c Data of the `companies` document.
+ * @param {boolean} isSuper Super admins are never blocked.
+ */
+function assertCompanyActive(c, isSuper) {
+  if (isSuper || !c.demo) return;
+  const at = c.demo_expires_at;
+  const ms = at && at.toMillis ? at.toMillis() : 0;
+  if (Date.now() >= ms) {
+    throw new HttpsError("permission-denied", "Demo period has ended.");
+  }
+}
+
 exports.renderReceiptPdf = onCall(
     // concurrency 1: each Chromium render gets the instance's full memory.
     // (Add minInstances: 1 to also remove cold starts — it raises the bill.)
@@ -275,6 +298,7 @@ exports.renderReceiptPdf = onCall(
       ]);
       const c = cSnap.exists ? cSnap.data() : {};
       const t = tSnap.exists ? tSnap.data() : {};
+      assertCompanyActive(c, isSuper);
 
       const company = {
         nameKu: c.name_ku || "",
@@ -357,6 +381,7 @@ exports.renderContractPdf = onCall(
       ]);
       const cd = cSnap.exists ? cSnap.data() : {};
       const t = tSnap.exists ? tSnap.data() : {};
+      assertCompanyActive(cd, isSuper);
 
       const company = {
         nameKu: cd.name_ku || "",
