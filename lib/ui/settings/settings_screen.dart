@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../auth/session.dart';
 import '../../data/contract_repository.dart';
 import '../../data/plan_config_repository.dart';
+import '../../data/profile_repository.dart';
 import '../../models/enums.dart';
 import '../lawyers/lawyers_screen.dart';
 import 'about_screen.dart';
@@ -51,18 +53,7 @@ class SettingsScreen extends ConsumerWidget {
             ),
             child: Column(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: accentYellow, width: 2)),
-                  child: CircleAvatar(
-                    radius: 40,
-                    backgroundColor: primaryDarkBlue.withValues(alpha: 0.1),
-                    backgroundImage: (company?.logoUrl.isNotEmpty ?? false) ? NetworkImage(company!.logoUrl) : null,
-                    child: (company?.logoUrl.isNotEmpty ?? false)
-                        ? null
-                        : const Icon(Icons.person, size: 40, color: primaryDarkBlue),
-                  ),
-                ),
+                _ProfileAvatar(user: user, companyLogoUrl: company?.logoUrl ?? ''),
                 const SizedBox(height: 16),
                 Text(user.displayName, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: primaryDarkBlue)),
                 const SizedBox(height: 4),
@@ -240,4 +231,91 @@ class SettingsScreen extends ConsumerWidget {
     title: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
     subtitle: Text(value.isEmpty ? '—' : value, style: const TextStyle(color: Colors.grey)),
   );
+}
+
+/// The tappable profile picture. Shows the user's own photo, falling back to
+/// the company logo, then a person icon. Tapping picks an image, uploads it,
+/// and refreshes the session so the new photo appears at once.
+class _ProfileAvatar extends ConsumerStatefulWidget {
+  const _ProfileAvatar({required this.user, required this.companyLogoUrl});
+
+  final SessionUser user;
+  final String companyLogoUrl;
+
+  @override
+  ConsumerState<_ProfileAvatar> createState() => _ProfileAvatarState();
+}
+
+class _ProfileAvatarState extends ConsumerState<_ProfileAvatar> {
+  bool _busy = false;
+
+  Future<void> _change() async {
+    final picked = await ImagePicker()
+        .pickImage(source: ImageSource.gallery, maxWidth: 800, imageQuality: 85);
+    if (picked == null) return;
+    final bytes = await picked.readAsBytes();
+    final contentType =
+        picked.name.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
+    setState(() => _busy = true);
+    try {
+      await ref.read(profileRepositoryProvider).uploadPhoto(bytes, contentType);
+      // The session was read once at login; re-read it so the new photo (and
+      // anything else on the user doc) shows without a restart.
+      ref.invalidate(sessionProvider);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('وێنەی پرۆفایل نوێ کرایەوە'),
+            backgroundColor: Color(0xFF10B981)));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('هەڵە: $e'), backgroundColor: Colors.red.shade700));
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final photo = widget.user.photoUrl.isNotEmpty
+        ? widget.user.photoUrl
+        : widget.companyLogoUrl;
+    return GestureDetector(
+      onTap: _busy ? null : _change,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: accentYellow, width: 2)),
+            child: CircleAvatar(
+              radius: 40,
+              backgroundColor: primaryDarkBlue.withValues(alpha: 0.1),
+              backgroundImage: photo.isNotEmpty ? NetworkImage(photo) : null,
+              child: photo.isEmpty
+                  ? const Icon(Icons.person, size: 40, color: primaryDarkBlue)
+                  : null,
+            ),
+          ),
+          if (_busy)
+            const CircularProgressIndicator(color: primaryDarkBlue, strokeWidth: 2.5),
+          // A small camera badge so it reads as changeable.
+          Positioned(
+            bottom: 0,
+            right: 4,
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: const BoxDecoration(
+                  color: accentYellow, shape: BoxShape.circle),
+              child: const Icon(Icons.camera_alt, size: 15, color: primaryDarkBlue),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

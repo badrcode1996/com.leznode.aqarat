@@ -24,6 +24,7 @@ class SessionUser {
     this.city = CompanyCity.erbil,
     this.demo = false,
     this.demoExpiresAt,
+    this.photoUrl = '',
   });
 
   final String uid;
@@ -62,6 +63,9 @@ class SessionUser {
 
   /// The branch (لق) this user belongs to.
   final String branch;
+
+  /// The user's own profile photo (Storage download URL); empty when unset.
+  final String photoUrl;
 
   /// Company admin scoped to their branch (ئادمینی لق) when true.
   final bool branchAdmin;
@@ -162,6 +166,7 @@ final sessionProvider = FutureProvider<SessionUser?>((ref) async {
     phone: data['phone'] as String? ?? '',
     branch: data['branch'] as String? ?? '',
     branchAdmin: data['branch_admin'] as bool? ?? false,
+    photoUrl: data['photo_url'] as String? ?? '',
     plan: plan,
     webOnly: webOnly,
     featureOverrides: featureOverrides,

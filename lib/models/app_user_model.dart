@@ -17,6 +17,7 @@ class AppUser {
     required this.createdAt,
     this.branch = '',
     this.branchAdmin = false,
+    this.photoUrl = '',
   });
 
   final String uid;
@@ -35,6 +36,10 @@ class AppUser {
   /// false = sees all company data (ئادمینی گشتی). Ignored for other roles.
   final bool branchAdmin;
 
+  /// The user's own profile photo (Storage download URL). Set by the user from
+  /// the settings screen; empty falls back to the company logo, then an icon.
+  final String photoUrl;
+
   factory AppUser.fromJson(String uid, Map<String, dynamic> json) => AppUser(
         uid: uid,
         companyId: json['company_id'] as String? ?? '',
@@ -46,6 +51,7 @@ class AppUser {
             (json['created_at'] as Timestamp?)?.toDate() ?? DateTime.now(),
         branch: json['branch'] as String? ?? '',
         branchAdmin: json['branch_admin'] as bool? ?? false,
+        photoUrl: json['photo_url'] as String? ?? '',
       );
 
   Map<String, dynamic> toJson() => {
@@ -57,5 +63,6 @@ class AppUser {
         'created_at': Timestamp.fromDate(createdAt),
         'branch': branch,
         'branch_admin': branchAdmin,
+        'photo_url': photoUrl,
       };
 }

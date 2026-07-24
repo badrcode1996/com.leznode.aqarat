@@ -29,6 +29,15 @@ service firebase.storage {
         && callerData().role == 'super_admin'
         && isImageUnder5MB();
     }
+    // Profile photos — public branding, but each user writes ONLY their own
+    // (the file name is their uid). Read by any signed-in user so a photo can
+    // show anywhere the user appears.
+    match /user_photos/{uid} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn()
+        && request.auth.uid == uid
+        && isImageUnder5MB();
+    }
     // Lawyer photos — only the owning company may write.
     match /lawyer_photos/{companyId}/{fileName} {
       allow read: if isSignedIn();
