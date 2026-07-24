@@ -6,6 +6,7 @@ import '../../data/contract_repository.dart';
 import '../../data/plan_config_repository.dart';
 import '../../models/enums.dart';
 import '../lawyers/lawyers_screen.dart';
+import 'about_screen.dart';
 
 // ڕەنگە سەرەکییەکان بۆ یەکپارچەیی دیزاینەکە
 const Color primaryDarkBlue = Color(0xFF0F2C59);
@@ -148,6 +149,28 @@ class SettingsScreen extends ConsumerWidget {
               ),
             ),
           ],
+
+          const SizedBox(height: 20),
+
+          // دەربارەی ئێمە — بۆ هەموو بەکارهێنەرێک
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4))],
+            ),
+            child: ListTile(
+              leading: const Icon(Icons.info_outline_rounded, color: primaryDarkBlue),
+              title: const Text('دەربارەی ئێمە', style: TextStyle(fontWeight: FontWeight.w600)),
+              subtitle: const Text('پەیوەندی و زانیاری ئەپەکە',
+                  style: TextStyle(color: Colors.grey)),
+              trailing: const Icon(Icons.chevron_left_rounded, color: Colors.grey),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AboutScreen()),
+              ),
+            ),
+          ),
 
           const SizedBox(height: 20),
 
