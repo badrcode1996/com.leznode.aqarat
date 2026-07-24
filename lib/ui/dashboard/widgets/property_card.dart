@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../models/property_model.dart';
+import '../../widgets/house_cover_image.dart';
 
 // ڕەنگە سەرەکییەکان بۆ یەکپارچەیی دیزاینەکە
 const Color primaryDarkBlue = Color(0xFF0F2C59);
@@ -169,18 +170,8 @@ class PropertyCard extends StatelessWidget {
       ),
       child: Icon(Icons.maps_home_work_outlined, color: accentColor, size: 34),
     );
-    if (listing.imageUrl.isEmpty) return placeholder;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: Image.network(
-        listing.imageUrl,
-        width: 84,
-        height: 84,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => placeholder,
-        loadingBuilder: (ctx, child, prog) => prog == null ? child : placeholder,
-      ),
-    );
+    return HouseThumb(
+        url: listing.imageUrl, size: 84, placeholder: placeholder);
   }
 
   // دیزاینی مۆدێرن بۆ تاگی (گشتی / ناوخۆیی)
