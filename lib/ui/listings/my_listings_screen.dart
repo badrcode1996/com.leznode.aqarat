@@ -327,32 +327,8 @@ class _ListingCard extends ConsumerWidget {
                     ],
                   ),
                 ),
-                // تاگی فرۆشتن/کرێ و گشتی/تایبەت
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    DealBadge(deal: listing.deal),
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: listing.isPublic ? const Color(0xFF10B981).withValues(alpha: 0.1) : Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(listing.isPublic ? Icons.public : Icons.public_off, size: 12, color: listing.isPublic ? const Color(0xFF10B981) : Colors.grey.shade600),
-                          const SizedBox(width: 4),
-                          Text(
-                            listing.isPublic ? 'گشتی' : 'تایبەت',
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: listing.isPublic ? const Color(0xFF10B981) : Colors.grey.shade600),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                // تاگی فرۆشتن/کرێ
+                DealBadge(deal: listing.deal),
               ],
             ),
 

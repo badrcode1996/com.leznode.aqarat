@@ -79,7 +79,9 @@ class _CreateListingScreenState extends ConsumerState<CreateListingScreen> {
 
   PropertyType _propertyType = PropertyType.house;
   DealKind _deal = DealKind.sale;
-  bool _isPublic = true;
+  // The Global Market is held back for now, so nothing publishes to it — the
+  // listing is always private and the public toggle is gone from the form.
+  final bool _isPublic = false;
   bool _busy = false;
   String? _error;
 
@@ -100,7 +102,6 @@ class _CreateListingScreenState extends ConsumerState<CreateListingScreen> {
     _area.text = '${e.area}';
     _propertyType = e.propertyType;
     _deal = e.deal;
-    _isPublic = e.isPublic;
   }
 
   @override
@@ -275,50 +276,6 @@ class _CreateListingScreenState extends ConsumerState<CreateListingScreen> {
                 ),
 
                 _text(_area, 'ڕووبەر (م²)', keyboard: const TextInputType.numberWithOptions(decimal: true), icon: Icons.square_foot),
-
-                const SizedBox(height: 8),
-
-                // بەشی بازاڕی گشتی بە دیزاینێکی مۆدێرنتر
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: _isPublic ? primaryDarkBlue.withValues(alpha: 0.05) : inputFillColor,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: _isPublic ? primaryDarkBlue.withValues(alpha: 0.2) : Colors.grey.shade200,
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'پیشاندان لە بازاڕی گشتی',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: primaryDarkBlue),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'ناو و مۆبایلی خاوەن بە شاردراوەیی دەمێنێتەوە بۆ پاراستنی تایبەتمەندی.',
-                              style: TextStyle(fontSize: 12, color: Colors.grey.shade600, height: 1.4),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Switch(
-                        value: _isPublic,
-                        activeThumbColor: Colors.white,
-                        activeTrackColor: primaryDarkBlue,
-                        inactiveThumbColor: Colors.grey.shade400,
-                        inactiveTrackColor: Colors.grey.shade200,
-                        onChanged: (v) => setState(() => _isPublic = v),
-                      ),
-                    ],
-                  ),
-                ),
 
                 if (_error != null) ...[
                   const SizedBox(height: 20),
