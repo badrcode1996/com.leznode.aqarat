@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 const Color _primaryDarkBlue = Color(0xFF0F2C59);
@@ -151,19 +152,7 @@ class AboutScreen extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
             const SizedBox(height: 14),
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-              decoration: BoxDecoration(
-                color: _appBackground,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text('v$appVersion',
-                  style: TextStyle(
-                      color: Colors.grey.shade700,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600)),
-            ),
+            const _VersionBadge(),
           ],
         ),
       );
@@ -235,9 +224,38 @@ class AboutScreen extends StatelessWidget {
       );
 }
 
-/// Keep in step with `version:` in pubspec.yaml — nothing reads it from the
-/// bundle, so a release bump has to be mirrored here.
-const String appVersion = '1.0.3';
+/// "v1.0.3 (3)" read from the bundle, so a release bump needs no code change.
+/// The lookup is a platform channel; the badge holds its space and stays empty
+/// for the frame or two before it answers.
+class _VersionBadge extends StatelessWidget {
+  const _VersionBadge();
+
+  /// Resolved once per launch — the bundle's version cannot change under a
+  /// running app, and a rebuilt FutureBuilder would otherwise ask again.
+  static final Future<PackageInfo> _info = PackageInfo.fromPlatform();
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+        decoration: BoxDecoration(
+          color: _appBackground,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: FutureBuilder<PackageInfo>(
+          future: _info,
+          builder: (context, snap) {
+            final info = snap.data;
+            return Text(
+              info == null ? '' : 'v${info.version} (${info.buildNumber})',
+              style: TextStyle(
+                  color: Colors.grey.shade700,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600),
+            );
+          },
+        ),
+      );
+}
 
 class _Social {
   const _Social(this.name, this.icon, this.url, this.color);
