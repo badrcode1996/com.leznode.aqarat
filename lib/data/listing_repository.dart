@@ -34,6 +34,7 @@ class ListingRepository {
       {
         'company_id': l.companyId,
         'listing_kind': l.kind.wire,
+        'deal_kind': l.deal.wire,
         'property_type': l.propertyType.wire,
         'project_name': l.projectName,
         'area': l.area,
@@ -124,6 +125,61 @@ class ListingRepository {
         FirebaseStorage.instance.ref('property_images/${_user.companyId}/$id');
     await ref.putData(bytes, SettableMetadata(contentType: contentType));
     return ref.getDownloadURL();
+  }
+
+  /// Applies an edit to an existing listing.
+  ///
+  /// Only the fields the form owns are written — `company_id`, `branch`,
+  /// `agent_id` and `created_at` stay as first saved, both because the rules
+  /// pin the first two and because re-stamping the creator would misattribute
+  /// the listing to whoever edited it.
+  ///
+  /// A new [imageBytes] replaces the picture; passing none keeps the current
+  /// one. The public `market` projection is rewritten to match, or dropped if
+  /// the listing stopped being public.
+  Future<void> update(
+    PropertyListing listing, {
+    Uint8List? imageBytes,
+    String imageContentType = 'image/jpeg',
+  }) async {
+    final imageUrl = imageBytes == null
+        ? listing.imageUrl
+        : await _uploadImage(listing.id, imageBytes, imageContentType);
+    await _col(listing.kind).doc(listing.id).update({
+      'deal_kind': listing.deal.wire,
+      'owner_name': listing.ownerName,
+      'owner_mobile': listing.ownerMobile,
+      'project_name': listing.projectName,
+      'property_type': listing.propertyType.wire,
+      'area': listing.area,
+      'is_public': listing.isPublic,
+      'image_url': imageUrl,
+    });
+    // Archived listings are absent from the market by design; re-publishing one
+    // here would resurrect it behind the archive filter.
+    if (listing.isPublic && !listing.isArchived) {
+      await _market
+          .doc(listing.id)
+          .set(_marketData(listing, city: _user.city.wire, imageUrl: imageUrl));
+    } else {
+      await _market.doc(listing.id).delete();
+    }
+  }
+
+  /// Removes a listing, its market projection and its uploaded image.
+  ///
+  /// The image delete is best-effort: a listing saved without one has no object
+  /// to remove, and a missing object must not block deleting the document.
+  Future<void> delete(ListingKind kind, String id) async {
+    await _col(kind).doc(id).delete();
+    await _market.doc(id).delete();
+    try {
+      await FirebaseStorage.instance
+          .ref('property_images/${_user.companyId}/$id')
+          .delete();
+    } catch (_) {
+      // No image stored, or already gone.
+    }
   }
 
   /// Creates a listing, optionally with a single house image (uploaded first so

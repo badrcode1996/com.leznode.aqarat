@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../data/listing_repository.dart';
 import '../../models/enums.dart';
 import '../../models/property_model.dart';
+import '../widgets/deal_filter_bar.dart';
 import '../widgets/house_cover_image.dart';
 
 // ڕەنگە سەرەکییەکان بۆ یەکپارچەیی دیزاینەکە
@@ -17,32 +18,56 @@ const Color inputFillColor = Color(0xFFF3F4F6);
 /// PRIVACY: it binds to [globalMarketProvider] which yields [PublicListingView]
 /// (no owner name/mobile). Contact is the creating agent + company phone, with
 /// a url_launcher "Click to Call" button.
-class GlobalMarketTab extends ConsumerWidget {
+class GlobalMarketTab extends ConsumerStatefulWidget {
   const GlobalMarketTab({super.key, this.kind = ListingKind.offer});
 
   final ListingKind kind;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final async = ref.watch(globalMarketProvider(kind));
+  ConsumerState<GlobalMarketTab> createState() => _GlobalMarketTabState();
+}
 
-    return async.when(
-      loading: () => const Center(child: CircularProgressIndicator(color: primaryDarkBlue)),
-      error: (e, _) => Center(child: Text('هەڵە: $e', style: const TextStyle(color: Colors.red))),
-      data: (items) {
-        if (items.isEmpty) {
-          return _emptyBox(
-            kind == ListingKind.offer ? 'هیچ خستنەڕوویەک لە بازاڕی گشتیدا نییە' : 'هیچ داواکارییەک لە بازاڕی گشتیدا نییە',
-            Icons.public_off_rounded,
-          );
-        }
-        return ListView.separated(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-          itemCount: items.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 16),
-          itemBuilder: (_, i) => _MarketCard(view: items[i]),
-        );
-      },
+class _GlobalMarketTabState extends ConsumerState<GlobalMarketTab> {
+  DealKind _deal = DealKind.sale;
+
+  @override
+  Widget build(BuildContext context) {
+    final async = ref.watch(globalMarketProvider(widget.kind));
+    final isOffer = widget.kind == ListingKind.offer;
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          child: DealFilterBar(
+            selected: _deal,
+            onChanged: (d) => setState(() => _deal = d),
+          ),
+        ),
+        Expanded(
+          child: async.when(
+            loading: () => const Center(child: CircularProgressIndicator(color: primaryDarkBlue)),
+            error: (e, _) => Center(child: Text('هەڵە: $e', style: const TextStyle(color: Colors.red))),
+            data: (all) {
+              final items = all.where((v) => v.deal == _deal).toList();
+              if (items.isEmpty) {
+                return _emptyBox(
+                  isOffer
+                      ? 'هیچ خستنەڕوویەکی ${_deal.label} لە بازاڕی گشتیدا نییە'
+                      : 'هیچ داواکارییەکی ${_deal.label} لە بازاڕی گشتیدا نییە',
+                  Icons.public_off_rounded,
+                );
+              }
+              return ListView.separated(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                itemCount: items.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 16),
+                itemBuilder: (_, i) => _MarketCard(view: items[i]),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -163,24 +188,31 @@ class _MarketCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                // تاگی ڕووبەر
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: inputFillColor,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.square_foot_rounded, size: 14, color: Colors.grey.shade700),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${view.area} م²',
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.grey.shade800),
+                // تاگی فرۆشتن/کرێ و ڕووبەر
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    DealBadge(deal: view.deal),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: inputFillColor,
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                    ],
-                  ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.square_foot_rounded, size: 14, color: Colors.grey.shade700),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${view.area} م²',
+                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.grey.shade800),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

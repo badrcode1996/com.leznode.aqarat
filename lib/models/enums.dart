@@ -141,6 +141,26 @@ enum ListingKind {
       );
 }
 
+/// Splits both Offers and Demands into selling and renting. Orthogonal to
+/// [ListingKind]: an offer can be a property for sale or for rent, and a demand
+/// can be someone looking to buy or to rent.
+///
+/// Listings written before this field existed carry no `deal_kind` and fall
+/// back to [sale] — the same default new forms open on.
+enum DealKind {
+  sale('sale', 'فرۆشتن'),
+  rent('rent', 'کرێ');
+
+  const DealKind(this.wire, this.label);
+  final String wire;
+  final String label;
+
+  static DealKind fromWire(String? value) => DealKind.values.firstWhere(
+        (d) => d.wire == value,
+        orElse: () => DealKind.sale,
+      );
+}
+
 /// Dropdown-backed property type.
 enum PropertyType {
   house('house', 'خانوو'),

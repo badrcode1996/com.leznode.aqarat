@@ -20,6 +20,7 @@ class PropertyListing {
     required this.companyId,
     required this.agentId,
     required this.kind,
+    required this.deal,
     required this.ownerName,
     required this.ownerMobile,
     required this.projectName,
@@ -39,6 +40,9 @@ class PropertyListing {
   final String companyId;
   final String agentId;
   final ListingKind kind;
+
+  /// Selling or renting — see [DealKind]. Splits each of the two sections.
+  final DealKind deal;
 
   // ----- PRIVATE: never expose in the Global Market -----
   final String ownerName; // ناوی خاوەن
@@ -77,6 +81,7 @@ class PropertyListing {
       companyId: json['company_id'] as String? ?? '',
       agentId: json['agent_id'] as String? ?? '',
       kind: ListingKind.fromWire(json['listing_kind'] as String?),
+      deal: DealKind.fromWire(json['deal_kind'] as String?),
       ownerName: json['owner_name'] as String? ?? '',
       ownerMobile: json['owner_mobile'] as String? ?? '',
       projectName: json['project_name'] as String? ?? '',
@@ -98,6 +103,7 @@ class PropertyListing {
         'company_id': companyId,
         'agent_id': agentId,
         'listing_kind': kind.wire,
+        'deal_kind': deal.wire,
         'owner_name': ownerName,
         'owner_mobile': ownerMobile,
         'project_name': projectName,
@@ -118,6 +124,7 @@ class PropertyListing {
   PublicListingView get publicView => PublicListingView(
         id: id,
         kind: kind,
+        deal: deal,
         propertyType: propertyType,
         projectName: projectName,
         area: area,
@@ -134,6 +141,7 @@ class PublicListingView {
   const PublicListingView({
     required this.id,
     required this.kind,
+    required this.deal,
     required this.propertyType,
     required this.projectName,
     required this.area,
@@ -149,6 +157,7 @@ class PublicListingView {
       PublicListingView(
         id: id,
         kind: ListingKind.fromWire(j['listing_kind'] as String?),
+        deal: DealKind.fromWire(j['deal_kind'] as String?),
         propertyType: PropertyType.fromWire(j['property_type'] as String?),
         projectName: j['project_name'] as String? ?? '',
         area: j['area'] as num? ?? 0,
@@ -159,6 +168,7 @@ class PublicListingView {
 
   final String id;
   final ListingKind kind;
+  final DealKind deal;
   final PropertyType propertyType;
   final String projectName;
   final num area;
