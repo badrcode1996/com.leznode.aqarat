@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../models/property_model.dart';
+import '../../widgets/deal_filter_bar.dart';
 import '../../widgets/house_cover_image.dart';
 
 // ڕەنگە سەرەکییەکان بۆ یەکپارچەیی دیزاینەکە
@@ -58,11 +59,11 @@ class PropertyCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ڕیزی سەرەوە: تاگی (گشتی/ناوخۆیی) و ڕووبەر
+                  // ڕیزی سەرەوە: تاگی (فرۆشتن/کرێ) و ڕووبەر
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _chip(listing.isPublic),
+                      DealBadge(deal: listing.deal),
                       const Spacer(),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -170,39 +171,13 @@ class PropertyCard extends StatelessWidget {
       ),
       child: Icon(Icons.maps_home_work_outlined, color: accentColor, size: 34),
     );
-    return HouseThumb(
-        url: listing.imageUrl, size: 84, placeholder: placeholder);
+    return SizedBox(
+        width: 84,
+        height: 84,
+        child: HouseThumb(
+            url: listing.imageUrl, size: 84, placeholder: placeholder));
   }
 
-  // دیزاینی مۆدێرن بۆ تاگی (گشتی / ناوخۆیی)
-  Widget _chip(bool isPublic) {
-    final color = isPublic ? modernGreen : Colors.grey.shade600;
-    final bgColor = isPublic ? modernGreen.withValues(alpha: 0.1) : Colors.grey.shade100;
-    final icon = isPublic ? Icons.public : Icons.public_off;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 12, color: color),
-          const SizedBox(width: 4),
-          Text(
-            isPublic ? 'گشتی' : 'ناوخۆیی',
-            style: TextStyle(
-              color: color,
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 // ڕەنگی فۆڕمەکان کە لە شاشەکانی تریش بەکارمان هێنا
