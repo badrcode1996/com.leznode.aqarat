@@ -58,9 +58,10 @@ class _MainShellState extends ConsumerState<MainShell> {
                   child: Text('کردارە خێراکان', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: primaryDarkBlue)),
                 ),
               ),
+              // گرێبەستی کرێ و فرۆشتن و پسولەکان — کردارە بنەڕەتییەکانن،
+              // لە هەموو پلانێکدا بەردەستن و بە پلان gate ناکرێن.
               _action(Icons.home_work_outlined, 'گرێبەستی کرێ', const Color(0xFF10B981), () => _push(const CreateRentContractStepper())),
-              if (features.sale)
-                _action(Icons.sell_outlined, 'گرێبەستی فرۆشتن', const Color(0xFF3B82F6), () => _push(const CreateSaleContractStepper())),
+              _action(Icons.sell_outlined, 'گرێبەستی فرۆشتن', const Color(0xFF3B82F6), () => _push(const CreateSaleContractStepper())),
               if (features.offers)
                 _action(Icons.add_home_work_outlined, 'خستنەڕووی موڵک', const Color(0xFFF59E0B), () => _push(const CreateListingScreen(kind: ListingKind.offer))),
               if (features.requests)

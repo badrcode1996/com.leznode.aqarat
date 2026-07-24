@@ -3,8 +3,10 @@ import 'enums.dart';
 /// The feature set + limits for ONE plan tier. Edited by the Super Admin and
 /// stored in Firestore (`config/plans`), read live by the app for gating.
 ///
-/// `maxBranches` / `maxUsers` use 0 to mean "unlimited". Core features (tenants,
-/// rent contracts, rent + external receipts) are always on and not listed here.
+/// `maxBranches` / `maxUsers` use 0 to mean "unlimited". Core features are
+/// always on and not gated: tenants, BOTH rent and sale contracts, and the
+/// rent + external receipts. `sale` is kept on the model for backward
+/// compatibility with saved configs, but nothing reads it any more.
 class PlanFeatures {
   const PlanFeatures({
     this.sale = true,
@@ -170,7 +172,9 @@ class PlanConfig {
       offers: true,
       requests: true,
       lawyers: false,
-      maxBranches: 3,
+      // Multiple branches are a Gold-only feature; Bronze and Silver run as a
+      // single branch.
+      maxBranches: 1,
       maxUsers: 5,
       webOnly: false,
     ),

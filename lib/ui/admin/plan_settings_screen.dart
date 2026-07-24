@@ -171,8 +171,8 @@ class _PlanSettingsScreenState extends ConsumerState<PlanSettingsScreen> {
                   fontWeight: FontWeight.bold,
                   color: _primaryDarkBlue)),
           const Divider(height: 24),
-          _toggle('گرێبەستی فرۆشتن', f.sale,
-              (v) => onChanged(f.copyWith(sale: v))),
+          // گرێبەستی فرۆشتن ئێستا کردارێکی بنەڕەتییە (وەک کرێ) و بە پلان
+          // gate ناکرێت، بۆیە توگڵی نییە لێرە.
           _toggle('ئاگاداری کرێی دواکەوتوو', f.overdue,
               (v) => onChanged(f.copyWith(overdue: v))),
           _toggle('بازاڕی گشتی', f.market,
