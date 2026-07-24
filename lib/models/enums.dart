@@ -168,6 +168,7 @@ enum PropertyType {
   shop('shop', 'دوکان'),
   land('land', 'زەوی'),
   office('office', 'ئۆفیس'),
+  structure('structure', 'هەیکەل'),
   other('other', 'هیتر');
 
   const PropertyType(this.wire, this.label);
