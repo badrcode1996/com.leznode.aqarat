@@ -72,7 +72,7 @@ class ListingRepository {
   Future<void> setArchived(ListingKind kind, String id, bool archived) async {
     await _col(kind).doc(id).update({'is_archived': archived});
     if (archived) {
-      await _market.doc(id).delete();
+      await _deleteMarketDoc(id);
     } else {
       final snap = await _col(kind).doc(id).get();
       if (!snap.exists) return;
@@ -162,7 +162,21 @@ class ListingRepository {
           .doc(listing.id)
           .set(_marketData(listing, city: _user.city.wire, imageUrl: imageUrl));
     } else {
-      await _market.doc(listing.id).delete();
+      await _deleteMarketDoc(listing.id);
+    }
+  }
+
+  /// Deletes a listing's market projection, tolerating its absence.
+  ///
+  /// A private listing has no market doc, and the delete rule reads
+  /// `resource.data.company_id` — which errors on a missing document and
+  /// surfaces as permission-denied. That must never fail the edit or delete
+  /// that called this, so the error is swallowed.
+  Future<void> _deleteMarketDoc(String id) async {
+    try {
+      await _market.doc(id).delete();
+    } catch (_) {
+      // No market doc for this listing (it was never public).
     }
   }
 
@@ -172,7 +186,7 @@ class ListingRepository {
   /// to remove, and a missing object must not block deleting the document.
   Future<void> delete(ListingKind kind, String id) async {
     await _col(kind).doc(id).delete();
-    await _market.doc(id).delete();
+    await _deleteMarketDoc(id);
     try {
       await FirebaseStorage.instance
           .ref('property_images/${_user.companyId}/$id')

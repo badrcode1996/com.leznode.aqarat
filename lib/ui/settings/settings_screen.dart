@@ -8,6 +8,7 @@ import '../../data/plan_config_repository.dart';
 import '../../data/profile_repository.dart';
 import '../../models/enums.dart';
 import '../lawyers/lawyers_screen.dart';
+import '../widgets/house_cover_image.dart';
 import 'about_screen.dart';
 
 // ڕەنگە سەرەکییەکان بۆ یەکپارچەیی دیزاینەکە
@@ -295,7 +296,8 @@ class _ProfileAvatarState extends ConsumerState<_ProfileAvatar> {
             child: CircleAvatar(
               radius: 40,
               backgroundColor: primaryDarkBlue.withValues(alpha: 0.1),
-              backgroundImage: photo.isNotEmpty ? NetworkImage(photo) : null,
+              backgroundImage:
+                  photo.isNotEmpty ? NetworkImage(publicImageUrl(photo)) : null,
               child: photo.isEmpty
                   ? const Icon(Icons.person, size: 40, color: primaryDarkBlue)
                   : null,

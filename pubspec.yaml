@@ -32,6 +32,11 @@ dependencies:
   # Click-to-call / external links
   url_launcher: ^6.3.1
 
+  # Plain HTTP fetch of public house images. Image.network under CanvasKit
+  # fails to paint cross-origin Storage images; fetching the bytes and drawing
+  # them with Image.memory sidesteps that.
+  http: ^1.2.2
+
   # Image picking (company logo upload)
   image_picker: ^1.1.2
 

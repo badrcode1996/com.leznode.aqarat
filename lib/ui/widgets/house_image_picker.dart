@@ -3,6 +3,8 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import 'house_cover_image.dart';
+
 const Color _primaryDarkBlue = Color(0xFF0F2C59);
 const Color _accentYellow = Color(0xFFF8B115);
 
@@ -80,10 +82,13 @@ class _HouseImagePickerState extends State<HouseImagePicker> {
 
   @override
   Widget build(BuildContext context) {
-    final hasNetwork = _bytes == null && widget.initialImageUrl.isNotEmpty;
+    // A freshly-picked image wins; otherwise the saved image via a public,
+    // tokenless URL (authenticated Storage reads fail on web).
     final ImageProvider? image = _bytes != null
         ? MemoryImage(_bytes!)
-        : (hasNetwork ? NetworkImage(widget.initialImageUrl) : null);
+        : (widget.initialImageUrl.isNotEmpty
+            ? NetworkImage(publicImageUrl(widget.initialImageUrl))
+            : null);
     return Column(
       children: [
         GestureDetector(

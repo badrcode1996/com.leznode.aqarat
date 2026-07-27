@@ -29,11 +29,11 @@ service firebase.storage {
         && callerData().role == 'super_admin'
         && isImageUnder5MB();
     }
-    // Profile photos — public branding, but each user writes ONLY their own
-    // (the file name is their uid). Read by any signed-in user so a photo can
-    // show anywhere the user appears.
+    // Profile photos — public branding, like the logo. Public read so the web
+    // build can fetch them with a plain URL (authenticated reads fail there).
+    // Each user still writes ONLY their own (the file name is their uid).
     match /user_photos/{uid} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow write: if isSignedIn()
         && request.auth.uid == uid
         && isImageUnder5MB();
@@ -45,10 +45,13 @@ service firebase.storage {
         && callerData().company_id == companyId
         && isImageUnder5MB();
     }
-    // House photos (contracts/listings) — only the owning company may write;
-    // read by signed-in users (market images are shown cross-company).
+    // House photos (listings) — public branding, like the company logo. They
+    // are property photos, not sensitive documents, and the market shows them
+    // cross-company anyway. Public read means the browser can fetch them with a
+    // plain tokenised URL (no auth request), which is the only thing that
+    // renders reliably on the web build. Writes stay owner-only.
     match /property_images/{companyId}/{fileName} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow write: if isSignedIn()
         && callerData().company_id == companyId
         && isImageUnder5MB();
