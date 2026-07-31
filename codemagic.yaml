@@ -6,7 +6,7 @@
 #      لەسەر ئەو Identifier ـە چالاک بکە — ئەگەرنا signing دەکەوێت.
 #   B) Codemagic → Code signing (iOS): certificate + provisioning profile ئەپلۆد بکە.
 #   C) Codemagic → Integrations → Apple Developer Portal: App Store Connect API key
-#      زیادکراوە بە ناوی "مولک" (Key ID: 27GLSNJVY6). ئەم ناوە لە خوارەوە بەکارهاتووە.
+#      زیادکراوە بە ناوی "aqarat" (Key ID: X9S5XHCL42). ئەم ناوە لە خوارەوە بەکارهاتووە.
 #   D) Codemagic → Environment variables → گرووپی "firebase_credentials":
 #      GOOGLE_SERVICE_INFO_PLIST = ناوەڕۆکی GoogleService-Info.plist بە base64
 #      (Secure بیکە).
@@ -20,7 +20,7 @@ workflows:
     instance_type: mac_mini_m2
     max_build_duration: 120
     integrations:
-      app_store_connect: "مولک"                     # = ناوی App Store Connect API key لە Codemagic
+      app_store_connect: aqarat                      # = ناوی App Store Connect API key لە Codemagic
     environment:
       groups:
         - firebase_credentials                       # GOOGLE_SERVICE_INFO_PLIST لێرەیە
