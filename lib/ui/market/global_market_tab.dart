@@ -42,6 +42,7 @@ class _GlobalMarketTabState extends ConsumerState<GlobalMarketTab> {
           child: DealFilterBar(
             selected: _deal,
             onChanged: (d) => setState(() => _deal = d),
+            kind: widget.kind,
           ),
         ),
         Expanded(
@@ -53,8 +54,8 @@ class _GlobalMarketTabState extends ConsumerState<GlobalMarketTab> {
               if (items.isEmpty) {
                 return _emptyBox(
                   isOffer
-                      ? 'هیچ خستنەڕوویەکی ${_deal.label} لە بازاڕی گشتیدا نییە'
-                      : 'هیچ داواکارییەکی ${_deal.label} لە بازاڕی گشتیدا نییە',
+                      ? 'هیچ خستنەڕوویەکی ${_deal.labelFor(widget.kind)} لە بازاڕی گشتیدا نییە'
+                      : 'هیچ داواکارییەکی ${_deal.labelFor(widget.kind)} لە بازاڕی گشتیدا نییە',
                   Icons.public_off_rounded,
                 );
               }
@@ -192,7 +193,7 @@ class _MarketCard extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    DealBadge(deal: view.deal),
+                    DealBadge(deal: view.deal, kind: view.kind),
                     const SizedBox(height: 4),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),

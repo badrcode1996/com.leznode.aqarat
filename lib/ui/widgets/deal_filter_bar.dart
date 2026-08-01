@@ -6,7 +6,8 @@ const Color _primaryDarkBlue = Color(0xFF0F2C59);
 const Color _inputFill = Color(0xFFF3F4F6);
 
 /// فرۆشتن / کرێ — the split applied to both Offers and Demands, in "My
-/// Listings" and in the Global Market alike.
+/// Listings" and in the Global Market alike. On the Demands side the sale pill
+/// reads کڕین, since a demand is someone looking to buy.
 ///
 /// Deliberately slimmer than a [SegmentedButton]: both screens already stack a
 /// segmented control underneath this one, and two identical-weight controls
@@ -16,10 +17,14 @@ class DealFilterBar extends StatelessWidget {
     super.key,
     required this.selected,
     required this.onChanged,
+    required this.kind,
   });
 
   final DealKind selected;
   final ValueChanged<DealKind> onChanged;
+
+  /// Which side of the app this bar sits on — decides the wording.
+  final ListingKind kind;
 
   static const _icons = {
     DealKind.sale: Icons.sell_outlined,
@@ -62,7 +67,7 @@ class DealFilterBar extends StatelessWidget {
                   color: active ? Colors.white : Colors.grey.shade600),
               const SizedBox(width: 6),
               Text(
-                deal.label,
+                deal.labelFor(kind),
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
@@ -75,12 +80,14 @@ class DealFilterBar extends StatelessWidget {
       );
 }
 
-/// The small "فرۆشتن" / "کرێ" tag shown on a listing card, so a card still
-/// says which side it belongs to once it is out of its filtered list.
+/// The small "فرۆشتن" / "کرێ" tag shown on a listing card ("کڕین" / "کرێ" on a
+/// demand card), so a card still says which side it belongs to once it is out
+/// of its filtered list.
 class DealBadge extends StatelessWidget {
-  const DealBadge({super.key, required this.deal});
+  const DealBadge({super.key, required this.deal, required this.kind});
 
   final DealKind deal;
+  final ListingKind kind;
 
   @override
   Widget build(BuildContext context) {
@@ -101,7 +108,7 @@ class DealBadge extends StatelessWidget {
               size: 12, color: color),
           const SizedBox(width: 4),
           Text(
-            deal.label,
+            deal.labelFor(kind),
             style: TextStyle(
                 fontSize: 11, fontWeight: FontWeight.bold, color: color),
           ),

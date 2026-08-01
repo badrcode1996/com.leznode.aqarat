@@ -229,20 +229,20 @@ class _CreateListingScreenState extends ConsumerState<CreateListingScreen> {
                           borderRadius: BorderRadius.circular(16)),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
-                    segments: const [
+                    segments: [
                       ButtonSegment(
                         value: DealKind.sale,
-                        label: Text('فرۆشتن',
-                            style: TextStyle(
+                        label: Text(DealKind.sale.labelFor(widget.kind),
+                            style: const TextStyle(
                                 fontWeight: FontWeight.bold, fontSize: 15)),
-                        icon: Icon(Icons.sell_outlined),
+                        icon: const Icon(Icons.sell_outlined),
                       ),
                       ButtonSegment(
                         value: DealKind.rent,
-                        label: Text('کرێ',
-                            style: TextStyle(
+                        label: Text(DealKind.rent.labelFor(widget.kind),
+                            style: const TextStyle(
                                 fontWeight: FontWeight.bold, fontSize: 15)),
-                        icon: Icon(Icons.vpn_key_outlined),
+                        icon: const Icon(Icons.vpn_key_outlined),
                       ),
                     ],
                     selected: {_deal},

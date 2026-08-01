@@ -84,6 +84,7 @@ class _ListingsTabState extends ConsumerState<_ListingsTab> {
           child: DealFilterBar(
             selected: _deal,
             onChanged: (d) => setState(() => _deal = d),
+            kind: widget.kind,
           ),
         ),
         // دیزاینی مۆدێرن بۆ دوگمەی فلتەرکردن
@@ -128,8 +129,8 @@ class _ListingsTabState extends ConsumerState<_ListingsTab> {
               if (items.isEmpty) {
                 return _emptyBox(
                   _showArchived
-                      ? 'ئەرشیفی ${_deal.label} بەتاڵە'
-                      : 'هیچ بڵاوکراوەیەکی چالاکی ${_deal.label} نییە',
+                      ? 'ئەرشیفی ${_deal.labelFor(widget.kind)} بەتاڵە'
+                      : 'هیچ بڵاوکراوەیەکی چالاکی ${_deal.labelFor(widget.kind)} نییە',
                   _showArchived ? Icons.inbox_outlined : Icons.search_off_rounded,
                 );
               }
@@ -328,7 +329,7 @@ class _ListingCard extends ConsumerWidget {
                   ),
                 ),
                 // تاگی فرۆشتن/کرێ
-                DealBadge(deal: listing.deal),
+                DealBadge(deal: listing.deal, kind: listing.kind),
               ],
             ),
 

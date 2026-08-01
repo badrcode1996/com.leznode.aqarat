@@ -63,7 +63,7 @@ class PropertyCard extends StatelessWidget {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      DealBadge(deal: listing.deal),
+                      DealBadge(deal: listing.deal, kind: listing.kind),
                       const Spacer(),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

@@ -148,12 +148,23 @@ enum ListingKind {
 /// Listings written before this field existed carry no `deal_kind` and fall
 /// back to [sale] — the same default new forms open on.
 enum DealKind {
-  sale('sale', 'فرۆشتن'),
-  rent('rent', 'کرێ');
+  sale('sale', 'فرۆشتن', 'کڕین'),
+  rent('rent', 'کرێ', 'کرێ');
 
-  const DealKind(this.wire, this.label);
+  const DealKind(this.wire, this.label, this.demandLabel);
   final String wire;
+
+  /// The offer-side wording — the company is selling/renting out.
   final String label;
+
+  /// The demand-side wording. A demand for a `sale` listing is someone looking
+  /// to BUY (کڕین), not to sell, so the same [wire] value must read differently
+  /// on the Demands side of the app.
+  final String demandLabel;
+
+  /// [label] or [demandLabel], picked by which side of the app is showing it.
+  String labelFor(ListingKind kind) =>
+      kind == ListingKind.demand ? demandLabel : label;
 
   static DealKind fromWire(String? value) => DealKind.values.firstWhere(
         (d) => d.wire == value,
