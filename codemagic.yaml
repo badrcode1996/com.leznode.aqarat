@@ -61,7 +61,13 @@ workflows:
         script: |
           flutter build ipa --release \
             --obfuscate --split-debug-info=build/debug-info \
-            --build-number=$BUILD_NUMBER
+            --build-number=$BUILD_NUMBER \
+            --export-options-plist=$HOME/export_options.plist
+      - name: Verify IPA exists
+        script: |
+          # ئەگەر ئەکسپۆرت سەرکەوتوو نەبێت، با بڵدەکە لێرە بشکێت —
+          # نەک بە بێدەنگی «finished» بێت و هیچ نەچێتە TestFlight.
+          ls -lh build/ios/ipa/*.ipa
       # --- ئیختیاری: تەنها ئەگەر firebase_crashlytics زیاد بکەیت ---
       # - name: Upload Crashlytics dSYMs
       #   script: |
