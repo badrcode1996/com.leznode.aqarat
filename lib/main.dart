@@ -1,4 +1,6 @@
-import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
+import 'dart:async' show unawaited;
+
+import 'package:flutter/foundation.dart' show debugPrint, kDebugMode, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,9 +20,18 @@ import 'ui/shell/main_shell.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  // NOTHING here may throw or hang before runApp(): until the first frame is
+  // drawn the OS keeps showing LaunchTheme's window background, so a failure
+  // this early looks like the app freezing on the splash image with no error.
+  Object? startupError;
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e, s) {
+    debugPrint('Firebase.initializeApp failed: $e\n$s');
+    startupError = e;
+  }
 
   // App Check attests that requests come from our genuine app before Firebase
   // (Firestore/Storage/Functions) will serve them. Debug builds use the debug
@@ -28,18 +39,83 @@ Future<void> main() async {
   // release builds use Play Integrity (Android) / App Attest (iOS). Enforcement
   // must stay OFF in the console until live traffic shows valid tokens.
   //
+  // Deliberately NOT awaited, and swallowed on failure: Play Integrity is
+  // unavailable on emulators and on any device without Google Play Services
+  // (Huawei), and App Attest needs a real iOS device. Awaiting it there killed
+  // main() before runApp() and stranded the app on the launch screen. Attested
+  // tokens are only needed once enforcement is switched on in the console —
+  // never to render the UI.
+  //
   // Web is skipped: it would need a reCAPTCHA web provider + a registered site
   // key. With enforcement OFF this isn't required for the web build to work; add
   // a ReCaptchaV3Provider here once a site key is configured.
-  if (!kIsWeb) {
-    await FirebaseAppCheck.instance.activate(
-      androidProvider:
-          kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
-      appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
+  if (!kIsWeb && startupError == null) {
+    unawaited(
+      FirebaseAppCheck.instance
+          .activate(
+            androidProvider: kDebugMode
+                ? AndroidProvider.debug
+                : AndroidProvider.playIntegrity,
+            appleProvider:
+                kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
+          )
+          .catchError((Object e) =>
+              debugPrint('App Check unavailable on this device: $e')),
     );
   }
 
-  runApp(const ProviderScope(child: AqaratApp()));
+  runApp(startupError == null
+      ? const ProviderScope(child: AqaratApp())
+      : _StartupErrorApp(error: startupError));
+}
+
+/// Shown when Firebase itself could not start. Without it the app would sit on
+/// the launch image forever, with nothing on screen to say why.
+class _StartupErrorApp extends StatelessWidget {
+  const _StartupErrorApp({required this.error});
+
+  final Object error;
+
+  @override
+  Widget build(BuildContext context) => MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: Directionality(
+          textDirection: TextDirection.rtl,
+          child: Scaffold(
+            body: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.cloud_off_rounded,
+                        size: 64, color: Colors.grey),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'ئەپەکە نەیتوانی پەیوەندی بکات',
+                      style: TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'تکایە ئینتەرنێتەکەت بپشکنە و ئەپەکە دووبارە بکەرەوە.',
+                      style: TextStyle(color: Colors.grey),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      '$error',
+                      style: const TextStyle(fontSize: 11, color: Colors.grey),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
 }
 
 class AqaratApp extends ConsumerWidget {
