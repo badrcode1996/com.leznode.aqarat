@@ -1248,6 +1248,7 @@ class _CompanyUsersScreen extends ConsumerWidget {
     'lawyers': 'پارێزەران',
     'guarantees': 'کۆی دڵنیایی',
     'commission': 'کۆی عمولە',
+    'arabic_contracts': 'گرێبەستی عەرەبی',
   };
 
   Future<void> _editFeatures(BuildContext context, WidgetRef ref) async {

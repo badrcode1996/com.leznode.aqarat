@@ -17,6 +17,7 @@ class PlanFeatures {
     this.lawyers = false,
     this.guarantees = false,
     this.commission = false,
+    this.arabicContracts = false,
     this.maxBranches = 0,
     this.maxUsers = 0,
     this.webOnly = false,
@@ -30,6 +31,7 @@ class PlanFeatures {
   final bool lawyers; // پارێزەران
   final bool guarantees; // کۆی دڵنیایی (guarantee/deposit totals)
   final bool commission; // کۆی عمولە (sale-contract commission totals)
+  final bool arabicContracts; // گرێبەستی عەرەبی (Arabic contract PDF)
   final int maxBranches; // 0 = unlimited
   final int maxUsers; // 0 = unlimited
   final bool webOnly; // platform = web only
@@ -37,18 +39,31 @@ class PlanFeatures {
   bool get unlimitedBranches => maxBranches <= 0;
   bool get unlimitedUsers => maxUsers <= 0;
 
-  factory PlanFeatures.fromJson(Map<String, dynamic> j) => PlanFeatures(
-        sale: j['sale'] as bool? ?? true,
-        overdue: j['overdue'] as bool? ?? false,
-        market: j['market'] as bool? ?? false,
-        offers: j['offers'] as bool? ?? false,
-        requests: j['requests'] as bool? ?? false,
-        lawyers: j['lawyers'] as bool? ?? false,
-        guarantees: j['guarantees'] as bool? ?? false,
-        commission: j['commission'] as bool? ?? false,
-        maxBranches: (j['max_branches'] as num?)?.toInt() ?? 0,
-        maxUsers: (j['max_users'] as num?)?.toInt() ?? 0,
-        webOnly: j['web_only'] as bool? ?? false,
+  /// [fallback] is the shipped matrix for THIS tier, and is what an absent key
+  /// resolves to.
+  ///
+  /// This matters every time a new feature ships: a config saved before the key
+  /// existed has no opinion about it, and defaulting those to `false` silently
+  /// switched the feature off for every tenant until a Super Admin re-saved the
+  /// screen. Inheriting the tier's default instead means a new feature reaches
+  /// the plans it was written for on deploy, while every value the Super Admin
+  /// actually chose still wins.
+  factory PlanFeatures.fromJson(Map<String, dynamic> j,
+          [PlanFeatures fallback = const PlanFeatures()]) =>
+      PlanFeatures(
+        sale: j['sale'] as bool? ?? fallback.sale,
+        overdue: j['overdue'] as bool? ?? fallback.overdue,
+        market: j['market'] as bool? ?? fallback.market,
+        offers: j['offers'] as bool? ?? fallback.offers,
+        requests: j['requests'] as bool? ?? fallback.requests,
+        lawyers: j['lawyers'] as bool? ?? fallback.lawyers,
+        guarantees: j['guarantees'] as bool? ?? fallback.guarantees,
+        commission: j['commission'] as bool? ?? fallback.commission,
+        arabicContracts:
+            j['arabic_contracts'] as bool? ?? fallback.arabicContracts,
+        maxBranches: (j['max_branches'] as num?)?.toInt() ?? fallback.maxBranches,
+        maxUsers: (j['max_users'] as num?)?.toInt() ?? fallback.maxUsers,
+        webOnly: j['web_only'] as bool? ?? fallback.webOnly,
       );
 
   Map<String, dynamic> toJson() => {
@@ -60,6 +75,7 @@ class PlanFeatures {
         'lawyers': lawyers,
         'guarantees': guarantees,
         'commission': commission,
+        'arabic_contracts': arabicContracts,
         'max_branches': maxBranches,
         'max_users': maxUsers,
         'web_only': webOnly,
@@ -76,6 +92,7 @@ class PlanFeatures {
     'lawyers',
     'guarantees',
     'commission',
+    'arabic_contracts',
   ];
 
   /// Returns these features with any per-company overrides applied. A key
@@ -92,6 +109,7 @@ class PlanFeatures {
       lawyers: overrides['lawyers'],
       guarantees: overrides['guarantees'],
       commission: overrides['commission'],
+      arabicContracts: overrides['arabic_contracts'],
     );
   }
 
@@ -104,6 +122,7 @@ class PlanFeatures {
     bool? lawyers,
     bool? guarantees,
     bool? commission,
+    bool? arabicContracts,
     int? maxBranches,
     int? maxUsers,
     bool? webOnly,
@@ -117,6 +136,7 @@ class PlanFeatures {
         lawyers: lawyers ?? this.lawyers,
         guarantees: guarantees ?? this.guarantees,
         commission: commission ?? this.commission,
+        arabicContracts: arabicContracts ?? this.arabicContracts,
         maxBranches: maxBranches ?? this.maxBranches,
         maxUsers: maxUsers ?? this.maxUsers,
         webOnly: webOnly ?? this.webOnly,
@@ -163,7 +183,9 @@ class PlanConfig {
       lawyers: false,
       maxBranches: 1,
       maxUsers: 2,
-      webOnly: true,
+      // Every plan ships on web AND mobile. web_only survives as a per-company
+      // switch the Super Admin can still flip, but no plan turns it on.
+      webOnly: false,
     ),
     silver: PlanFeatures(
       sale: true,
@@ -172,6 +194,8 @@ class PlanConfig {
       offers: true,
       requests: true,
       lawyers: false,
+      // Arabic contracts are sold from Silver up — Bronze stays Kurdish-only.
+      arabicContracts: true,
       // Multiple branches are a Gold-only feature; Bronze and Silver run as a
       // single branch.
       maxBranches: 1,
@@ -187,6 +211,7 @@ class PlanConfig {
       lawyers: true,
       guarantees: true,
       commission: true,
+      arabicContracts: true,
       maxBranches: 0,
       maxUsers: 0,
       webOnly: false,
@@ -202,25 +227,31 @@ class PlanConfig {
       lawyers: true,
       guarantees: true,
       commission: true,
+      arabicContracts: true,
       maxBranches: 0,
       maxUsers: 0,
       webOnly: false,
     ),
   );
 
+  // Each tier is parsed against its OWN shipped defaults, so a key the stored
+  // document predates inherits what that tier was meant to have.
   factory PlanConfig.fromJson(Map<String, dynamic> j) => PlanConfig(
         bronze: j['bronze'] is Map
-            ? PlanFeatures.fromJson((j['bronze'] as Map).cast<String, dynamic>())
+            ? PlanFeatures.fromJson(
+                (j['bronze'] as Map).cast<String, dynamic>(), defaults.bronze)
             : defaults.bronze,
         silver: j['silver'] is Map
-            ? PlanFeatures.fromJson((j['silver'] as Map).cast<String, dynamic>())
+            ? PlanFeatures.fromJson(
+                (j['silver'] as Map).cast<String, dynamic>(), defaults.silver)
             : defaults.silver,
         gold: j['gold'] is Map
-            ? PlanFeatures.fromJson((j['gold'] as Map).cast<String, dynamic>())
+            ? PlanFeatures.fromJson(
+                (j['gold'] as Map).cast<String, dynamic>(), defaults.gold)
             : defaults.gold,
         diamond: j['diamond'] is Map
             ? PlanFeatures.fromJson(
-                (j['diamond'] as Map).cast<String, dynamic>())
+                (j['diamond'] as Map).cast<String, dynamic>(), defaults.diamond)
             : defaults.diamond,
       );
 
