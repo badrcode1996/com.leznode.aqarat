@@ -194,8 +194,10 @@ class PlanConfig {
       offers: true,
       requests: true,
       lawyers: false,
-      // Arabic contracts are sold from Silver up — Bronze stays Kurdish-only.
-      arabicContracts: true,
+      // Arabic contracts are Gold-and-up. A Silver company that needs them is
+      // handled one at a time through its feature_overrides, not by moving the
+      // whole tier.
+      arabicContracts: false,
       // Multiple branches are a Gold-only feature; Bronze and Silver run as a
       // single branch.
       maxBranches: 1,

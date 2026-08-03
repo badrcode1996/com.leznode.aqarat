@@ -280,8 +280,9 @@ async function planAllows(db, company, key, isSuper) {
   if (tier && typeof tier[key] === "boolean") return tier[key];
 
   // No stored config yet — fall back to the shipped matrix.
+  // Mirrors PlanConfig.defaults in lib/models/plan_config_model.dart.
   const DEFAULT_ON = {
-    arabic_contracts: ["silver", "gold", "diamond"],
+    arabic_contracts: ["gold", "diamond"],
   };
   return (DEFAULT_ON[key] || []).includes(plan);
 }

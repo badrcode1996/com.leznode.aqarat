@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../auth/session.dart';
 import '../../data/contract_repository.dart';
 import '../../data/lawyer_repository.dart';
+import '../../data/plan_config_repository.dart';
 import '../../data/template_repository.dart';
 import '../../models/contract_model.dart';
 import '../../models/enums.dart';
@@ -293,10 +294,18 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
     }
   }
 
+  /// Gold and up keep a lawyer directory; every other plan types the name in
+  /// by hand. The field itself is always there — a sale contract needs a
+  /// lawyer either way — only the pick-from-list shortcut is sold.
+  bool get _hasLawyerDirectory =>
+      ref.watch(currentPlanFeaturesProvider).lawyers;
+
   @override
   Widget build(BuildContext context) {
-    // Keep the lawyer list warm so the picker is ready by step 3.
-    ref.watch(lawyersStreamProvider);
+    // Keep the lawyer list warm so the picker is ready by step 3. Plans without
+    // the directory must not run this query at all — it would only ever return
+    // an empty list for them.
+    if (_hasLawyerDirectory) ref.watch(lawyersStreamProvider);
     return Scaffold(
       backgroundColor: appBackgroundColor,
       appBar: AppBar(
@@ -453,19 +462,22 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
     );
   }
 
-  // خانەی پارێزەر: دەتوانرێت ناوێک لە لیستی کۆمپانیا هەڵبژێردرێت یان بە دەستی
-  // بنووسرێت. دوگمەی لای کۆتایی لیستی پارێزەران دەکاتەوە.
+  // خانەی پارێزەر: هەمیشە بە دەستی دەنووسرێت. لە گۆڵد بەرەوسەرەوە دوگمەیەکی
+  // لای کۆتایی هەیە کە لیستی پارێزەرانی کۆمپانیا دەکاتەوە بۆ هەڵبژاردن.
   Widget _lawyerField() => Padding(
         padding: const EdgeInsets.only(bottom: 16),
         child: TextFormField(
           controller: _lawyer,
           decoration: modernInputDecoration(label: 'پارێزەر', icon: Icons.gavel_rounded)
               .copyWith(
-            suffixIcon: IconButton(
-              tooltip: 'هەڵبژاردن لە لیست',
-              icon: const Icon(Icons.people_alt_outlined, color: primaryDarkBlue),
-              onPressed: _pickLawyer,
-            ),
+            suffixIcon: _hasLawyerDirectory
+                ? IconButton(
+                    tooltip: 'هەڵبژاردن لە لیست',
+                    icon: const Icon(Icons.people_alt_outlined,
+                        color: primaryDarkBlue),
+                    onPressed: _pickLawyer,
+                  )
+                : null,
           ),
           validator: (v) => (v == null || v.trim().isEmpty) ? 'پێویستە' : null,
         ),

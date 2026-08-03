@@ -185,15 +185,20 @@ service cloud.firestore {
       allow write: if isSuperAdmin();
     }
 
-    // --- Lawyers (پارێزەران): company-scoped directory managed by the company
-    //     admin (admin restriction enforced client-side). Agents read them to
-    //     pick a lawyer on the sale contract form.
+    // --- Lawyers (پارێزەران): a company-scoped directory. EVERY member reads
+    //     it — agents pick a lawyer on the sale contract form — but only a
+    //     company admin curates it. Not branch-scoped: the directory is a
+    //     company-wide address book, not per-branch data.
     match /lawyers/{id} {
       allow read:   if isSuperAdmin() || activeMember(resource.data.company_id);
-      allow create: if activeMember(request.resource.data.company_id);
-      allow update: if activeMember(resource.data.company_id)
+      allow create: if isSuperAdmin()
+        || (isCompanyAdmin()
+            && activeMember(request.resource.data.company_id));
+      allow update: if (isSuperAdmin()
+          || (isCompanyAdmin() && activeMember(resource.data.company_id)))
         && request.resource.data.company_id == resource.data.company_id;
-      allow delete: if activeMember(resource.data.company_id);
+      allow delete: if isSuperAdmin()
+        || (isCompanyAdmin() && activeMember(resource.data.company_id));
     }
 
     // --- Listings: STRICTLY company-scoped. These docs hold private owner

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../auth/session.dart';
 import '../../data/lawyer_repository.dart';
 import '../../models/lawyer_model.dart';
 
@@ -19,6 +20,10 @@ class LawyersScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(lawyersStreamProvider);
+    // Agents read the directory to pick a lawyer on a sale contract; only a
+    // company admin curates it. Mirrored in firestore.rules, so this is a
+    // convenience, not the enforcement.
+    final isAdmin = ref.watch(currentUserProvider).isAdmin;
     return Scaffold(
       backgroundColor: _appBg,
       appBar: AppBar(
@@ -29,17 +34,19 @@ class LawyersScreen extends ConsumerWidget {
         centerTitle: true,
         elevation: 0,
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: _accentYellow,
-        foregroundColor: _primaryDarkBlue,
-        icon: const Icon(Icons.add),
-        label: const Text('پارێزەری نوێ',
-            style: TextStyle(fontWeight: FontWeight.bold)),
-        onPressed: () => _openForm(context),
-      ),
+      floatingActionButton: isAdmin
+          ? FloatingActionButton.extended(
+              backgroundColor: _accentYellow,
+              foregroundColor: _primaryDarkBlue,
+              icon: const Icon(Icons.add),
+              label: const Text('پارێزەری نوێ',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              onPressed: () => _openForm(context),
+            )
+          : null,
       body: async.when(
-        loading: () =>
-            const Center(child: CircularProgressIndicator(color: _primaryDarkBlue)),
+        loading: () => const Center(
+            child: CircularProgressIndicator(color: _primaryDarkBlue)),
         error: (e, _) => Center(child: Text('هەڵە: $e')),
         data: (list) {
           if (list.isEmpty) {
@@ -103,36 +110,40 @@ class _LawyerCard extends ConsumerWidget {
             style: const TextStyle(
                 fontWeight: FontWeight.bold, color: _primaryDarkBlue)),
         subtitle: Text(lawyer.phone.isEmpty ? '—' : lawyer.phone),
-        trailing: PopupMenuButton<String>(
-          icon: const Icon(Icons.more_vert_rounded, color: Colors.grey),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          onSelected: (v) {
-            if (v == 'edit') {
-              _openForm(context, existing: lawyer);
-            } else if (v == 'delete') {
-              _confirmDelete(context, ref, lawyer);
-            }
-          },
-          itemBuilder: (_) => [
-            const PopupMenuItem(
-              value: 'edit',
-              child: Row(children: [
-                Icon(Icons.edit_outlined, color: _primaryDarkBlue, size: 20),
-                SizedBox(width: 12),
-                Text('دەستکاری'),
-              ]),
-            ),
-            PopupMenuItem(
-              value: 'delete',
-              child: Row(children: [
-                Icon(Icons.delete_outline, color: Colors.red.shade700, size: 20),
-                const SizedBox(width: 12),
-                const Text('سڕینەوە'),
-              ]),
-            ),
-          ],
-        ),
+        trailing: !ref.watch(currentUserProvider).isAdmin
+            ? null
+            : PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert_rounded, color: Colors.grey),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                onSelected: (v) {
+                  if (v == 'edit') {
+                    _openForm(context, existing: lawyer);
+                  } else if (v == 'delete') {
+                    _confirmDelete(context, ref, lawyer);
+                  }
+                },
+                itemBuilder: (_) => [
+                  const PopupMenuItem(
+                    value: 'edit',
+                    child: Row(children: [
+                      Icon(Icons.edit_outlined,
+                          color: _primaryDarkBlue, size: 20),
+                      SizedBox(width: 12),
+                      Text('دەستکاری'),
+                    ]),
+                  ),
+                  PopupMenuItem(
+                    value: 'delete',
+                    child: Row(children: [
+                      Icon(Icons.delete_outline,
+                          color: Colors.red.shade700, size: 20),
+                      const SizedBox(width: 12),
+                      const Text('سڕینەوە'),
+                    ]),
+                  ),
+                ],
+              ),
       ),
     );
   }
@@ -170,7 +181,8 @@ Future<void> _confirmDelete(
   } catch (e) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('هەڵە: $e'), backgroundColor: Colors.red.shade700),
+        SnackBar(
+            content: Text('هەڵە: $e'), backgroundColor: Colors.red.shade700),
       );
     }
   }
@@ -221,8 +233,9 @@ class _LawyerFormState extends ConsumerState<_LawyerForm> {
     final bytes = await picked.readAsBytes();
     setState(() {
       _photoBytes = bytes;
-      _photoContentType =
-          picked.name.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
+      _photoContentType = picked.name.toLowerCase().endsWith('.png')
+          ? 'image/png'
+          : 'image/jpeg';
     });
   }
 
@@ -253,8 +266,7 @@ class _LawyerFormState extends ConsumerState<_LawyerForm> {
         setState(() => _busy = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('هەڵە: $e'),
-              backgroundColor: Colors.red.shade700),
+              content: Text('هەڵە: $e'), backgroundColor: Colors.red.shade700),
         );
       }
     }
