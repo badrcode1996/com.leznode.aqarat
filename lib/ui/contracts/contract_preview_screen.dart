@@ -1,8 +1,10 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
 
+import '../../data/plan_config_repository.dart';
 import '../../models/company_model.dart';
 import '../../models/contract_model.dart';
 import '../../models/contract_template_model.dart';
@@ -16,24 +18,34 @@ const Color appBackgroundColor = Color(0xFFF5F7FA);
 /// On-screen PDF preview. Builds the bytes, rasterizes the pages to images and
 /// shows them. Both steps are guarded so a failure surfaces the real error
 /// instead of a blank red screen, and print/share always work regardless.
-class ContractPreviewScreen extends StatefulWidget {
+class ContractPreviewScreen extends ConsumerStatefulWidget {
   const ContractPreviewScreen({
     super.key,
     required this.contract,
     this.company,
     this.template,
+    this.initialLang = 'ku',
   });
 
   final Contract contract;
   final Company? company;
   final ContractTemplate? template;
 
+  /// Which edition to open on — 'ku' or 'ar'. Set by the stepper (the language
+  /// picked while creating the contract) and by the archive's long-press menu.
+  final String initialLang;
+
   @override
-  State<ContractPreviewScreen> createState() => _ContractPreviewScreenState();
+  ConsumerState<ContractPreviewScreen> createState() =>
+      _ContractPreviewScreenState();
 }
 
-class _ContractPreviewScreenState extends State<ContractPreviewScreen> {
-  late final Future<List<Uint8List>> _pages = _render();
+class _ContractPreviewScreenState
+    extends ConsumerState<ContractPreviewScreen> {
+  /// 'ku' or 'ar' — which edition of the document is on screen.
+  late String _lang = widget.initialLang;
+
+  late Future<List<Uint8List>> _pages = _render();
 
   /// The rendered PDF bytes, cached from the preview render so print/share can
   /// fire synchronously inside the button's tap — on web the browser only opens
@@ -42,7 +54,8 @@ class _ContractPreviewScreenState extends State<ContractPreviewScreen> {
   Uint8List? _pdfBytes;
 
   Future<List<Uint8List>> _render() async {
-    final bytes = await ContractPdfRemote.build(widget.contract.id);
+    final bytes =
+        await ContractPdfRemote.build(widget.contract.id, lang: _lang);
     _pdfBytes = bytes;
     final images = <Uint8List>[];
     await for (final page in Printing.raster(bytes, dpi: 110)) {
@@ -58,8 +71,19 @@ class _ContractPreviewScreenState extends State<ContractPreviewScreen> {
     if (bytes != null) {
       await Printing.layoutPdf(onLayout: (_) async => bytes);
     } else {
-      await ContractPdfRemote.printContract(widget.contract.id);
+      await ContractPdfRemote.printContract(widget.contract.id, lang: _lang);
     }
+  }
+
+  /// Re-renders the same contract in the other language. The cached bytes must
+  /// go with it, or print/share would emit the edition no longer on screen.
+  void _setLang(String lang) {
+    if (lang == _lang) return;
+    setState(() {
+      _lang = lang;
+      _pdfBytes = null;
+      _pages = _render();
+    });
   }
 
   /// Shares the contract, reusing the cached bytes when available.
@@ -67,10 +91,53 @@ class _ContractPreviewScreenState extends State<ContractPreviewScreen> {
     final bytes = _pdfBytes;
     if (bytes != null) {
       await Printing.sharePdf(
-          bytes: bytes, filename: 'contract_${widget.contract.id}.pdf');
+          bytes: bytes,
+          filename: 'contract_${widget.contract.id}_$_lang.pdf');
     } else {
-      await ContractPdfRemote.shareContract(widget.contract.id);
+      await ContractPdfRemote.shareContract(widget.contract.id, lang: _lang);
     }
+  }
+
+  /// Two pills in the app bar. Deliberately not a dropdown: there are exactly
+  /// two editions and the user needs to see at a glance which one is printing.
+  Widget _langToggle() => Container(
+        margin: const EdgeInsets.symmetric(vertical: 10),
+        padding: const EdgeInsets.all(3),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _langPill('کوردی', 'ku'),
+            _langPill('عەرەبی', 'ar'),
+          ],
+        ),
+      );
+
+  Widget _langPill(String text, String lang) {
+    final active = _lang == lang;
+    return GestureDetector(
+      onTap: () => _setLang(lang),
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: active ? accentYellow : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          text,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: active ? primaryDarkBlue : Colors.white70,
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _run(Future<void> Function() action) async {
@@ -89,6 +156,16 @@ class _ContractPreviewScreenState extends State<ContractPreviewScreen> {
     }
   }
 
+  /// Arabic needs BOTH the plan feature and this company's Arabic clauses for
+  /// THIS contract type — an Arabic rent template says nothing about sales.
+  bool get _canArabic {
+    // A null template means it has not loaded yet, not that the company opted
+    // out — the built-in template always carries the Arabic clauses.
+    final tpl = widget.template ?? ContractTemplate.defaults();
+    if (!tpl.arabicReadyFor(widget.contract)) return false;
+    return ref.watch(currentPlanFeaturesProvider).arabicContracts;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -103,6 +180,7 @@ class _ContractPreviewScreenState extends State<ContractPreviewScreen> {
         elevation: 0,
         centerTitle: true,
         actions: [
+          if (_canArabic) _langToggle(),
           IconButton(
             tooltip: 'هاوبەشکردن',
             icon: const Icon(Icons.share_rounded),

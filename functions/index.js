@@ -9,19 +9,29 @@ const {buildExportHtml} = require("./export_html");
 
 admin.initializeApp();
 
-// Cache the embedded fonts (base64) across warm invocations.
-let _fontReg;
-let _fontBold;
-function fonts() {
-  if (!_fontReg) {
-    _fontReg = fs
-        .readFileSync(path.join(__dirname, "fonts", "SPEDA.ttf"))
-        .toString("base64");
-    _fontBold = fs
-        .readFileSync(path.join(__dirname, "fonts", "SPEDA-Bold.ttf"))
-        .toString("base64");
+// Cache the embedded fonts (base64) across warm invocations, per family.
+// Speda is a Kurdish face; Arabic documents get Amiri, which shapes and
+// ligates proper Arabic far better. Both are read lazily so an Arabic-only
+// cold start never pays for Speda, and vice versa.
+const FONT_FILES = {
+  ku: ["SPEDA.ttf", "SPEDA-Bold.ttf"],
+  ar: ["Amiri-Regular.ttf", "Amiri-Bold.ttf"],
+};
+const _fontCache = {};
+function fonts(lang) {
+  const key = lang === "ar" ? "ar" : "ku";
+  if (!_fontCache[key]) {
+    const [reg, bold] = FONT_FILES[key];
+    _fontCache[key] = {
+      fontRegB64: fs
+          .readFileSync(path.join(__dirname, "fonts", reg))
+          .toString("base64"),
+      fontBoldB64: fs
+          .readFileSync(path.join(__dirname, "fonts", bold))
+          .toString("base64"),
+    };
   }
-  return {fontRegB64: _fontReg, fontBoldB64: _fontBold};
+  return _fontCache[key];
 }
 
 const CURRENCY_LABEL = {IQD: "دیناری عێراقی", USD: "دۆلاری ئەمریکی"};
@@ -241,6 +251,41 @@ exports.setUserPassword = onCall(async (request) => {
  * @param {object} c Data of the `companies` document.
  * @param {boolean} isSuper Super admins are never blocked.
  */
+/**
+ * Whether a company's plan (plus its per-company overrides) includes a
+ * feature. Mirrors currentPlanFeaturesProvider in the app, but re-checked here
+ * because these callables run on the Admin SDK, where the client's gating is
+ * just a UI courtesy — a patched client could ask for a paid rendering it did
+ * not buy.
+ *
+ * Defaults are the built-in matrix in plan_config_model.dart. A Super Admin is
+ * never gated.
+ *
+ * @param {object} db Firestore instance.
+ * @param {object} company Data of the `companies` document.
+ * @param {string} key Feature key, e.g. "arabic_contracts".
+ * @param {boolean} isSuper Super admins bypass the check.
+ * @return {Promise<boolean>} true when the feature is available.
+ */
+async function planAllows(db, company, key, isSuper) {
+  if (isSuper) return true;
+  const overrides = company.feature_overrides || {};
+  // An explicit per-company override wins over the plan, either way.
+  if (typeof overrides[key] === "boolean") return overrides[key];
+
+  const plan = company.plan || "bronze";
+  const snap = await db.collection("config").doc("plans").get();
+  const cfg = (snap.exists ? snap.data() : {}) || {};
+  const tier = cfg[plan];
+  if (tier && typeof tier[key] === "boolean") return tier[key];
+
+  // No stored config yet — fall back to the shipped matrix.
+  const DEFAULT_ON = {
+    arabic_contracts: ["silver", "gold", "diamond"],
+  };
+  return (DEFAULT_ON[key] || []).includes(plan);
+}
+
 function assertCompanyActive(c, isSuper) {
   if (isSuper || !c.demo) return;
   const at = c.demo_expires_at;
@@ -383,6 +428,16 @@ exports.renderContractPdf = onCall(
       const t = tSnap.exists ? tSnap.data() : {};
       assertCompanyActive(cd, isSuper);
 
+      // Language of the rendered document. Arabic is a paid feature; the
+      // clauses themselves fall back to the shipped Arabic defaults when a
+      // company has not customised them.
+      const lang = request.data && request.data.lang === "ar" ? "ar" : "ku";
+      if (lang === "ar" &&
+          !await planAllows(db, cd, "arabic_contracts", isSuper)) {
+        throw new HttpsError(
+            "permission-denied", "Arabic contracts are not in this plan.");
+      }
+
       const company = {
         nameKu: cd.name_ku || "",
         nameAr: cd.name_ar || "",
@@ -410,8 +465,8 @@ exports.renderContractPdf = onCall(
       }
 
       const html = buildContractHtml({
-        ...fonts(), contract, company, template: t, attachments,
-        companyId: k.company_id,
+        ...fonts(lang), contract, company, template: t, attachments,
+        companyId: k.company_id, lang,
       });
       const pdf = await htmlToPdf(html);
       return {pdf_base64: Buffer.from(pdf).toString("base64")};

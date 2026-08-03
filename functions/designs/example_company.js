@@ -38,22 +38,30 @@ const css = `
 //      vm.attachments     attachment photos as data: URIs (appendix pages)
 //      vm.contract        the raw contract document, for anything else
 //      vm.company         raw company document
-//      vm.fontRegB64      Speda regular, base64 — REQUIRED for Kurdish shaping
-//      vm.fontBoldB64     Speda bold, base64
+//      vm.lang            "ku" | "ar" — which edition is being rendered
+//      vm.label           every fixed string, already in vm.lang
+//      vm.fontRegB64      regular face, base64 — REQUIRED for correct shaping
+//      vm.fontBoldB64     bold face, base64
 //      vm.esc / vm.money / vm.fmtDate / vm.applyTokens   helpers
 //
 //    `o` is the untouched input, if you need something vm doesn't expose.
 //
-//    Three rules for a correct Kurdish PDF: embed both Speda faces, set
-//    `direction:rtl`, and run every dynamic value through `vm.esc`.
+//    Three rules for a correct PDF: embed both faces, set `direction:rtl`, and
+//    run every dynamic value through `vm.esc`.
+//
+//    Do NOT hardcode Kurdish text here — take it from vm.label, or the Arabic
+//    edition of this contract will come out half-Kurdish. The font bytes are
+//    already the right ones for vm.lang (Speda for ku, Amiri for ar), which is
+//    why the family below is named generically.
 // ---------------------------------------------------------------------------
 const contractHtml = (vm) => `<!doctype html>
-<html lang="ckb"><head><meta charset="utf-8"><style>
-@font-face{font-family:'Speda';src:url(data:font/ttf;base64,${vm.fontRegB64}) format('truetype');font-weight:normal;}
-@font-face{font-family:'Speda';src:url(data:font/ttf;base64,${vm.fontBoldB64}) format('truetype');font-weight:bold;}
+<html lang="${vm.lang === "ar" ? "ar" : "ckb"}"><head><meta charset="utf-8">
+<style>
+@font-face{font-family:'DocFont';src:url(data:font/ttf;base64,${vm.fontRegB64}) format('truetype');font-weight:normal;}
+@font-face{font-family:'DocFont';src:url(data:font/ttf;base64,${vm.fontBoldB64}) format('truetype');font-weight:bold;}
 *{box-sizing:border-box;margin:0;padding:0;}
 @page{size:A4;margin:16mm;}
-body{font-family:'Speda';direction:rtl;font-size:${vm.fontSize};line-height:1.7;}
+body{font-family:'DocFont';direction:rtl;font-size:${vm.fontSize};line-height:1.7;}
 .hd{text-align:center;border-bottom:3px double ${vm.accent};padding-bottom:10px;}
 .hd img{height:64px;object-fit:contain;}
 .hd h1{color:${vm.accent};font-size:24px;margin-top:8px;}
@@ -68,9 +76,12 @@ body{font-family:'Speda';direction:rtl;font-size:${vm.fontSize};line-height:1.7;
     <h1>${vm.esc(vm.title)}</h1>
   </div>
   <div class="info">
-    <div><b>ژمارەی گرێبەست:</b> ${vm.esc(vm.contract.contract_number)}</div>
-    <div><b>لایەنی یەکەم:</b> ${vm.esc(vm.contract.party1_name)}</div>
-    <div><b>لایەنی دووەم:</b> ${vm.esc(vm.contract.party2_name)}</div>
+    <div><b>${vm.esc(vm.label.contractNo)}</b> ${
+  vm.esc(vm.contract.contract_number)}</div>
+    <div><b>${vm.esc(vm.isRent ? vm.label.party1Rent : vm.label.party1Sale)}</b> ${
+  vm.esc(vm.contract.party1_name)}</div>
+    <div><b>${vm.esc(vm.isRent ? vm.label.party2Rent : vm.label.party2Sale)}</b> ${
+  vm.esc(vm.contract.party2_name)}</div>
     ${vm.propertyPairs
       .map((p) => `<div><b>${vm.esc(p[0])}</b> ${vm.esc(p[1])}</div>`)
       .join("")}
@@ -79,9 +90,9 @@ body{font-family:'Speda';direction:rtl;font-size:${vm.fontSize};line-height:1.7;
       .map((cl, i) => `<div class="clause">${i + 1}- ${vm.esc(cl)}</div>`)
       .join("")}
   <div>
-    <div class="sg"><div class="sgline"></div>لایەنی یەکەم</div>
-    <div class="sg"><div class="sgline"></div>کارمەندی بەرپرس</div>
-    <div class="sg"><div class="sgline"></div>لایەنی دووەم</div>
+    <div class="sg"><div class="sgline"></div>${vm.esc(vm.label.sign1)}</div>
+    <div class="sg"><div class="sgline"></div>${vm.esc(vm.label.signAgent)}</div>
+    <div class="sg"><div class="sgline"></div>${vm.esc(vm.label.sign2)}</div>
   </div>
 </body></html>`;
 

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/session.dart';
 import '../../data/contract_repository.dart';
+import '../../data/plan_config_repository.dart';
 import '../../data/template_repository.dart';
 import '../../models/company_model.dart';
 import '../../models/contract_model.dart';
@@ -198,14 +199,62 @@ class _ContractCard extends ConsumerWidget {
   final Contract contract;
 
   void _openPreview(
-      BuildContext context, Company? company, ContractTemplate? template) {
+      BuildContext context, Company? company, ContractTemplate? template,
+      {String lang = 'ku'}) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => ContractPreviewScreen(
-            contract: contract, company: company, template: template),
+            contract: contract,
+            company: company,
+            template: template,
+            initialLang: lang),
       ),
     );
+  }
+
+  /// Long-pressing the view button asks which edition to open. A plain tap
+  /// still goes straight to Kurdish, so the common case stays one tap.
+  Future<void> _pickLangThenPreview(
+      BuildContext context, Company? company, ContractTemplate? template) async {
+    final lang = await showModalBottomSheet<String>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 18, 20, 6),
+              child: Text('بینینی گرێبەست بە کام زمان؟',
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: primaryDarkBlue)),
+            ),
+            ListTile(
+              leading: const Icon(Icons.description_outlined,
+                  color: primaryDarkBlue),
+              title: const Text('کوردی',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              onTap: () => Navigator.pop(ctx, 'ku'),
+            ),
+            ListTile(
+              leading:
+                  const Icon(Icons.translate_rounded, color: primaryDarkBlue),
+              title: const Text('عەرەبی',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              onTap: () => Navigator.pop(ctx, 'ar'),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (lang == null || !context.mounted) return;
+    _openPreview(context, company, template, lang: lang);
   }
 
   Future<void> _run(BuildContext context, Future<void> Function() action) async {
@@ -315,6 +364,13 @@ class _ContractCard extends ConsumerWidget {
     final template =
         ref.watch(contractTemplateProvider(contract.companyId)).value;
     final isAdmin = ref.watch(currentUserProvider).isAdmin;
+    final features = ref.watch(currentPlanFeaturesProvider);
+    // The plan sells it, and this company has Arabic clauses for THIS contract
+    // type — both are needed before an Arabic option may be offered.
+    // A null template is one still streaming in, not a company without Arabic;
+    // the built-in template always carries the Arabic clauses.
+    final arabicAvailable = features.arabicContracts &&
+        (template ?? ContractTemplate.defaults()).arabicReadyFor(contract);
     final typeLabel = isRent ? 'کرێ' : 'فرۆشتن';
 
     // ڕەنگکردنی جۆری گرێبەستەکە
@@ -462,10 +518,25 @@ class _ContractCard extends ConsumerWidget {
                               'هیچ بەڵگەیەک زیاد نەکراوە — لە دەستکاریدا دەتوانیت زیادی بکەیت'),
                         )),
                       ),
-                    IconButton(
-                      tooltip: 'پێشبینین',
-                      icon: const Icon(Icons.visibility_outlined, color: primaryDarkBlue),
-                      onPressed: () => _openPreview(context, company, template),
+                    // InkWell, not IconButton: IconButton has no long-press,
+                    // and the long press is what offers the Arabic edition.
+                    Tooltip(
+                      message: arabicAvailable
+                          ? 'پێشبینین (دایبگرە بۆ هەڵبژاردنی زمان)'
+                          : 'پێشبینین',
+                      child: InkWell(
+                        customBorder: const CircleBorder(),
+                        onTap: () => _openPreview(context, company, template),
+                        onLongPress: arabicAvailable
+                            ? () => _pickLangThenPreview(
+                                context, company, template)
+                            : null,
+                        child: const Padding(
+                          padding: EdgeInsets.all(8),
+                          child: Icon(Icons.visibility_outlined,
+                              color: primaryDarkBlue),
+                        ),
+                      ),
                     ),
                     PopupMenuButton<String>(
                       icon: const Icon(Icons.more_vert_rounded, color: Colors.grey),
@@ -475,6 +546,9 @@ class _ContractCard extends ConsumerWidget {
                           _openPreview(context, company, template);
                         } else if (v == 'print') {
                           _run(context, () => ContractPdfRemote.printContract(contract.id));
+                        } else if (v == 'print_ar') {
+                          _run(context,
+                              () => ContractPdfRemote.printContract(contract.id, lang: 'ar'));
                         } else if (v == 'share') {
                           _run(context, () => ContractPdfRemote.shareContract(contract.id));
                         } else if (v == 'edit') {
@@ -504,6 +578,20 @@ class _ContractCard extends ConsumerWidget {
                             ],
                           ),
                         ),
+                        // Only when the plan includes it AND this company has
+                        // Arabic clauses for THIS contract type on file.
+                        if (arabicAvailable)
+                          const PopupMenuItem(
+                            value: 'print_ar',
+                            child: Row(
+                              children: [
+                                Icon(Icons.translate_rounded,
+                                    color: primaryDarkBlue, size: 20),
+                                SizedBox(width: 12),
+                                Text('پرینتی عەرەبی'),
+                              ],
+                            ),
+                          ),
                         const PopupMenuItem(
                           value: 'share',
                           child: Row(

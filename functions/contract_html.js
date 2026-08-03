@@ -10,7 +10,66 @@
 const {DEFAULTS} = require("./contract_defaults");
 const {resolveDesign} = require("./designs");
 
-const CURRENCY_LABEL = {IQD: "دیناری عێراقی", USD: "دۆلاری ئەمریکی"};
+/**
+ * Every fixed string on the document, per language. The contract is rendered
+ * in ONE language — Kurdish or Arabic — never both on a page: this is a legal
+ * document that gets filed with the land registry or a court, and a bilingual
+ * body would double a 26-clause rent contract's page count.
+ *
+ * Clause bodies are NOT here — they are legal text and live in the company's
+ * template (`rent_clauses_ar` / `sale_clauses_ar`), written by the company's
+ * own lawyer. A contract with no Arabic clauses stored cannot be rendered in
+ * Arabic at all; index.js refuses before reaching this file.
+ */
+const L = {
+  ku: {
+    currency: {IQD: "دیناری عێراقی", USD: "دۆلاری ئەمریکی"},
+    company: "کۆمپانیا",
+    areaUnit: " م²",
+    cardTitle: "زانیاری گرێبەست",
+    contractNo: "ژمارەی گرێبەست:",
+    party1Rent: "لایەنی یەکەم (خاوەن موڵک):",
+    party2Rent: "لایەنی دووەم (کرێچی):",
+    party1Sale: "لایەنی یەکەم (فرۆشیار):",
+    party2Sale: "لایەنی دووەم (کڕیار):",
+    commission: "ڕێژەی عمولە:",
+    commissionEach: " — هەر لایەک ",
+    propertyType: "جۆری موڵک:",
+    project: "پڕۆژە / گەڕەک:",
+    propertyNo: "ژمارەی عەقار:",
+    area: "ڕووبەر:",
+    clausesHead: "هەردوو لایەن ڕێکەوتن لەسەر ئەم خاڵانەی خوارەوە:",
+    notes: "تێبینی: ",
+    sign1: "لایەنی یەکەم",
+    signAgent: "کارمەندی بەرپرس",
+    sign2: "لایەنی دووەم",
+  },
+  ar: {
+    currency: {IQD: "دينار عراقي", USD: "دولار أمريكي"},
+    company: "الشركة",
+    areaUnit: " م²",
+    cardTitle: "معلومات العقد",
+    contractNo: "رقم العقد:",
+    party1Rent: "الطرف الأول (مالك العقار):",
+    party2Rent: "الطرف الثاني (المستأجر):",
+    party1Sale: "الطرف الأول (البائع):",
+    party2Sale: "الطرف الثاني (المشتري):",
+    commission: "نسبة العمولة:",
+    commissionEach: " — لكل طرف ",
+    propertyType: "نوع العقار:",
+    project: "المشروع / الحي:",
+    propertyNo: "رقم العقار:",
+    area: "المساحة:",
+    clausesHead: "اتفق الطرفان على البنود الآتية:",
+    notes: "ملاحظة: ",
+    sign1: "الطرف الأول",
+    signAgent: "الموظف المسؤول",
+    sign2: "الطرف الثاني",
+  },
+};
+
+/** Falls back to Kurdish for any value that is not exactly "ar". */
+const langOf = (v) => (v === "ar" ? "ar" : "ku");
 
 const esc = (s) =>
   String(s == null ? "" : s)
@@ -33,9 +92,13 @@ function fmtDate(d) {
   return `${y}/${m}/${day}`;
 }
 
-function tokensFor(c, company) {
-  const cn = company.nameKu || "کۆمپانیا";
-  const cur = CURRENCY_LABEL[c.dinar_dolar] || "";
+function tokensFor(c, company, lang) {
+  const t = L[langOf(lang)];
+  // An Arabic contract names the company in Arabic when the company has an
+  // Arabic name on file; otherwise its Kurdish name still beats a placeholder.
+  const cn = (langOf(lang) === "ar" ? company.nameAr || company.nameKu :
+    company.nameKu) || t.company;
+  const cur = t.currency[c.dinar_dolar] || "";
   const common = {
     company: cn,
     contract_number: String(c.contract_number || ""),
@@ -44,7 +107,7 @@ function tokensFor(c, company) {
     property_type: c.property_type || "",
     project: c.project_name || "",
     property_number: c.property_number || "",
-    area: (c.area || 0) + " م²",
+    area: (c.area || 0) + t.areaUnit,
     currency: cur,
   };
   if (c.contract_type === "rent") {
@@ -93,15 +156,28 @@ function contractViewModel(o) {
   const company = o.company || {};
   const t = o.template || {};
   const isRent = c.contract_type === "rent";
-  const tokens = tokensFor(c, company);
+  const lang = langOf(o.lang);
+  const isAr = lang === "ar";
+  const label = L[lang];
+  const tokens = tokensFor(c, company, lang);
 
   const pick = (...lists) =>
     lists.find((l) => Array.isArray(l) && l.length > 0) || [];
   // Migration shim: rent_clauses_house is the newest edit on templates saved
   // while clauses were split per property kind. Drop once all are re-saved.
-  const rawClauses = isRent ?
-    pick(t.rent_clauses_house, t.rent_clauses, DEFAULTS.rent_clauses) :
-    pick(t.sale_clauses, DEFAULTS.sale_clauses);
+  const rawClauses = isAr ?
+    (isRent ?
+      pick(t.rent_clauses_ar, DEFAULTS.rent_clauses_ar) :
+      pick(t.sale_clauses_ar, DEFAULTS.sale_clauses_ar)) :
+    (isRent ?
+      pick(t.rent_clauses_house, t.rent_clauses, DEFAULTS.rent_clauses) :
+      pick(t.sale_clauses, DEFAULTS.sale_clauses));
+
+  const kuTitle = isRent ?
+    (t.rent_title || DEFAULTS.rent_title) :
+    (t.sale_title || DEFAULTS.sale_title);
+  const arTitle = (isRent ? t.rent_title_ar : t.sale_title_ar) ||
+    (isRent ? DEFAULTS.rent_title_ar : DEFAULTS.sale_title_ar);
 
   return {
     contract: c,
@@ -109,24 +185,31 @@ function contractViewModel(o) {
     template: t,
     isRent,
     tokens,
+    /** "ku" | "ar" — a custom design can branch on this. */
+    lang,
+    /** Every fixed string on the document, already in [lang]. */
+    label,
     accent: "#" + (t.primary_color || DEFAULTS.primary_color),
     fontSize: (t.clause_font_size || DEFAULTS.clause_font_size) + "px",
-    title: isRent ?
-      (t.rent_title || DEFAULTS.rent_title) :
-      (t.sale_title || DEFAULTS.sale_title),
+    title: (isAr ? arTitle : "") || kuTitle,
     /** Clause texts with every {token} already substituted. */
     clauses: rawClauses.map((cl) => applyTokens(cl, tokens)),
-    /** Company name lines, blanks dropped. */
-    names: [company.nameKu, company.nameAr, company.nameEn].filter(Boolean),
+    /**
+     * Company name lines, blanks dropped. The Arabic edition leads with the
+     * Arabic name and drops the Kurdish one, so the header matches the body.
+     */
+    names: (isAr ?
+      [company.nameAr, company.nameEn] :
+      [company.nameKu, company.nameAr, company.nameEn]).filter(Boolean),
     logoUri: company.logo_data_uri || "",
     /** Attachment photos as data: URIs, for appendix pages. */
     attachments: Array.isArray(o.attachments) ? o.attachments : [],
     /** [label, value] pairs describing the property. */
     propertyPairs: [
-      ["جۆری موڵک:", c.property_type || ""],
-      ["پڕۆژە / گەڕەک:", c.project_name || ""],
-      ["ژمارەی عەقار:", c.property_number || ""],
-      ["ڕووبەر:", (c.area || 0) + " م²"],
+      [label.propertyType, c.property_type || ""],
+      [label.project, c.project_name || ""],
+      [label.propertyNo, c.property_number || ""],
+      [label.area, (c.area || 0) + label.areaUnit],
     ],
     footerCells: [
       [company.phone1, company.phone2].filter(Boolean).join(" / "),
@@ -159,7 +242,7 @@ function buildContractHtml(o) {
   }
 
   const vm = contractViewModel(o);
-  const {accent, title, names, propertyPairs: propPairs} = vm;
+  const {accent, title, names, propertyPairs: propPairs, lang, label: T} = vm;
   const fs = vm.fontSize;
   const logo = company.logo_data_uri ?
     `<img class="logo" src="${escAttr(company.logo_data_uri)}">` : "";
@@ -180,19 +263,19 @@ function buildContractHtml(o) {
     `</div>`;
 
   const card = isRent ? [
-    row("ژمارەی گرێبەست:", c.contract_number),
-    row("لایەنی یەکەم (خاوەن موڵک):", c.party1_name),
-    row("لایەنی دووەم (کرێچی):", c.party2_name),
+    row(T.contractNo, c.contract_number),
+    row(T.party1Rent, c.party1_name),
+    row(T.party2Rent, c.party2_name),
     propLine(propPairs),
   ].join("") : [
-    row("ژمارەی گرێبەست:", c.contract_number),
-    row("لایەنی یەکەم (فرۆشیار):", c.party1_name),
-    row("لایەنی دووەم (کڕیار):", c.party2_name),
+    row(T.contractNo, c.contract_number),
+    row(T.party1Sale, c.party1_name),
+    row(T.party2Sale, c.party2_name),
     propLine(propPairs),
     (c.commission_rate ?
-      row("ڕێژەی عمولە:", c.commission_rate + "% — هەر لایەک " +
+      row(T.commission, c.commission_rate + "%" + T.commissionEach +
         money((Number(c.total_price) || 0) * Number(c.commission_rate) / 100) +
-        " " + (CURRENCY_LABEL[c.dinar_dolar] || "")) : ""),
+        " " + (T.currency[c.dinar_dolar] || "")) : ""),
   ].join("");
 
   // vm.clauses already has its {token}s substituted.
@@ -201,7 +284,7 @@ function buildContractHtml(o) {
       .join("");
 
   const notes = (c.notes && c.notes.trim()) ?
-    `<div class="notes">تێبینی: ${esc(c.notes)}</div>` : "";
+    `<div class="notes">${esc(T.notes)}${esc(c.notes)}</div>` : "";
 
   const sign = (label, name) =>
     `<div class="sg"><div class="sgl">${esc(label)}</div>` +
@@ -229,13 +312,17 @@ function buildContractHtml(o) {
       })
       .join("");
 
-  return `<!doctype html><html lang="ckb"><head><meta charset="utf-8">
+  // 'DocFont' is deliberately generic: index.js embeds Speda for Kurdish and
+  // Amiri for Arabic under the same family name, so the stylesheet — and any
+  // per-company design that copies it — needs no language branch.
+  return `<!doctype html><html lang="${lang === "ar" ? "ar" : "ckb"}"><head>
+<meta charset="utf-8">
 <style>
-@font-face{font-family:'Speda';src:url(data:font/ttf;base64,${o.fontRegB64}) format('truetype');font-weight:normal;}
-@font-face{font-family:'Speda';src:url(data:font/ttf;base64,${o.fontBoldB64}) format('truetype');font-weight:bold;}
+@font-face{font-family:'DocFont';src:url(data:font/ttf;base64,${o.fontRegB64}) format('truetype');font-weight:normal;}
+@font-face{font-family:'DocFont';src:url(data:font/ttf;base64,${o.fontBoldB64}) format('truetype');font-weight:bold;}
 *{box-sizing:border-box;margin:0;padding:0;}
 @page{size:A4;margin:14mm 16mm 24mm;}
-body{font-family:'Speda';direction:rtl;color:#111;font-size:${fs};line-height:1.6;}
+body{font-family:'DocFont';direction:rtl;color:#111;font-size:${fs};line-height:1.6;}
 table.page{width:100%;border-collapse:collapse;}
 thead{display:table-header-group;}
 .band{display:flex;align-items:center;padding-bottom:6px;}
@@ -294,14 +381,14 @@ ${watermark}
   </td></tr></thead>
   <tbody><tr><td>
     <div class="title">${esc(title)}</div>
-    <div class="card"><div class="ct">زانیاری گرێبەست</div>${card}</div>
-    <div class="chead">هەردوو لایەن ڕێکەوتن لەسەر ئەم خاڵانەی خوارەوە:</div>
+    <div class="card"><div class="ct">${esc(T.cardTitle)}</div>${card}</div>
+    <div class="chead">${esc(T.clausesHead)}</div>
     ${clausesHtml}
     ${notes}
     <div class="signs">
-      ${sign("لایەنی یەکەم", c.party1_name)}
-      ${sign("کارمەندی بەرپرس", c.agent_name)}
-      ${sign("لایەنی دووەم", c.party2_name)}
+      ${sign(T.sign1, c.party1_name)}
+      ${sign(T.signAgent, c.agent_name)}
+      ${sign(T.sign2, c.party2_name)}
     </div>
   </td></tr></tbody>
 </table>

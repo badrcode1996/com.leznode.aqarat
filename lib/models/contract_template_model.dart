@@ -22,12 +22,29 @@ class ContractTemplate {
     required this.clauseFontSize,
     required this.receiptColorHex,
     required this.receiptFontSize,
+    this.rentClausesAr = const [],
+    this.saleClausesAr = const [],
+    this.rentTitleAr = '',
+    this.saleTitleAr = '',
   });
 
   final List<String> rentClauses;
   final List<String> saleClauses;
   final String rentTitle;
   final String saleTitle;
+
+  /// The Arabic edition of the same document, with its own clause list so a
+  /// company can tune the two languages independently.
+  final List<String> rentClausesAr;
+  final List<String> saleClausesAr;
+  final String rentTitleAr;
+  final String saleTitleAr;
+
+  /// True when THIS contract type can be rendered in Arabic. Clause lists are
+  /// filled from the built-in Arabic defaults by [fromJson], so this is only
+  /// false if a company deliberately cleared them.
+  bool arabicReadyFor(Contract c) =>
+      (c is RentContract ? rentClausesAr : saleClausesAr).isNotEmpty;
 
   /// 6-digit RRGGBB hex (no leading #).
   final String primaryColorHex;
@@ -46,6 +63,10 @@ class ContractTemplate {
     double? clauseFontSize,
     String? receiptColorHex,
     double? receiptFontSize,
+    List<String>? rentClausesAr,
+    List<String>? saleClausesAr,
+    String? rentTitleAr,
+    String? saleTitleAr,
   }) =>
       ContractTemplate(
         rentClauses: rentClauses ?? this.rentClauses,
@@ -56,6 +77,10 @@ class ContractTemplate {
         clauseFontSize: clauseFontSize ?? this.clauseFontSize,
         receiptColorHex: receiptColorHex ?? this.receiptColorHex,
         receiptFontSize: receiptFontSize ?? this.receiptFontSize,
+        rentClausesAr: rentClausesAr ?? this.rentClausesAr,
+        saleClausesAr: saleClausesAr ?? this.saleClausesAr,
+        rentTitleAr: rentTitleAr ?? this.rentTitleAr,
+        saleTitleAr: saleTitleAr ?? this.saleTitleAr,
       );
 
   /// Reads a stored template, filling every absent/empty field from
@@ -89,6 +114,10 @@ class ContractTemplate {
       receiptColorHex: str('receipt_color', d.receiptColorHex),
       receiptFontSize: (json['receipt_font_size'] as num?)?.toDouble() ??
           d.receiptFontSize,
+      rentClausesAr: list('rent_clauses_ar', d.rentClausesAr),
+      saleClausesAr: list('sale_clauses_ar', d.saleClausesAr),
+      rentTitleAr: str('rent_title_ar', d.rentTitleAr),
+      saleTitleAr: str('sale_title_ar', d.saleTitleAr),
     );
   }
 
@@ -101,6 +130,10 @@ class ContractTemplate {
         'clause_font_size': clauseFontSize,
         'receipt_color': receiptColorHex,
         'receipt_font_size': receiptFontSize,
+        'rent_clauses_ar': rentClausesAr,
+        'sale_clauses_ar': saleClausesAr,
+        'rent_title_ar': rentTitleAr,
+        'sale_title_ar': saleTitleAr,
         'updated_at': FieldValue.serverTimestamp(),
       };
 
@@ -225,6 +258,10 @@ class ContractTemplate {
         receiptFontSize: 10,
         rentClauses: _defaultRentClauses,
         saleClauses: _defaultSaleClauses,
+        rentTitleAr: 'عقد إيجار',
+        saleTitleAr: 'عقد بيع وشراء',
+        rentClausesAr: _defaultRentClausesAr,
+        saleClausesAr: _defaultSaleClausesAr,
       );
 
   static const List<String> _defaultRentClauses = [
@@ -270,5 +307,59 @@ class ContractTemplate {
     'لەسەر لایەنی یەکەم پێویستە قەرزی کارەبا و هەر خزمەتگوزاریەک لەسەر ئەم موڵکە هەبێت پاک بکاتەوە تا بەرواری ڕادەست کردنی موڵکەکە.',
     'لەسەر لایەنی یەکەم پێویستە بڕی ٪١ لە نرخی ئەم موڵکەی سەرەوە بدات بە {company} لە بەرامبەر فرۆشتنی ئەم موڵکە.',
     'لەسەر لایەنی دووەم پێویستە بڕی ٪١ لە نرخی ئەم موڵکەی سەرەوە بدات بە {company} لە بەرامبەر کڕینی ئەم موڵکە.',
+  ];
+
+  // ---------------------------------------------------------------------------
+  // Arabic edition — DRAFT translation, pending review by the company's lawyer.
+  //
+  // Clause order and {token} placement mirror the Kurdish lists above line for
+  // line, so the two editions can be compared side by side. Kept byte-identical
+  // to RENT_CLAUSES_AR / SALE_CLAUSES_AR in functions/contract_defaults.js —
+  // the server renders from its own copy, so the two must not drift.
+  // ---------------------------------------------------------------------------
+
+  static const List<String> _defaultRentClausesAr = [
+    'يوافق الطرف الأول على تأجير العقار الموصوف أعلاه إلى الطرف الثاني لمدة ({period_months}) شهراً.',
+    'اتفق الطرفان على أن يكون بدل الإيجار الشهري مبلغ {rent_amount} {currency}.',
+    'يبدأ سريان هذا العقد من تاريخ: {start_date} ولغاية {end_date}.',
+    'يدفع الطرف الثاني إلى الطرف الأول مبلغ {down_payment} كمقدَّم عن ({down_payment_months}) شهراً، وبعد المقدَّم يُدفع الإيجار كل ({payment_frequency}) شهراً.',
+    'على الطرف الثاني أن يودع مبلغ {guarantee} لدى {company} كتأمينات، تُعاد إليه بعد تسليم العقار إلى الطرف الأول خالياً من أي نقص أو ضرر.',
+    'يستخدم الطرف الثاني هذا العقار لغرض {purpose}، وأي استخدام لغير هذا الغرض يستوجب موافقة {company} والطرف الأول.',
+    'ليس للطرف الثاني المطالبة بمفاتيح العقار قبل حصوله على موافقة الأمن، وإذا لم يتمكن من الحصول على الموافقة خلال {grace_period} يوماً يُفسخ العقد تلقائياً وتُعاد المبالغ إلى الطرف الثاني.',
+    'على الطرف الثاني قبل تأثيث العقار تبديل أقفال الأبواب الخارجية على نفقته الخاصة، وبخلافه يتحمل مسؤولية أي مشكلة تحدث.',
+    'بعد انتهاء مدة العقد، إذا لم يلتزم الطرف الثاني بإخلاء العقار أو تجديد هذا العقد، يلتزم بدفع مبلغ {late_fee} {currency} عن كل يوم تأخير لحين حسم العقد.',
+    'تقع خدمات الماء والكهرباء وأي خدمة أخرى تتعلق بهذا العقار خلال مدة تنفيذ هذا العقد على عاتق الطرف الثاني.',
+    'أي تغيير في القسم الخارجي أو الداخلي من هذا العقار يجب أن يتم بموافقة الطرف الأول و{company}، ولا يتحمل الطرف الأول إلا التكاليف الناشئة عن إصلاح نقص أو تغيير ضروري في العقار، أما أي تغيير تجميلي أو غير ضروري فيقع على عاتق الطرف الثاني.',
+    'لا يحق للطرف الثاني بأي شكل من الأشكال تأجير هذا العقار (كله أو جزء منه) إلى طرف آخر دون إشعار {company} وموافقة الطرف الأول.',
+    'إذا باع الطرف الأول العقار، يحق للطرف الثاني البقاء في العقار حتى نهاية مدة العقد، ويلتزم المالك الجديد بمضمون هذا العقد.',
+    'إذا أخلى الطرف الثاني العقار قبل انتهاء مدة العقد، تساعد {company} في إعادة (جزء أو كل) إيجار المدة المتبقية بعد إخلاء العقار، إذا أُعيد تأجيره من قبل {company}.',
+    'إذا كان العقار مؤثثاً، فعلى الطرف الأول إعداد قائمة بمحتويات العقار، يدققها الطرف الثاني ثم توقَّع وتُرفق بهذا العقد.',
+    'على الطرف الثاني المحافظة على المحتويات وتسليمها إلى الطرف الأول عند الإخلاء كما استلمها، وبخلافه يكون مسؤولاً عن إصلاحها أو تبديلها على نفقته.',
+    'على الطرف الأول قبل تأجير العقار تسوية ذمة العقار ودفع أجور الماء والكهرباء وأي خدمة أخرى تتعلق بالعقار، ويكون مسؤولاً عن إصلاح أي نقص يتعلق ببنية العقار.',
+    'عند حلول موعد الإيجار، على الطرف الأول الحضور إلى {company} في أقرب وقت لاستلام بدل الإيجار، وبخلافه يُودع المبلغ في الحساب المصرفي لـ{company} ثم يُصرف له بصك.',
+    'على كل من الطرف الأول والطرف الثاني دفع بدل نصف شهر عن كل سنة إلى {company} مقابل أجور تنظيم هذا العقد.',
+    'على الطرف الثاني إشعار {company} قبل (شهر) من موعد انتهاء العقد برغبته في التجديد أو إخلاء العقار، وبخلافه يتحمل الطرف الثاني بدل إيجار (شهر).',
+    'قبل إخلاء العقار، على الطرف الثاني تسليمه إلى الطرف الأول كما استلمه دون نقص، وبخلافه يكون مسؤولاً عن إصلاح النواقص في أقرب وقت، وعليه تسوية ذمة العقار ودفع أجور الماء والكهرباء وأي خدمة أخرى تتعلق بالعقار.',
+    'بعد انتهاء مدة العقد، يُجدَّد هذا العقد بسعر اليوم بموافقة الطرفين وبوساطة {company} في تحديد السعر وطريقة الدفع، أو يُخلى العقار ويُسلَّم إلى مالكه.',
+    'عند تجديد العقد يلتزم كل من الطرفين بدفع بدل إيجار نصف شهر عن سنة واحدة إلى {company}.',
+    'على الطرف الثاني استخدام العقار للغرض المتفق عليه، وبما لا يسبب أذى أو إزعاجاً لجيرانه، وبخلافه يكون مسؤولاً أمام القانون ويُفسخ العقد.',
+    'في حال عدم حل الخلاف بين الطرفين (إن وُجد)، لا تتحمل {company} أي مسؤولية، ويُحال الخلاف إلى المحكمة لحسمه بشهادة الموظفين المسؤولين.',
+    'إذا استلم الطرف الأول بدل الإيجار من المستأجر بنفسه، فلا تتحمل {company} أي مسؤولية عن أي مشكلة.',
+  ];
+
+  static const List<String> _defaultSaleClausesAr = [
+    'يوافق الطرف الأول {party1} على بيع العقار الموصوف أعلاه إلى الطرف الثاني بمبلغ {total_price} {currency}.',
+    'يوافق الطرف الثاني {party2} على شراء العقار الموصوف أعلاه بمبلغ {total_price} {currency}.',
+    'تستلم {company} مبلغ {down_payment} {currency} كعربون نيابة عن الطرف الأول.',
+    'يُدفع المبلغ المتبقي وفق الآتي: {payment_method}',
+    'على الطرف الأول تسليم هذا العقار إلى الطرف الثاني بتاريخ {delivery_date} بعد استيفائه المستحقات المالية.',
+    'إذا لم يسلّم الطرف الأول العقار إلى الطرف الثاني في التاريخ المحدد، يلتزم بدفع مبلغ {late_fee} {currency} عن كل يوم تأخير.',
+    'إذا نكل أي من الطرفين عن هذا العقد لأي سبب، يلتزم بدفع مبلغ {withdrawal} {currency} إلى الطرف الآخر دون حاجة إلى إنذار رسمي.',
+    'رسوم البيع والتسجيل والإفراز والدمج والتصحيح وضريبة العقار تقع على الطرف الأول وفق القانون إذا كان العقار مسجلاً في الطابو، وإن لم يكن مسجلاً يلتزم الطرف الأول بدفع بدل تسجيله بإسمه.',
+    'رسوم الكشف وتسجيل العقار تقع على الطرف الثاني وفق القانون إذا كان العقار مسجلاً في الطابو، وإن لم يكن مسجلاً يلتزم الطرف الثاني بدفع بدل التسجيل.',
+    'على الطرف الأول تخويل المحامي {lawyer} بوكالة خاصة بهذا العقار لدى دائرة الكاتب العدل لغرض متابعة المعاملات وتسجيله بإسم الطرف الثاني لدى مديرية التسجيل العقاري.',
+    'على الطرف الأول تسديد ديون الكهرباء وأي خدمة أخرى مترتبة على هذا العقار لغاية تاريخ تسليم العقار.',
+    'على الطرف الأول دفع ما نسبته ١٪ من سعر العقار الموصوف أعلاه إلى {company} مقابل بيع هذا العقار.',
+    'على الطرف الثاني دفع ما نسبته ١٪ من سعر العقار الموصوف أعلاه إلى {company} مقابل شراء هذا العقار.',
   ];
 }

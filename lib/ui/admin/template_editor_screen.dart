@@ -25,10 +25,14 @@ class TemplateEditorScreen extends ConsumerStatefulWidget {
 class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
   final _rentTitle = TextEditingController();
   final _saleTitle = TextEditingController();
+  final _rentTitleAr = TextEditingController();
+  final _saleTitleAr = TextEditingController();
   final _color = TextEditingController();
   final _receiptColor = TextEditingController();
   final _rent = <TextEditingController>[];
   final _sale = <TextEditingController>[];
+  final _rentAr = <TextEditingController>[];
+  final _saleAr = <TextEditingController>[];
   double _fontSize = 11;
   double _receiptFontSize = 10;
 
@@ -51,6 +55,8 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
   void _apply(ContractTemplate tpl) {
     _rentTitle.text = tpl.rentTitle;
     _saleTitle.text = tpl.saleTitle;
+    _rentTitleAr.text = tpl.rentTitleAr;
+    _saleTitleAr.text = tpl.saleTitleAr;
     _color.text = tpl.primaryColorHex;
     _receiptColor.text = tpl.receiptColorHex;
     _fontSize = tpl.clauseFontSize;
@@ -62,14 +68,19 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
     _sale
       ..clear()
       ..addAll(tpl.saleClauses.map((c) => TextEditingController(text: c)));
+    _rentAr
+      ..clear()
+      ..addAll(tpl.rentClausesAr.map((c) => TextEditingController(text: c)));
+    _saleAr
+      ..clear()
+      ..addAll(tpl.saleClausesAr.map((c) => TextEditingController(text: c)));
   }
 
   void _disposeLists() {
-    for (final c in _rent) {
-      c.dispose();
-    }
-    for (final c in _sale) {
-      c.dispose();
+    for (final l in [_rent, _sale, _rentAr, _saleAr]) {
+      for (final c in l) {
+        c.dispose();
+      }
     }
   }
 
@@ -77,6 +88,8 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
   void dispose() {
     _rentTitle.dispose();
     _saleTitle.dispose();
+    _rentTitleAr.dispose();
+    _saleTitleAr.dispose();
     _color.dispose();
     _receiptColor.dispose();
     _disposeLists();
@@ -99,6 +112,10 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
       clauseFontSize: _fontSize,
       receiptColorHex: rHex.length == 6 ? rHex : '1E4D8B',
       receiptFontSize: _receiptFontSize,
+      rentClausesAr: clean(_rentAr),
+      saleClausesAr: clean(_saleAr),
+      rentTitleAr: _rentTitleAr.text.trim(),
+      saleTitleAr: _saleTitleAr.text.trim(),
     );
   }
 
@@ -210,6 +227,16 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
                 _clauseSection('بەندەکانی گرێبەستی کرێ', _rent),
                 const SizedBox(height: 16),
                 _clauseSection('بەندەکانی گرێبەستی فرۆشتن', _sale),
+                const SizedBox(height: 24),
+                _arabicNotice(),
+                const SizedBox(height: 16),
+                _arabicTitles(),
+                const SizedBox(height: 16),
+                _clauseSection('بەندەکانی گرێبەستی کرێ — عەرەبی', _rentAr,
+                    arabic: true),
+                const SizedBox(height: 16),
+                _clauseSection('بەندەکانی گرێبەستی فرۆشتن — عەرەبی', _saleAr,
+                    arabic: true),
               ],
             ),
     );
@@ -369,8 +396,17 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
       );
 
   // --------------------------- clauses ---------------------------
-  Widget _clauseSection(String title, List<TextEditingController> list) {
+  Widget _clauseSection(String title, List<TextEditingController> list,
+      {bool arabic = false}) {
     return _panel(title, [
+      if (arabic && list.isEmpty)
+        const Padding(
+          padding: EdgeInsets.only(bottom: 8),
+          child: Text(
+            'هێشتا هیچ بەندێکی عەرەبی نەنووسراوە — گرێبەستی عەرەبی بۆ ئەم کۆمپانیایە بەردەست نابێت.',
+            style: TextStyle(fontSize: 12, color: Colors.grey),
+          ),
+        ),
       for (var i = 0; i < list.length; i++) _clauseRow(list, i),
       const SizedBox(height: 4),
       Align(
@@ -386,6 +422,51 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
       ),
     ]);
   }
+
+  /// Arabic clauses are legal text with no safe default, so the editor says so
+  /// rather than shipping a machine translation the company would never read.
+  Widget _arabicNotice() => Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: _accentYellow.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: _accentYellow.withValues(alpha: 0.5)),
+        ),
+        child: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('گرێبەستی عەرەبی',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold, color: _primaryDarkBlue)),
+            SizedBox(height: 6),
+            Text(
+              'ئەم بەندانە بە عەرەبی بنووسە تاوەکو کۆمپانیاکە بتوانێت گرێبەستەکە بە عەرەبی چاپ بکات. '
+              'هەمان تۆکنەکانی سەرەوە ({party1}، {total_price}، …) لێرەش کار دەکەن. '
+              'هیچ وەرگێڕانێکی خۆکار نییە — دەقێکی یاسایییە و دەبێت پارێزەر پێداچوونەوەی بۆ بکات.',
+              style: TextStyle(fontSize: 12, height: 1.6),
+            ),
+          ],
+        ),
+      );
+
+  Widget _arabicTitles() => _panel('ناونیشانەکانی عەرەبی', [
+        TextField(
+          controller: _rentTitleAr,
+          textDirection: TextDirection.rtl,
+          decoration: const InputDecoration(
+              labelText: 'ناونیشانی گرێبەستی کرێ (عەرەبی)',
+              hintText: 'عقد إيجار'),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _saleTitleAr,
+          textDirection: TextDirection.rtl,
+          decoration: const InputDecoration(
+              labelText: 'ناونیشانی گرێبەستی فرۆشتن (عەرەبی)',
+              hintText: 'عقد بيع وشراء'),
+        ),
+      ]);
 
   Widget _clauseRow(List<TextEditingController> list, int i) => Padding(
         padding: const EdgeInsets.only(bottom: 10),

@@ -10,6 +10,7 @@ import '../../models/contract_model.dart';
 import '../../models/enums.dart';
 import '../../models/lawyer_model.dart';
 import 'contract_preview_screen.dart';
+import 'doc_lang_field.dart';
 import 'widgets/contract_docs_field.dart';
 import 'widgets/saving_dialog.dart';
 
@@ -77,6 +78,11 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
   int _step = 0;
   bool _saving = false;
   bool _savingDialogOpen = false;
+
+  /// Language of the document produced for this contract — 'ku' or 'ar'. Only
+  /// governs the PDF that opens after saving; the stored contract is language
+  /// neutral, so the archive can still print either edition later.
+  String _docLang = 'ku';
 
   /// Pops the progress dialog exactly once, so later navigation (preview, or
   /// popping this screen) doesn't tear down the wrong route.
@@ -260,6 +266,7 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
             contract: saved,
             company: ref.read(currentCompanyProvider).value,
             template: ref.read(contractTemplateProvider(saved.companyId)).value,
+            initialLang: _docLang,
           ),
         ));
         return;
@@ -429,6 +436,12 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
 
                       const SizedBox(height: 12),
                       ContractDocsField(controller: _docs),
+                      const SizedBox(height: 12),
+                      DocLangField(
+                        isRent: false,
+                        value: _docLang,
+                        onChanged: (v) => setState(() => _docLang = v),
+                      ),
                     ],
                   ),
                 ),
