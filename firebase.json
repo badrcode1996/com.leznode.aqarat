@@ -44,6 +44,19 @@
         ]
       },
       {
+        "//": "main.dart.js carries no content hash in its name, so Firebase's default max-age=3600 served the PREVIOUS build's code for up to an hour after every deploy — a fix looked like it had not shipped. version.json is what the service worker compares to decide there is a new build, so it must not be cached either.",
+        "source": "/main.dart.js",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+        ]
+      },
+      {
+        "source": "/version.json",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+        ]
+      },
+      {
         "//": "The icon font is tree-shaken to just the glyphs the build uses, and ships at a fixed path with no content hash. Cached, it pairs an old subset with new code and every newly-added icon renders blank. Flutter's service worker does the real caching, so revalidating here costs nothing.",
         "source": "/assets/**",
         "headers": [
