@@ -61,6 +61,15 @@ service cloud.firestore {
       return sameCompany(cid) && companyActive(cid);
     }
 
+    // A company admin (branch-scoped or not). Deleting a signed contract or a
+    // receipt is not an everyday agent action — both screens already hide the
+    // button from agents, and this makes that stick for a caller that skips the
+    // app. Editing stays open to agents: correcting a typo is routine work.
+    function isCompanyAdmin() {
+      return isSignedIn() && profileExists()
+        && userData().role == 'company_admin';
+    }
+
     // True if the user sees EVERY branch of their company: a company-wide admin
     // (a company_admin who is NOT branch-scoped). Super admins are handled
     // separately at each rule. Only called once sameCompany() proved the profile
@@ -102,10 +111,24 @@ service cloud.firestore {
       allow read: if isSuperAdmin() || (isSignedIn() &&
         (request.auth.uid == uid || sameCompany(resource.data.company_id)));
       allow create: if isSuperAdmin();
+      // `branch` and `branch_admin` are pinned alongside company_id and role:
+      // inBranch() and seesAllBranches() read them straight off this document,
+      // so a member able to edit them could move themselves into another
+      // branch — or, as a branch-scoped company_admin, clear branch_admin and
+      // gain the whole company. The app never writes either field (a profile
+      // edit only ever touches photo_url); only the Super Admin provisioning
+      // path sets them, and that goes through the isSuperAdmin() branch above.
+      // Safe field access: profiles created before branches existed carry
+      // neither field, and reading a missing field ERRORS — .get() with a
+      // default keeps those accounts editable.
       allow update: if isSuperAdmin() || (isSignedIn()
         && request.auth.uid == uid
         && request.resource.data.company_id == resource.data.company_id
-        && request.resource.data.role == resource.data.role);
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.get('branch', '')
+             == resource.data.get('branch', '')
+        && request.resource.data.get('branch_admin', false)
+             == resource.data.get('branch_admin', false));
       allow delete: if isSuperAdmin();
     }
 
@@ -136,7 +159,8 @@ service cloud.firestore {
         && request.resource.data.company_id == resource.data.company_id
         && request.resource.data.branch == resource.data.branch;
       allow delete: if isSuperAdmin()
-        || inBranch(resource.data.company_id, resource.data.branch);
+        || (isCompanyAdmin()
+            && inBranch(resource.data.company_id, resource.data.branch));
     }
 
     // --- Receipts (وەصڵ): company- AND branch-scoped, same as contracts.
@@ -150,7 +174,8 @@ service cloud.firestore {
         && request.resource.data.company_id == resource.data.company_id
         && request.resource.data.branch == resource.data.branch;
       allow delete: if isSuperAdmin()
-        || inBranch(resource.data.company_id, resource.data.branch);
+        || (isCompanyAdmin()
+            && inBranch(resource.data.company_id, resource.data.branch));
     }
 
     // --- Contract templates (تێمپلەیت): one doc per company (id == company_id).
