@@ -52,7 +52,7 @@ class AboutScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    watchPalette(context);
+    watchAppShell(context);
     return Scaffold(
       backgroundColor: _appBackground,
       appBar: AppBar(
@@ -247,7 +247,7 @@ class _VersionBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    watchPalette(context);
+    watchAppShell(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
       decoration: BoxDecoration(

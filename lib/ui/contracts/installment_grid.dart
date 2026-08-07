@@ -11,6 +11,7 @@ import '../../models/receipt_model.dart';
 import '../receipts/receipt_preview_screen.dart';
 import '../widgets/processing_dialog.dart';
 import '../../theme/app_colors.dart';
+import '../../l10n/app_strings.dart';
 
 // ڕەنگە سەرەکییەکان
 Color get primaryDarkBlue => AppColors.current.brand;
@@ -34,9 +35,9 @@ class InstallmentGrid extends ConsumerWidget {
 
   // زیادکردنی ئایکۆن و گۆڕینی ڕەنگەکان بۆ شێوازی مۆدێرنتر
   (String, Color, IconData) _style(PaymentStatus s) => switch (s) {
-    PaymentStatus.pending => ('چاوەڕوان', AppColors.current.textMuted, Icons.schedule_rounded),
-    PaymentStatus.receivedFromTenant => ('وەرگیرا', AppColors.current.warning, Icons.inbox_rounded), // پرتەقاڵی/زەردێکی جوان
-    PaymentStatus.deliveredToOwner => ('گەیەنرا', AppColors.current.success, Icons.done_all_rounded), // سەوزێکی مۆدێرن
+    PaymentStatus.pending => (S.instPending, AppColors.current.textMuted, Icons.schedule_rounded),
+    PaymentStatus.receivedFromTenant => (S.instReceived, AppColors.current.warning, Icons.inbox_rounded), // پرتەقاڵی/زەردێکی جوان
+    PaymentStatus.deliveredToOwner => (S.instDelivered, AppColors.current.success, Icons.done_all_rounded), // سەوزێکی مۆدێرن
   };
 
   /// Asks the user for an optional note/code before a rent receipt is created,
@@ -50,32 +51,32 @@ class InstallmentGrid extends ConsumerWidget {
     return showDialog<({String note, bool print})>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(isReceive ? 'وەرگرتنی کرێ' : 'دانەوەی کرێ'),
+        title: Text(isReceive ? S.collectRent : S.payRentBack),
         content: TextField(
           controller: controller,
           autofocus: true,
           maxLines: 2,
-          decoration: const InputDecoration(
-            labelText: 'تێبینی / کۆد',
-            hintText: 'کۆد یان تێبینی بنووسە (ئارەزوومەندانە)',
+          decoration: InputDecoration(
+            labelText: S.noteOrCode,
+            hintText: S.noteOrCodeHint,
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('پاشگەزبوونەوە'),
+            child: Text(S.cancel),
           ),
           // بەبێ پرینتی پسولە — کردارەکە ئەنجام دەدرێت و پسولە تۆمار دەکرێت،
           // بەڵام PDF ـەکە ناکرێتەوە (بۆ کرێچی/خاوەن خانووی پسولەی ناوێت).
           OutlinedButton(
             onPressed: () =>
                 Navigator.pop(ctx, (note: controller.text.trim(), print: false)),
-            child: const Text('بەبێ پسولە'),
+            child: Text(S.withoutReceipt),
           ),
           ElevatedButton(
             onPressed: () =>
                 Navigator.pop(ctx, (note: controller.text.trim(), print: true)),
-            child: const Text('دروستکردنی پسولە'),
+            child: Text(S.createReceipt),
           ),
         ],
       ),
@@ -135,8 +136,9 @@ class InstallmentGrid extends ConsumerWidget {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(
-                  '${isReceive ? 'پسولەی وەرگرتنی کرێ' : 'پسولەی دانەوەی کرێ'} #${saved.receiptNumber} دروستکرا'),
+              content: Text(S.receiptCreated(
+                  isReceive ? S.receiptRentReceive : S.receiptRentPay,
+                  saved.receiptNumber)),
               backgroundColor: AppColors.current.success,
             ),
           );
@@ -156,7 +158,7 @@ class InstallmentGrid extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('هەڵە: $e'),
+            content: Text(S.error(e)),
             backgroundColor: AppColors.current.danger,
           ),
         );
@@ -166,7 +168,7 @@ class InstallmentGrid extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    watchPalette(context);
+    watchAppShell(context);
     // Watch the live contract from the stream so a status change shows
     // immediately — the passed-in `contract` is only the initial snapshot.
     var live = contract;
@@ -228,7 +230,7 @@ class InstallmentGrid extends ConsumerWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'مانگی ${inst.monthNumber}',
+                          S.monthNumber(inst.monthNumber),
                           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.current.textStrong),
                         ),
                         Icon(icon, size: 20, color: color),

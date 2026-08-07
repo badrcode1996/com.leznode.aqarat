@@ -9,6 +9,7 @@ import '../../services/pdf/receipt_pdf_remote.dart';
 import 'create_receipt_screen.dart';
 import 'receipt_preview_screen.dart';
 import '../../theme/app_colors.dart';
+import '../../l10n/app_strings.dart';
 
 Color get _accentYellow => AppColors.current.accent;
 Color get _green => AppColors.current.success;
@@ -21,7 +22,7 @@ class ReceiptsArchiveBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    watchPalette(context);
+    watchAppShell(context);
     return DefaultTabController(
       length: 2,
       child: Column(
@@ -35,9 +36,9 @@ class ReceiptsArchiveBody extends StatelessWidget {
               labelColor: AppColors.current.textStrong,
               unselectedLabelColor: AppColors.current.textMuted,
               labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-              tabs: const [
-                Tab(text: 'پسولەی کرێ'),
-                Tab(text: 'پسولەی دەرەکی'),
+              tabs: [
+                Tab(text: S.tabRentReceipts),
+                Tab(text: S.tabExternalReceipts),
               ],
             ),
           ),
@@ -62,17 +63,17 @@ class _ReceiptsList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    watchPalette(context);
+    watchAppShell(context);
     final async = ref.watch(receiptsStreamProvider);
     return async.when(
       loading: () =>
           Center(child: CircularProgressIndicator(color: AppColors.current.textStrong)),
-      error: (e, _) => Center(child: Text('هەڵە: $e')),
+      error: (e, _) => Center(child: Text(S.error(e))),
       data: (all) {
         final list = all.where((r) => r.type.isRent == rent).toList();
         if (list.isEmpty) {
           return Center(
-            child: Text(rent ? 'هیچ پسولەیەکی کرێ نییە' : 'هیچ پسولەیەکی دەرەکی نییە',
+            child: Text(rent ? S.noRentReceipts : S.noExternalReceipts,
                 style: TextStyle(
                     color: AppColors.current.textMuted, fontWeight: FontWeight.bold)),
           );
@@ -110,15 +111,15 @@ class _ReceiptCard extends ConsumerWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('سڕینەوەی پسولە',
+        title: Text(S.deleteReceipt,
             style: TextStyle(
                 color: AppColors.current.textStrong, fontWeight: FontWeight.bold)),
         content: Text(
-            'دڵنیایت لە سڕینەوەی پسولە #${receipt.receiptNumber}؟ ئەم کردارە ناگەڕێتەوە.'),
+            S.deleteReceiptConfirm(receipt.receiptNumber)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('پاشگەزبوونەوە',
+            child: Text(S.cancel,
                 style: TextStyle(color: AppColors.current.textMuted)),
           ),
           ElevatedButton(
@@ -126,7 +127,7 @@ class _ReceiptCard extends ConsumerWidget {
                 backgroundColor: AppColors.current.danger,
                 foregroundColor: Colors.white),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('سڕینەوە'),
+            child: Text(S.delete),
           ),
         ],
       ),
@@ -137,14 +138,14 @@ class _ReceiptCard extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: const Text('پسولە سڕایەوە'), backgroundColor: _green),
+              content: Text(S.receiptDeleted), backgroundColor: _green),
         );
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('هەڵە: $e'),
+              content: Text(S.error(e)),
               backgroundColor: AppColors.current.danger),
         );
       }
@@ -153,7 +154,7 @@ class _ReceiptCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    watchPalette(context);
+    watchAppShell(context);
     final isPay = receipt.type.isPayment;
     final color = isPay ? AppColors.current.danger : _green;
     final isAdmin = ref.watch(currentUserProvider).isAdmin;
@@ -182,17 +183,17 @@ class _ReceiptCard extends ConsumerWidget {
           backgroundColor: color.withValues(alpha: 0.12),
           child: Icon(isPay ? Icons.north_east : Icons.south_west, color: color),
         ),
-        title: Text('${receipt.type.titleKu}  ·  #${receipt.receiptNumber}',
+        title: Text('${receipt.type.uiLabel}  ·  #${receipt.receiptNumber}',
             style: TextStyle(
                 fontWeight: FontWeight.bold, color: AppColors.current.textStrong, fontSize: 14)),
         subtitle: Text(
-            '${receipt.personName} · ${_money.format(receipt.amount)} ${receipt.currency.label}\n${_df.format(receipt.date)}'),
+            '${receipt.personName} · ${_money.format(receipt.amount)} ${receipt.currency.uiLabel}\n${_df.format(receipt.date)}'),
         isThreeLine: true,
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              tooltip: 'پرینت',
+              tooltip: S.print,
               icon: Icon(Icons.print_outlined, color: AppColors.current.textStrong),
               onPressed: () => ReceiptPdfRemote.printReceipt(receipt.id),
             ),
@@ -216,7 +217,7 @@ class _ReceiptCard extends ConsumerWidget {
                         Icon(Icons.edit_outlined,
                             color: AppColors.current.textStrong, size: 20),
                         const SizedBox(width: 12),
-                        const Text('دەستکاری'),
+                        Text(S.edit),
                       ],
                     ),
                   ),
@@ -227,7 +228,7 @@ class _ReceiptCard extends ConsumerWidget {
                         Icon(Icons.delete_outline,
                             color: AppColors.current.danger, size: 20),
                         const SizedBox(width: 12),
-                        const Text('سڕینەوە'),
+                        Text(S.delete),
                       ],
                     ),
                   ),

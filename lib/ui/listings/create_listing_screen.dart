@@ -216,7 +216,7 @@ class _CreateListingScreenState extends ConsumerState<CreateListingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    watchPalette(context);
+    watchAppShell(context);
     return Scaffold(
       backgroundColor: appBackgroundColor,
       appBar: AppBar(

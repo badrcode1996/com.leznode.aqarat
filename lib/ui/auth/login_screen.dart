@@ -71,7 +71,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    watchPalette(context);
+    watchAppShell(context);
     return Scaffold(
       backgroundColor: primaryDarkBlue,
       body: SafeArea(

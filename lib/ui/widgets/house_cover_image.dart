@@ -77,7 +77,7 @@ class _HouseGalleryState extends State<HouseGallery> {
 
   @override
   Widget build(BuildContext context) {
-    watchPalette(context);
+    watchAppShell(context);
     if (widget.urls.isEmpty) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -107,8 +107,8 @@ class _HouseGalleryState extends State<HouseGallery> {
                   top: 8,
                   end: 8,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 3),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.55),
                       borderRadius: BorderRadius.circular(20),
@@ -163,29 +163,32 @@ class _GalleryPage extends StatelessWidget {
   final BoxFit fit;
 
   @override
-  Widget build(BuildContext context) => FutureBuilder<Uint8List>(
-        future: houseImageBytes(url),
-        builder: (_, snap) {
-          if (snap.hasError) {
-            return Container(
-              color: _fill,
-              alignment: Alignment.center,
-              child: Icon(Icons.broken_image_outlined,
-                  color: AppColors.current.textFaint, size: 40),
-            );
-          }
-          if (!snap.hasData) {
-            return Container(
-              color: _fill,
-              alignment: Alignment.center,
-              child: CircularProgressIndicator(
-                  color: AppColors.current.textStrong, strokeWidth: 2),
-            );
-          }
-          return Image.memory(snap.data!,
-              width: double.infinity, height: double.infinity, fit: fit);
-        },
-      );
+  Widget build(BuildContext context) {
+    watchAppShell(context);
+    return FutureBuilder<Uint8List>(
+      future: houseImageBytes(url),
+      builder: (_, snap) {
+        if (snap.hasError) {
+          return Container(
+            color: _fill,
+            alignment: Alignment.center,
+            child: Icon(Icons.broken_image_outlined,
+                color: AppColors.current.textFaint, size: 40),
+          );
+        }
+        if (!snap.hasData) {
+          return Container(
+            color: _fill,
+            alignment: Alignment.center,
+            child: CircularProgressIndicator(
+                color: AppColors.current.textStrong, strokeWidth: 2),
+          );
+        }
+        return Image.memory(snap.data!,
+            width: double.infinity, height: double.infinity, fit: fit);
+      },
+    );
+  }
 }
 
 /// Full-screen, pinch-zoomable view of the gallery.
@@ -254,7 +257,7 @@ class HouseThumb extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    watchPalette(context);
+    watchAppShell(context);
     if (url.isEmpty) return placeholder;
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),

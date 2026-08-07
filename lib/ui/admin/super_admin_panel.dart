@@ -81,7 +81,7 @@ class SuperAdminPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    watchPalette(context);
+    watchAppShell(context);
     final companies = ref.watch(companiesProvider);
 
     return Scaffold(
@@ -190,7 +190,7 @@ class _SuperAdminsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    watchPalette(context);
+    watchAppShell(context);
     final admins = ref.watch(superAdminsProvider);
     return Scaffold(
       backgroundColor: appBackgroundColor,
@@ -288,7 +288,7 @@ class _AddSuperAdminScreenState extends ConsumerState<_AddSuperAdminScreen> {
 
   @override
   Widget build(BuildContext context) {
-    watchPalette(context);
+    watchAppShell(context);
     return Scaffold(
       backgroundColor: appBackgroundColor,
       appBar: modernAppBar('سوپەر ئەدمینی نوێ'),
@@ -458,7 +458,7 @@ class _CreateCompanyScreenState extends ConsumerState<_CreateCompanyScreen> {
 
   @override
   Widget build(BuildContext context) {
-    watchPalette(context);
+    watchAppShell(context);
     return Scaffold(
       backgroundColor: appBackgroundColor,
       appBar: modernAppBar('کۆمپانیای نوێ'),
@@ -698,7 +698,7 @@ class _EditCompanyScreenState extends ConsumerState<_EditCompanyScreen> {
 
   @override
   Widget build(BuildContext context) {
-    watchPalette(context);
+    watchAppShell(context);
     // The saved logo shows until a new one is picked, so the picker always
     // previews what will actually be stored.
     final DecorationImage? logo = _logoBytes != null
@@ -837,7 +837,7 @@ class _CompanyUsersScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    watchPalette(context);
+    watchAppShell(context);
     final users = ref.watch(companyUsersProvider(company.id));
     return Scaffold(
       backgroundColor: appBackgroundColor,
@@ -1769,7 +1769,7 @@ class _AddUserScreenState extends ConsumerState<_AddUserScreen> {
 
   @override
   Widget build(BuildContext context) {
-    watchPalette(context);
+    watchAppShell(context);
     return Scaffold(
       backgroundColor: appBackgroundColor,
       appBar: modernAppBar('بەکارهێنەری نوێ'),
@@ -1874,7 +1874,7 @@ class _PlanSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    watchPalette(context);
+    watchAppShell(context);
     return SegmentedButton<CompanyPlan>(
       showSelectedIcon: false,
       style: SegmentedButton.styleFrom(
@@ -1906,7 +1906,7 @@ class _AccessSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    watchPalette(context);
+    watchAppShell(context);
     return SegmentedButton<bool>(
       style: SegmentedButton.styleFrom(
         backgroundColor: AppColors.current.card,

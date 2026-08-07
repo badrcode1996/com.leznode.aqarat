@@ -22,7 +22,7 @@ class CommissionsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    watchPalette(context);
+    watchAppShell(context);
     final async = ref.watch(contractsStreamProvider);
     return Scaffold(
       backgroundColor: _appBg,
@@ -156,7 +156,7 @@ class _CommissionCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    watchPalette(context);
+    watchAppShell(context);
     final confirmed = item.confirmed;
     return Container(
       padding: const EdgeInsets.all(16),
@@ -218,12 +218,12 @@ class _CommissionCard extends ConsumerWidget {
             children: [
               Expanded(
                 child: _amountBox(S.estimated,
-                    '${CommissionsScreen._money.format(_calculated)} ${contract.currency.label}'),
+                    '${CommissionsScreen._money.format(_calculated)} ${contract.currency.uiLabel}'),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: _amountBox(S.receivedLabel,
-                    '${CommissionsScreen._money.format(item.paid)} ${contract.currency.label}',
+                    '${CommissionsScreen._money.format(item.paid)} ${contract.currency.uiLabel}',
                     highlight: true),
               ),
             ],

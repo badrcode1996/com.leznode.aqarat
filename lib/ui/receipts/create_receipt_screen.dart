@@ -9,6 +9,7 @@ import '../../models/receipt_model.dart';
 import '../widgets/processing_dialog.dart';
 import 'receipt_preview_screen.dart';
 import '../../theme/app_colors.dart';
+import '../../l10n/app_strings.dart';
 
 Color get _appBg => AppColors.current.pageBg;
 
@@ -121,7 +122,7 @@ class _CreateReceiptScreenState extends ConsumerState<CreateReceiptScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('هەڵە: $e'), backgroundColor: AppColors.current.danger));
+            SnackBar(content: Text(S.error(e)), backgroundColor: AppColors.current.danger));
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -130,13 +131,13 @@ class _CreateReceiptScreenState extends ConsumerState<CreateReceiptScreen> {
 
   @override
   Widget build(BuildContext context) {
-    watchPalette(context);
+    watchAppShell(context);
     return Scaffold(
       backgroundColor: _appBg,
       appBar: AppBar(
         title: Text(_isEdit
-            ? 'دەستکاری پسولە #${_editing!.receiptNumber}'
-            : (_isPay ? 'پسولەی پارەدان' : 'پسولەی پارە وەرگرتن')),
+            ? S.editReceiptTitle(_editing!.receiptNumber)
+            : (_isPay ? S.receiptOut : S.receiptIn)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -148,7 +149,7 @@ class _CreateReceiptScreenState extends ConsumerState<CreateReceiptScreen> {
               TextFormField(
                 controller: _person,
                 decoration: InputDecoration(
-                    labelText: _isPay ? 'پێدرا بە بەڕێز' : 'وەرمگرت لە بەڕێز'),
+                    labelText: _isPay ? S.paidTo : S.receivedFrom),
                 validator: _req,
               ),
               const SizedBox(height: 12),
@@ -156,14 +157,14 @@ class _CreateReceiptScreenState extends ConsumerState<CreateReceiptScreen> {
                 controller: _amount,
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(labelText: 'بڕی پارە'),
+                decoration: InputDecoration(labelText: S.amount),
                 validator: _req,
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<Currency>(
                 isExpanded: true,
                 initialValue: _currency,
-                decoration: const InputDecoration(labelText: 'دراو'),
+                decoration: InputDecoration(labelText: S.currencyField),
                 items: Currency.values
                     .map((c) =>
                         DropdownMenuItem(value: c, child: Text(c.label)))
@@ -173,22 +174,22 @@ class _CreateReceiptScreenState extends ConsumerState<CreateReceiptScreen> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _purpose,
-                decoration: const InputDecoration(labelText: 'لە بڕی (مەبەست)'),
+                decoration: InputDecoration(labelText: S.purpose),
                 validator: _req,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _note,
                 maxLines: 2,
-                decoration: const InputDecoration(labelText: 'تێبینی'),
+                decoration: InputDecoration(labelText: S.notes),
               ),
               const SizedBox(height: 8),
               Row(
                 children: [
-                  Expanded(child: Text('بەروار: ${_df.format(_date)}')),
+                  Expanded(child: Text(S.dateWithValue(_df.format(_date)))),
                   TextButton.icon(
                     icon: const Icon(Icons.calendar_today, size: 18),
-                    label: const Text('بەروار'),
+                    label: Text(S.date),
                     onPressed: () async {
                       final picked = await showDatePicker(
                         context: context,
@@ -210,7 +211,7 @@ class _CreateReceiptScreenState extends ConsumerState<CreateReceiptScreen> {
                         width: 20,
                         child: CircularProgressIndicator(
                             color: Colors.white, strokeWidth: 2))
-                    : Text(_isEdit ? 'پاشەکەوتکردن' : 'دروستکردن و پرینت'),
+                    : Text(_isEdit ? S.save : S.createAndPrint),
               ),
             ],
           ),
@@ -220,5 +221,5 @@ class _CreateReceiptScreenState extends ConsumerState<CreateReceiptScreen> {
   }
 
   String? _req(String? v) =>
-      (v == null || v.trim().isEmpty) ? 'پێویستە' : null;
+      (v == null || v.trim().isEmpty) ? S.requiredField : null;
 }

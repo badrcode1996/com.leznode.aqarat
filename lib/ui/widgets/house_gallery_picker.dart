@@ -167,7 +167,7 @@ class _HouseGalleryPickerState extends State<HouseGalleryPicker> {
 
   @override
   Widget build(BuildContext context) {
-    watchPalette(context);
+    watchAppShell(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -277,7 +277,7 @@ class DottedAddBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    watchPalette(context);
+    watchAppShell(context);
     return Container(
       width: size,
       height: size,

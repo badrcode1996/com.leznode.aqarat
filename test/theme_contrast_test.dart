@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:aqarat/l10n/app_language.dart';
 import 'package:aqarat/theme/app_colors.dart';
 import 'package:aqarat/theme/app_theme.dart';
 
@@ -84,16 +85,16 @@ void main() {
   }
 
   test('both themes publish the palette extension', () {
-    expect(AppTheme.light().extension<AppColors>(), AppColors.light);
-    expect(AppTheme.dark().extension<AppColors>(), AppColors.dark);
+    expect(AppTheme.light(AppLanguage.ku).extension<AppColors>(), AppColors.light);
+    expect(AppTheme.dark(AppLanguage.ku).extension<AppColors>(), AppColors.dark);
   });
 
   testWidgets('the dark theme actually resolves to the dark palette',
       (tester) async {
     late AppColors seen;
     await tester.pumpWidget(MaterialApp(
-      theme: AppTheme.light(),
-      darkTheme: AppTheme.dark(),
+      theme: AppTheme.light(AppLanguage.ku),
+      darkTheme: AppTheme.dark(AppLanguage.ku),
       themeMode: ThemeMode.dark,
       home: Builder(builder: (context) {
         seen = context.c;

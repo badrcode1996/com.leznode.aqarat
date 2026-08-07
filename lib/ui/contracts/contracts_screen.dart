@@ -32,7 +32,7 @@ class ContractsArchiveBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    watchPalette(context);
+    watchAppShell(context);
     return DefaultTabController(
       length: 2,
       child: Column(
@@ -46,9 +46,9 @@ class ContractsArchiveBody extends StatelessWidget {
               labelColor: AppColors.current.textStrong,
               unselectedLabelColor: AppColors.current.textMuted,
               labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-              tabs: const [
-                Tab(text: 'کرێ'),
-                Tab(text: 'فرۆشتن'),
+              tabs: [
+                Tab(text: S.contractRent),
+                Tab(text: S.contractSale),
               ],
             ),
           ),
@@ -88,16 +88,16 @@ class _ContractsListState extends ConsumerState<_ContractsList> {
 
   @override
   Widget build(BuildContext context) {
-    watchPalette(context);
+    watchAppShell(context);
     final async = ref.watch(contractsStreamProvider);
     return async.when(
       loading: () => Center(child: CircularProgressIndicator(color: AppColors.current.textStrong)),
-      error: (e, _) => Center(child: Text('هەڵە: $e', style: TextStyle(color: AppColors.current.danger))),
+      error: (e, _) => Center(child: Text(S.error(e), style: TextStyle(color: AppColors.current.danger))),
       data: (all) {
         final ofType = all.where((c) => c.type == type).toList();
         if (ofType.isEmpty) {
           return _emptyBox(
-            type == ContractType.rent ? 'هیچ گرێبەستێکی کرێ نییە' : 'هیچ گرێبەستێکی فرۆشتن نییە',
+            type == ContractType.rent ? S.noRentContracts : S.noSaleContracts,
             type == ContractType.rent ? Icons.key_outlined : Icons.sell_outlined,
           );
         }
@@ -108,7 +108,7 @@ class _ContractsListState extends ConsumerState<_ContractsList> {
             _searchField(),
             Expanded(
               child: contracts.isEmpty
-                  ? _emptyBox('هیچ ئەنجامێک نەدۆزرایەوە بۆ «$_query»',
+                  ? _emptyBox(S.noResultsFor(_query),
                       Icons.search_off_rounded)
                   : ListView.separated(
                       padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
@@ -132,7 +132,7 @@ class _ContractsListState extends ConsumerState<_ContractsList> {
           onChanged: (v) => setState(() => _query = v.trim()),
           textInputAction: TextInputAction.search,
           decoration: InputDecoration(
-            hintText: 'گەڕان بە ناو، ژمارەی مۆبایل، ژمارەی عەقار…',
+            hintText: S.searchHint,
             hintStyle: TextStyle(color: AppColors.current.textMuted, fontSize: 14),
             prefixIcon: Icon(Icons.search_rounded, color: AppColors.current.textStrong),
             suffixIcon: _query.isEmpty
@@ -238,7 +238,7 @@ class _ContractCard extends ConsumerWidget {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 18, 20, 6),
-              child: Text('بینینی گرێبەست بە کام زمان؟',
+              child: Text(S.pickViewLanguage,
                   style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
@@ -247,15 +247,15 @@ class _ContractCard extends ConsumerWidget {
             ListTile(
               leading: Icon(Icons.description_outlined,
                   color: AppColors.current.textStrong),
-              title: const Text('کوردی',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
+              title: Text(S.langKurdish,
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
               onTap: () => Navigator.pop(ctx, 'ku'),
             ),
             ListTile(
               leading:
                   Icon(Icons.translate_rounded, color: AppColors.current.textStrong),
-              title: const Text('عەرەبی',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
+              title: Text(S.langArabic,
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
               onTap: () => Navigator.pop(ctx, 'ar'),
             ),
             const SizedBox(height: 8),
@@ -274,7 +274,7 @@ class _ContractCard extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('پرینت سەرکەوتوو نەبوو: $e'),
+            content: Text(S.printFailed(e)),
             backgroundColor: AppColors.current.danger,
           ),
         );
@@ -292,8 +292,8 @@ class _ContractCard extends ConsumerWidget {
         builder: (_) => Scaffold(
           backgroundColor: appBackgroundColor,
           appBar: AppBar(
-            title: const Text('بەڵگەکان',
-                style: TextStyle(fontWeight: FontWeight.bold)),
+            title: Text(S.attachments,
+                style: const TextStyle(fontWeight: FontWeight.bold)),
             backgroundColor: primaryDarkBlue,
             foregroundColor: Colors.white,
             elevation: 0,
@@ -325,15 +325,15 @@ class _ContractCard extends ConsumerWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('سڕینەوەی گرێبەست',
+        title: Text(S.deleteContract,
             style: TextStyle(
                 color: AppColors.current.textStrong, fontWeight: FontWeight.bold)),
         content: Text(
-            'دڵنیایت لە سڕینەوەی گرێبەست #${contract.contractNumber} (${contract.listTitle})؟ ئەم کردارە ناگەڕێتەوە.'),
+            S.deleteContractConfirm(contract.contractNumber, contract.listTitle)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('پاشگەزبوونەوە',
+            child: Text(S.cancel,
                 style: TextStyle(color: AppColors.current.textMuted)),
           ),
           ElevatedButton(
@@ -341,7 +341,7 @@ class _ContractCard extends ConsumerWidget {
                 backgroundColor: AppColors.current.danger,
                 foregroundColor: Colors.white),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('سڕینەوە'),
+            child: Text(S.delete),
           ),
         ],
       ),
@@ -352,7 +352,7 @@ class _ContractCard extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: const Text('گرێبەست سڕایەوە'),
+              content: Text(S.contractDeleted),
               backgroundColor: AppColors.current.success),
         );
       }
@@ -360,7 +360,7 @@ class _ContractCard extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('هەڵە: $e'),
+              content: Text(S.error(e)),
               backgroundColor: AppColors.current.danger),
         );
       }
@@ -369,7 +369,7 @@ class _ContractCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    watchPalette(context);
+    watchAppShell(context);
     final isRent = contract.type == ContractType.rent;
     final company = ref.watch(currentCompanyProvider).value;
     final template =
@@ -382,7 +382,7 @@ class _ContractCard extends ConsumerWidget {
     // the built-in template always carries the Arabic clauses.
     final arabicAvailable = features.arabicContracts &&
         (template ?? ContractTemplate.defaults()).arabicReadyFor(contract);
-    final typeLabel = isRent ? 'کرێ' : 'فرۆشتن';
+    final typeLabel = isRent ? S.contractRent : S.contractSale;
 
     // ڕەنگکردنی جۆری گرێبەستەکە
     final Color iconBgColor = isRent ? AppColors.current.success.withValues(alpha: 0.15) : AppColors.current.info.withValues(alpha: 0.15);
@@ -508,7 +508,7 @@ class _ContractCard extends ConsumerWidget {
                     // بەکارهێنەر بزانێت بەڵگەکان لەکوێن.
                     if (contract.attachmentUrls.isNotEmpty)
                       IconButton(
-                        tooltip: 'بەڵگەکان (${contract.attachmentUrls.length})',
+                        tooltip: S.attachmentsCount(contract.attachmentUrls.length),
                         icon: Badge.count(
                           count: contract.attachmentUrls.length,
                           backgroundColor: accentYellow,
@@ -520,21 +520,21 @@ class _ContractCard extends ConsumerWidget {
                       )
                     else
                       IconButton(
-                        tooltip: 'بەڵگەکان (بەتاڵ)',
+                        tooltip: S.attachmentsEmpty,
                         icon: Icon(Icons.photo_library_outlined,
                             color: AppColors.current.textFaint),
                         onPressed: () => ScaffoldMessenger.of(context)
-                            .showSnackBar(const SnackBar(
+                            .showSnackBar(SnackBar(
                           content: Text(
-                              'هیچ بەڵگەیەک زیاد نەکراوە — لە دەستکاریدا دەتوانیت زیادی بکەیت'),
+                              S.attachmentsNoneHint),
                         )),
                       ),
                     // InkWell, not IconButton: IconButton has no long-press,
                     // and the long press is what offers the Arabic edition.
                     Tooltip(
                       message: arabicAvailable
-                          ? 'پێشبینین (دایبگرە بۆ هەڵبژاردنی زمان)'
-                          : 'پێشبینین',
+                          ? S.previewHint
+                          : S.preview,
                       child: InkWell(
                         customBorder: const CircleBorder(),
                         onTap: () => _openPreview(context, company, template, arabicAvailable: arabicAvailable),
@@ -575,7 +575,7 @@ class _ContractCard extends ConsumerWidget {
                             children: [
                               Icon(Icons.visibility_outlined, color: AppColors.current.textStrong, size: 20),
                               const SizedBox(width: 12),
-                              const Text('پێشبینین'),
+                              Text(S.preview),
                             ],
                           ),
                         ),
@@ -585,7 +585,7 @@ class _ContractCard extends ConsumerWidget {
                             children: [
                               Icon(Icons.print_outlined, color: AppColors.current.textStrong, size: 20),
                               const SizedBox(width: 12),
-                              const Text('پرینت'),
+                              Text(S.print),
                             ],
                           ),
                         ),
@@ -599,7 +599,7 @@ class _ContractCard extends ConsumerWidget {
                                 Icon(Icons.translate_rounded,
                                     color: AppColors.current.textStrong, size: 20),
                                 const SizedBox(width: 12),
-                                const Text('پرینتی عەرەبی'),
+                                Text(S.printArabic),
                               ],
                             ),
                           ),
@@ -609,7 +609,7 @@ class _ContractCard extends ConsumerWidget {
                             children: [
                               Icon(Icons.share_outlined, color: AppColors.current.textStrong, size: 20),
                               const SizedBox(width: 12),
-                              const Text('هاوبەشکردن'),
+                              Text(S.share),
                             ],
                           ),
                         ),
@@ -620,7 +620,7 @@ class _ContractCard extends ConsumerWidget {
                               children: [
                                 Icon(Icons.edit_outlined, color: AppColors.current.textStrong, size: 20),
                                 const SizedBox(width: 12),
-                                const Text('دەستکاری'),
+                                Text(S.edit),
                               ],
                             ),
                           ),
@@ -630,7 +630,7 @@ class _ContractCard extends ConsumerWidget {
                               children: [
                                 Icon(Icons.delete_outline, color: AppColors.current.danger, size: 20),
                                 const SizedBox(width: 12),
-                                const Text('سڕینەوە'),
+                                Text(S.delete),
                               ],
                             ),
                           ),

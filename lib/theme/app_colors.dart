@@ -223,18 +223,44 @@ extension AppColorsX on BuildContext {
   AppColors get c => Theme.of(this).extension<AppColors>()!;
 }
 
-/// Call this at the top of any `build` that reads colours from
-/// [AppColors.current].
+/// Marks the app-wide state that the static accessors read.
 ///
-/// The palette is a static so it can be reached from enum members and model
-/// getters that have no BuildContext. The price is that Flutter cannot SEE that
-/// dependency: a widget reading `AppColors.current` never registers with the
-/// Theme, so switching brightness leaves it painting the old colours until
-/// something unrelated happens to rebuild it. That is why dark mode first
-/// landed as a patchwork — only freshly-pushed routes came out dark, and the
-/// tab screens (held in a `const` list, so never rebuilt) stayed light.
+/// Holds nothing but a [revision], bumped whenever the brightness OR the
+/// interface language changes. Screens depend on it through [watchAppShell];
+/// it lives here, rather than alongside the language, only so that
+/// `theme/app_colors.dart` stays the single import a screen needs.
+class AppShellScope extends InheritedWidget {
+  const AppShellScope({
+    super.key,
+    required this.revision,
+    required super.child,
+  });
+
+  final int revision;
+
+  @override
+  bool updateShouldNotify(AppShellScope oldWidget) =>
+      oldWidget.revision != revision;
+}
+
+/// Call this at the top of any `build` that reads [AppColors.current] or the
+/// string catalogue.
 ///
-/// This registers the dependency the static hides. It reads nothing; the
-/// colours still come from [AppColors.current], which [AppTheme] refreshes
-/// before any of this builds.
-void watchPalette(BuildContext context) => Theme.of(context);
+/// Both are statics, so they can be reached from enum members and model getters
+/// that have no BuildContext. The price is that Flutter cannot SEE those
+/// dependencies: a widget reading a static never registers with anything, so
+/// changing brightness or language leaves it rendering the old values until
+/// something unrelated happens to rebuild it.
+///
+/// That is why dark mode first landed as a patchwork — only freshly-pushed
+/// routes came out dark, and the tab screens (held in a `const` list, so never
+/// rebuilt) stayed light. Registering the Theme fixed brightness but NOT
+/// language: Kurdish and Arabic are both RTL, so switching between them changed
+/// nothing Flutter tracks and every screen stayed Kurdish. Hence the scope.
+///
+/// It reads nothing. The values still come from the statics, which are
+/// refreshed before any of this builds.
+void watchAppShell(BuildContext context) {
+  Theme.of(context);
+  context.dependOnInheritedWidgetOfExactType<AppShellScope>();
+}

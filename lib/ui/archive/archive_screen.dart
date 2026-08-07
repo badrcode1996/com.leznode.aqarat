@@ -17,7 +17,7 @@ class ArchiveScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    watchPalette(context);
+    watchAppShell(context);
     // Warm the PDF render functions as soon as the archive opens, so a print
     // tap moments later doesn't hit a cold instance (throttled internally).
     PdfWarmup.ping();

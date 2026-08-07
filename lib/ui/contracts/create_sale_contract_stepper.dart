@@ -15,6 +15,7 @@ import 'doc_lang_field.dart';
 import 'widgets/contract_docs_field.dart';
 import 'widgets/saving_dialog.dart';
 import '../../theme/app_colors.dart';
+import '../../l10n/app_strings.dart';
 
 // ڕەنگە سەرەکییەکان بۆ یەکپارچەیی دیزاینەکە
 Color get primaryDarkBlue => AppColors.current.brand;
@@ -183,8 +184,8 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
     // Blocking dialog for the whole save — uploads + transaction. Closed in
     // _closeSavingDialog on every exit path, success or failure.
     showSavingDialog(context, widget.existing == null
-        ? 'چاوەڕێ بە، گرێبەستەکە دروست دەکرێت...'
-        : 'چاوەڕێ بە، گرێبەستەکە نوێ دەکرێتەوە...');
+        ? S.savingContract
+        : S.updatingContract);
     _savingDialogOpen = true;
 
     final user = ref.read(currentUserProvider);
@@ -200,7 +201,7 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
       _closeSavingDialog();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('بارکردنی بەڵگەکان سەرکەوتوو نەبوو: $e'),
+            content: Text(S.attachmentUploadFailed(e)),
             backgroundColor: AppColors.current.danger));
         setState(() => _saving = false);
       }
@@ -255,7 +256,7 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
         _closeSavingDialog();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: const Text('گرێبەستی فرۆشتن نوێکرایەوە'), backgroundColor: AppColors.current.success));
+              SnackBar(content: Text(S.saleContractUpdated), backgroundColor: AppColors.current.success));
           Navigator.of(context).pop(existing.id);
         }
         return;
@@ -267,7 +268,7 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
       _closeSavingDialog();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('گرێبەستی فرۆشتن دروستکرا ($id)'), backgroundColor: AppColors.current.success));
+          SnackBar(content: Text(S.contractCreated(S.saleContract, id)), backgroundColor: AppColors.current.success));
       // Replace the stepper with the new contract's preview, so going back
       // lands on the list instead of a filled-in form.
       if (saved != null) {
@@ -286,7 +287,7 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
       _closeSavingDialog();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('سەرکەوتوو نەبوو: $e'), backgroundColor: AppColors.current.danger));
+            SnackBar(content: Text(S.saveFailed(e)), backgroundColor: AppColors.current.danger));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -311,7 +312,7 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
 
   @override
   Widget build(BuildContext context) {
-    watchPalette(context);
+    watchAppShell(context);
     // Keep the lawyer list warm so the picker is ready by step 3. Plans without
     // the directory must not run this query at all — it would only ever return
     // an empty list for them.
@@ -319,7 +320,7 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
     return Scaffold(
       backgroundColor: appBackgroundColor,
       appBar: AppBar(
-        title: Text(_isEdit ? 'دەستکاری گرێبەستی فرۆشتن' : 'گرێبەستی فرۆشتنی نوێ', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        title: Text(_isEdit ? S.editSaleContract : S.newSaleContract, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         backgroundColor: primaryDarkBlue,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -347,8 +348,8 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
                     child: _step == 2
                         ? (_saving
                         ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-                        : Text(_isEdit ? 'پاشەکەوتکردن' : 'دروستکردن', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)))
-                        : const Text('دواتر', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        : Text(_isEdit ? S.save : S.create, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)))
+                        : Text(S.next, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -362,7 +363,7 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
                       onPressed: details.onStepCancel,
-                      child: const Text('گەڕانەوە', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      child: Text(S.back, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
                   ),
               ],
@@ -370,7 +371,7 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
           ),
           steps: [
             Step(
-              title: const Text('لایەنەکان', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              title: Text(S.stepParties, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               isActive: _step >= 0,
               state: _step > 0 ? StepState.complete : StepState.indexed,
               content: Form(
@@ -379,18 +380,18 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
                   padding: const EdgeInsets.only(top: 16),
                   child: Column(
                     children: [
-                      _text(_party1Name, 'لایەنی یەکەم (فرۆشیار)', icon: Icons.person_outline),
-                      _text(_party1Mobile, 'ژمارەی مۆبایل (فرۆشیار)', keyboard: TextInputType.phone, icon: Icons.phone_iphone),
+                      _text(_party1Name, S.party1Seller, icon: Icons.person_outline),
+                      _text(_party1Mobile, S.sellerMobile, keyboard: TextInputType.phone, icon: Icons.phone_iphone),
                       const Divider(height: 32),
-                      _text(_party2Name, 'لایەنی دووەم (کڕیار)', icon: Icons.person_outline),
-                      _text(_party2Mobile, 'ژمارەی مۆبایل (کڕیار)', keyboard: TextInputType.phone, icon: Icons.phone_iphone),
+                      _text(_party2Name, S.party2Buyer, icon: Icons.person_outline),
+                      _text(_party2Mobile, S.buyerMobile, keyboard: TextInputType.phone, icon: Icons.phone_iphone),
                     ],
                   ),
                 ),
               ),
             ),
             Step(
-              title: const Text('موڵک', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              title: Text(S.stepProperty, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               isActive: _step >= 1,
               state: _step > 1 ? StepState.complete : StepState.indexed,
               content: Form(
@@ -399,17 +400,17 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
                   padding: const EdgeInsets.only(top: 16),
                   child: Column(
                     children: [
-                      _text(_propertyType, 'جۆری موڵک (بۆ نموونە: خانوو)', icon: Icons.home_work_outlined),
-                      _text(_projectName, 'پڕۆژە / گەڕەک', icon: Icons.location_city_outlined),
-                      _text(_propertyNumber, 'ژمارەی عەقار', icon: Icons.numbers),
-                      _text(_area, 'ڕووبەر (م²)', keyboard: const TextInputType.numberWithOptions(decimal: true), icon: Icons.square_foot),
+                      _text(_propertyType, S.propertyTypeHint, icon: Icons.home_work_outlined),
+                      _text(_projectName, S.projectOrNeighborhood, icon: Icons.location_city_outlined),
+                      _text(_propertyNumber, S.propertyNumber, icon: Icons.numbers),
+                      _text(_area, S.areaLabel, keyboard: const TextInputType.numberWithOptions(decimal: true), icon: Icons.square_foot),
                     ],
                   ),
                 ),
               ),
             ),
             Step(
-              title: const Text('دارایی و بەروار', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              title: Text(S.stepFinancials, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               isActive: _step >= 2,
               content: Form(
                 key: _financialsKey,
@@ -418,14 +419,14 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _text(_totalPrice, 'نرخی فرۆشتن', keyboard: const TextInputType.numberWithOptions(decimal: true), icon: Icons.payments_outlined),
+                      _text(_totalPrice, S.salePrice, keyboard: const TextInputType.numberWithOptions(decimal: true), icon: Icons.payments_outlined),
 
                       Padding(
                         padding: const EdgeInsets.only(bottom: 16),
                         child: DropdownButtonFormField<Currency>(
                           isExpanded: true,
                           initialValue: _currency,
-                          decoration: modernInputDecoration(label: 'جۆری دراو', icon: Icons.money),
+                          decoration: modernInputDecoration(label: S.currencyType, icon: Icons.money),
                           items: Currency.values
                               .map((c) => DropdownMenuItem(value: c, child: Text(c.label, style: const TextStyle(fontWeight: FontWeight.bold))))
                               .toList(),
@@ -433,22 +434,22 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
                         ),
                       ),
 
-                      _text(_downPayment, 'پێشەکی (عربون)', keyboard: const TextInputType.numberWithOptions(decimal: true), icon: Icons.monetization_on_outlined),
-                      _text(_paymentMethod, 'شێوازی پارەدان', icon: Icons.account_balance_wallet_outlined),
-                      _text(_lateFee, 'پێدانی بڕی دواکەوتن بۆ ڕۆژێک', keyboard: const TextInputType.numberWithOptions(decimal: true), icon: Icons.warning_amber_rounded),
-                      _text(_withdrawal, 'بڕی پاشگەزبوونەوە', keyboard: const TextInputType.numberWithOptions(decimal: true), icon: Icons.money_off_outlined),
+                      _text(_downPayment, S.downPaymentSale, keyboard: const TextInputType.numberWithOptions(decimal: true), icon: Icons.monetization_on_outlined),
+                      _text(_paymentMethod, S.paymentMethod, icon: Icons.account_balance_wallet_outlined),
+                      _text(_lateFee, S.lateFeePerDay, keyboard: const TextInputType.numberWithOptions(decimal: true), icon: Icons.warning_amber_rounded),
+                      _text(_withdrawal, S.withdrawalAmount, keyboard: const TextInputType.numberWithOptions(decimal: true), icon: Icons.money_off_outlined),
                       // ڕێژەی عمولە (%) — هەر لایەک. لە هەردوو لا وەردەگیرێت.
                       Padding(
                         padding: const EdgeInsets.only(bottom: 16),
                         child: TextFormField(
                           controller: _commission,
                           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          decoration: modernInputDecoration(label: 'ڕێژەی عمولە % (هەر لایەک)', icon: Icons.percent_rounded),
+                          decoration: modernInputDecoration(label: S.commissionRate, icon: Icons.percent_rounded),
                         ),
                       ),
                       _lawyerField(),
 
-                      _datePicker('ڕێکەوتی تەسلیم', _deliveryDate, (d) => setState(() => _deliveryDate = d)),
+                      _datePicker(S.deliveryDate, _deliveryDate, (d) => setState(() => _deliveryDate = d)),
 
                       const SizedBox(height: 12),
                       ContractDocsField(controller: _docs),
@@ -475,18 +476,18 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
         padding: const EdgeInsets.only(bottom: 16),
         child: TextFormField(
           controller: _lawyer,
-          decoration: modernInputDecoration(label: 'پارێزەر', icon: Icons.gavel_rounded)
+          decoration: modernInputDecoration(label: S.lawyer, icon: Icons.gavel_rounded)
               .copyWith(
             suffixIcon: _hasLawyerDirectory
                 ? IconButton(
-                    tooltip: 'هەڵبژاردن لە لیست',
+                    tooltip: S.pickFromList,
                     icon: Icon(Icons.people_alt_outlined,
                         color: AppColors.current.textStrong),
                     onPressed: _pickLawyer,
                   )
                 : null,
           ),
-          validator: (v) => (v == null || v.trim().isEmpty) ? 'پێویستە' : null,
+          validator: (v) => (v == null || v.trim().isEmpty) ? S.requiredField : null,
         ),
       );
 
@@ -506,11 +507,11 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
                   children: [
                     Icon(Icons.gavel_rounded, size: 48, color: AppColors.current.textMuted),
                     const SizedBox(height: 12),
-                    Text('هیچ پارێزەرێک زیاد نەکراوە',
+                    Text(S.noLawyers,
                         style: TextStyle(
                             color: AppColors.current.textMuted, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 4),
-                    Text('لە ڕێکخستن > پارێزەران دەیانخەیتە سەر',
+                    Text(S.noLawyersHint,
                         style: TextStyle(color: AppColors.current.textMuted, fontSize: 12)),
                   ],
                 ),
@@ -522,7 +523,7 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                     child: Align(
                       alignment: AlignmentDirectional.centerStart,
-                      child: Text('هەڵبژاردنی پارێزەر',
+                      child: Text(S.pickLawyer,
                           style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -571,7 +572,7 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
           controller: c,
           keyboardType: keyboard,
           decoration: modernInputDecoration(label: label, icon: icon),
-          validator: (v) => (v == null || v.trim().isEmpty) ? 'پێویستە' : null,
+          validator: (v) => (v == null || v.trim().isEmpty) ? S.requiredField : null,
         ),
       );
 

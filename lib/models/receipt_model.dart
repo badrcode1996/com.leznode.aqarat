@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'enums.dart';
+import '../l10n/app_strings.dart';
 
 /// A receipt/voucher (وەصڵ). (collection: `receipts`)
 ///
@@ -73,7 +74,7 @@ class Receipt {
     final end = DateTime(start.year, start.month + 1, start.day)
         .subtract(const Duration(days: 1));
     String f(DateTime d) => '${d.day}-${d.month}-${d.year}';
-    return 'لە بڕی کرێی ${f(start)} تاکو ${f(end)}';
+    return S.rentPeriodPurpose(f(start), f(end));
   }
 
   Map<String, dynamic> toJson() => {

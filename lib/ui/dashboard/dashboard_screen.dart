@@ -36,7 +36,7 @@ class DashboardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    watchPalette(context);
+    watchAppShell(context);
     final user = ref.watch(currentUserProvider);
     final features = ref.watch(currentPlanFeaturesProvider);
     // valueOrNull (NOT .value): .value RETHROWS when a provider is in its error

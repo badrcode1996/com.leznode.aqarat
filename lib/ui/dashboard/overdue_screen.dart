@@ -30,7 +30,7 @@ class OverdueScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    watchPalette(context);
+    watchAppShell(context);
     final async = ref.watch(contractsStreamProvider);
     return Scaffold(
       backgroundColor: _appBg,
@@ -111,7 +111,7 @@ class _OverdueCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    watchPalette(context);
+    watchAppShell(context);
     final c = item.contract;
     final inst = item.inst;
     final days = DateTime.now().difference(inst.dueDate).inDays;
@@ -169,7 +169,7 @@ class _OverdueCard extends StatelessWidget {
                       _chip(Icons.event_busy_rounded,
                           S.dateWith(OverdueScreen._date.format(inst.dueDate))),
                       _chip(Icons.payments_rounded,
-                          '${OverdueScreen._money.format(c.rentAmount)} ${c.currency.label}'),
+                          '${OverdueScreen._money.format(c.rentAmount)} ${c.currency.uiLabel}'),
                       _chip(Icons.tag_rounded, S.monthNumber(inst.monthNumber)),
                       _chip(Icons.timelapse_rounded, S.daysOverdue(days),
                           color: _red),

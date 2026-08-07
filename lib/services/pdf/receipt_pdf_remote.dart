@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:printing/printing.dart';
+import '../../l10n/app_strings.dart';
 
 /// Receipt PDFs are rendered server-side by the `renderReceiptPdf` Cloud
 /// Function (headless Chrome) so Kurdish/Arabic letter shaping — especially
@@ -18,7 +19,7 @@ class ReceiptPdfRemote {
     });
     final b64 = res.data['pdf_base64'] as String?;
     if (b64 == null || b64.isEmpty) {
-      throw Exception('وەڵامی فەنکشن بەتاڵە');
+      throw Exception(S.emptyFunctionResponse);
     }
     return base64Decode(b64);
   }

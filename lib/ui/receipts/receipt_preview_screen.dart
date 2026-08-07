@@ -8,6 +8,7 @@ import '../../models/contract_template_model.dart';
 import '../../models/receipt_model.dart';
 import '../../services/pdf/receipt_pdf_remote.dart';
 import '../../theme/app_colors.dart';
+import '../../l10n/app_strings.dart';
 
 // ڕەنگە سەرەکییەکان بۆ یەکپارچەیی دیزاینەکە
 Color get primaryDarkBlue => AppColors.current.brand;
@@ -83,7 +84,7 @@ class _ReceiptPreviewScreenState extends State<ReceiptPreviewScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('هەڵە: $e',
+            content: Text(S.error(e),
                 style: const TextStyle(fontWeight: FontWeight.bold)),
             backgroundColor: AppColors.current.danger,
             behavior: SnackBarBehavior.floating,
@@ -95,12 +96,12 @@ class _ReceiptPreviewScreenState extends State<ReceiptPreviewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    watchPalette(context);
+    watchAppShell(context);
     return Scaffold(
       backgroundColor: appBackgroundColor,
       appBar: AppBar(
         title: Text(
-          'پسولە #${widget.receipt.receiptNumber}',
+          S.receiptTitle(widget.receipt.receiptNumber),
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         backgroundColor: primaryDarkBlue,
@@ -109,7 +110,7 @@ class _ReceiptPreviewScreenState extends State<ReceiptPreviewScreen> {
         centerTitle: true,
         actions: [
           IconButton(
-            tooltip: 'هاوبەشکردن',
+            tooltip: S.share,
             icon: const Icon(Icons.share_rounded),
             onPressed: () => _run(_share),
           ),
@@ -122,7 +123,7 @@ class _ReceiptPreviewScreenState extends State<ReceiptPreviewScreen> {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: IconButton(
-                tooltip: 'پرینت',
+                tooltip: S.print,
                 icon: Icon(Icons.print_rounded, color: AppColors.current.onAccent),
                 onPressed: () => _run(_print),
               ),
@@ -178,7 +179,7 @@ class _ErrorFallback extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    watchPalette(context);
+    watchAppShell(context);
     final frames = stack?.toString().split('\n').take(8).join('\n') ?? '';
     return Center(
       child: SingleChildScrollView(
@@ -210,7 +211,7 @@ class _ErrorFallback extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                'کێشە لە پێشبینینی فایلی PDF',
+                S.previewFailedTitle,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                     fontSize: 18,
@@ -219,7 +220,7 @@ class _ErrorFallback extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'پێشبینین نەکرایەوە لەسەر شاشەکە، بەڵام هێشتا دەتوانیت لە ڕێگەی دوگمەکانی سەرەوە پرینتی بکەیت یان هاوبەشی پێ بکەیت.',
+                S.previewFailedBody,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                     fontSize: 14, color: AppColors.current.textMuted, height: 1.5),

@@ -7,9 +7,17 @@ import 'package:aqarat/l10n/app_strings.dart';
 /// strings by hand: a block gets copied and one entry is never translated, so a
 /// screen silently shows Kurdish inside an English UI.
 void main() {
-  /// Letters used by Central Kurdish but not by standard Arabic. Their presence
-  /// in the Arabic catalogue means an entry was copied and left untranslated.
-  const kurdishOnly = ['ێ', 'ۆ', 'ڕ', 'ڵ'];
+  /// Letters used by Central Kurdish (and Persian) but not by standard Arabic.
+  ///
+  /// Two failure modes: a whole entry copied over untranslated, and the subtler
+  /// one — an Arabic word typed on a Kurdish keyboard, so it carries ک (U+06A9)
+  /// where Arabic wants ك (U+0643). That renders as a slightly wrong letter
+  /// which a non-Arabic speaker will not spot.
+  const kurdishOnly = [
+    'ێ', 'ۆ', 'ڕ', 'ڵ', // Kurdish-only vowels and trills
+    'ک', 'گ', 'پ', 'چ', 'ژ', // Persian/Kurdish consonants
+    'ی', 'ە', // Farsi yeh and Kurdish schwa (Arabic uses ي and ة/ه)
+  ];
 
   /// Values that are the same in every language on purpose.
   const shared = {'—'};
@@ -79,6 +87,9 @@ void main() {
       expect(s.monthNumber(3), contains('3'));
       expect(s.daysOverdue(9), contains('9'));
       expect(s.allRightsReserved(2026), contains('2026'));
+      expect(s.receiptCreated(s.receiptRentReceive, 12), contains('12'));
+      expect(s.receiptCreated(s.receiptRentReceive, 12),
+          contains(s.receiptRentReceive));
     }
     expect(AppStrings.en.error('x'), isNot(AppStrings.ku.error('x')));
     expect(AppStrings.ar.error('x'), isNot(AppStrings.ku.error('x')));

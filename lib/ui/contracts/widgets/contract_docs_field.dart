@@ -5,6 +5,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../../l10n/app_strings.dart';
 
 
 /// Holds the attachment state for a contract form: already-uploaded URLs
@@ -91,7 +92,7 @@ class AttachmentImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    watchPalette(context);
+    watchAppShell(context);
     return FutureBuilder<Uint8List>(
       future: attachmentBytes(reference),
       builder: (_, snap) {
@@ -153,7 +154,7 @@ class _ContractDocsFieldState extends State<ContractDocsField> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('وێنە هەڵنەگیرا: $e'),
+            content: Text(S.photoFailed(e)),
             backgroundColor: AppColors.current.danger));
       }
     }
@@ -171,7 +172,7 @@ class _ContractDocsFieldState extends State<ContractDocsField> {
             ListTile(
               leading: Icon(Icons.photo_camera_outlined,
                   color: AppColors.current.textStrong),
-              title: const Text('کامێرا'),
+              title: Text(S.camera),
               onTap: () {
                 Navigator.pop(ctx);
                 _pick(ImageSource.camera);
@@ -180,7 +181,7 @@ class _ContractDocsFieldState extends State<ContractDocsField> {
             ListTile(
               leading: Icon(Icons.photo_library_outlined,
                   color: AppColors.current.textStrong),
-              title: const Text('گالەری'),
+              title: Text(S.gallery),
               onTap: () {
                 Navigator.pop(ctx);
                 _pick(ImageSource.gallery);
@@ -216,7 +217,7 @@ class _ContractDocsFieldState extends State<ContractDocsField> {
 
   @override
   Widget build(BuildContext context) {
-    watchPalette(context);
+    watchAppShell(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -231,7 +232,7 @@ class _ContractDocsFieldState extends State<ContractDocsField> {
             children: [
               Icon(Icons.photo_camera_outlined, color: AppColors.current.textStrong),
               const SizedBox(width: 8),
-              Text('بەڵگەکان',
+              Text(S.attachments,
                   style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: AppColors.current.textBody)),
@@ -246,7 +247,7 @@ class _ContractDocsFieldState extends State<ContractDocsField> {
                 onPressed: _chooseSource,
                 style: TextButton.styleFrom(foregroundColor: AppColors.current.textStrong),
                 icon: const Icon(Icons.add_a_photo_outlined, size: 18),
-                label: const Text('زیادکردن'),
+                label: Text(S.add),
               ),
             ],
           ),
@@ -278,8 +279,8 @@ class _ContractDocsFieldState extends State<ContractDocsField> {
               contentPadding: EdgeInsets.zero,
               dense: true,
               activeThumbColor: AppColors.current.textStrong,
-              title: const Text('چاپکردنی بەڵگەکان لەگەڵ گرێبەست',
-                  style: TextStyle(fontSize: 13)),
+              title: Text(S.printAttachments,
+                  style: const TextStyle(fontSize: 13)),
               value: _c.printDocs,
               onChanged: (v) => setState(() => _c.printDocs = v),
             ),
@@ -326,7 +327,7 @@ class _DocsGalleryState extends State<_DocsGallery> {
     try {
       final bytes = await attachmentBytes(widget.urls[_index]);
       if (bytes.isEmpty) {
-        _snack('بەڵگەکە دانەبەزێنرا');
+        _snack(S.attachmentNotDownloaded);
         return;
       }
       await Share.shareXFiles([
@@ -337,13 +338,13 @@ class _DocsGalleryState extends State<_DocsGallery> {
         ),
       ]);
     } catch (e) {
-      _snack('هاوبەشکردن سەرکەوتوو نەبوو: $e');
+      _snack(S.shareFailed(e));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    watchPalette(context);
+    watchAppShell(context);
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -353,7 +354,7 @@ class _DocsGalleryState extends State<_DocsGallery> {
             style: const TextStyle(fontSize: 15)),
         actions: [
           IconButton(
-            tooltip: 'هاوبەشکردن / پاشەکەوتکردن',
+            tooltip: S.shareOrSave,
             icon: const Icon(Icons.ios_share_rounded),
             onPressed: _share,
           ),
@@ -396,7 +397,7 @@ class ContractDocsViewer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    watchPalette(context);
+    watchAppShell(context);
     if (urls.isEmpty) return const SizedBox.shrink();
     // Cap the width so attachments don't stretch across a wide desktop
     // window — keep them a readable, page-like column, centred.
@@ -424,7 +425,7 @@ class ContractDocsViewer extends StatelessWidget {
             children: [
               Icon(Icons.folder_open_outlined, color: AppColors.current.textStrong),
               const SizedBox(width: 8),
-              Text('بەڵگەکان',
+              Text(S.attachments,
                   style: TextStyle(
                       fontWeight: FontWeight.bold, color: AppColors.current.textStrong)),
             ],

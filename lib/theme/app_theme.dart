@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_language.dart';
 import 'app_colors.dart';
 
 /// App-wide theme. Uses the SPEDA font family (declared in pubspec) so the
@@ -15,15 +16,21 @@ class AppTheme {
   static const Color primaryDarkBlue = Color(0xFF0F2C59);
   static const Color accentYellow = Color(0xFFF8B115);
 
-  static ThemeData light() => _build(Brightness.light, AppColors.light);
+  static ThemeData light(AppLanguage language) =>
+      _build(Brightness.light, AppColors.light, language);
 
-  static ThemeData dark() => _build(Brightness.dark, AppColors.dark);
+  static ThemeData dark(AppLanguage language) =>
+      _build(Brightness.dark, AppColors.dark, language);
 
-  static ThemeData _build(Brightness brightness, AppColors c) {
+  static ThemeData _build(
+      Brightness brightness, AppColors c, AppLanguage language) {
+    // Null lets the platform pick — see AppLanguage.fontFamily for why Arabic
+    // and English must not be forced onto the Kurdish face.
+    final font = language.fontFamily;
     final isDark = brightness == Brightness.dark;
     return ThemeData(
       useMaterial3: true,
-      fontFamily: 'Speda',
+      fontFamily: font,
       brightness: brightness,
       scaffoldBackgroundColor: c.pageBg,
       extensions: [c],
@@ -49,7 +56,7 @@ class AppTheme {
         centerTitle: true,
         iconTheme: IconThemeData(color: c.onBrand),
         titleTextStyle: TextStyle(
-          fontFamily: 'Speda',
+          fontFamily: font,
           fontSize: 18,
           fontWeight: FontWeight.bold,
           color: c.onBrand,
@@ -63,7 +70,7 @@ class AppTheme {
       textTheme: Typography.material2021(
         platform: TargetPlatform.android,
       ).black.apply(
-            fontFamily: 'Speda',
+            fontFamily: font,
             bodyColor: c.textBody,
             displayColor: c.textStrong,
           ),
@@ -103,8 +110,8 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          textStyle: const TextStyle(
-            fontFamily: 'Speda',
+          textStyle: TextStyle(
+            fontFamily: font,
             fontSize: 16,
             fontWeight: FontWeight.bold,
           ),
@@ -119,8 +126,8 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          textStyle: const TextStyle(
-            fontFamily: 'Speda',
+          textStyle: TextStyle(
+            fontFamily: font,
             fontSize: 16,
             fontWeight: FontWeight.bold,
           ),
@@ -169,8 +176,8 @@ class AppTheme {
         indicatorColor: c.accent,
         labelColor: c.accent,
         unselectedLabelColor: Colors.white70,
-        labelStyle: const TextStyle(
-          fontFamily: 'Speda',
+        labelStyle: TextStyle(
+          fontFamily: font,
           fontWeight: FontWeight.bold,
           fontSize: 16,
         ),

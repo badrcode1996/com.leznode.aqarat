@@ -128,7 +128,7 @@ class AqaratApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    watchPalette(context);
+    watchAppShell(context);
     final language = ref.watch(languageProvider);
     // Publish the catalogue BEFORE building, not in `builder`: strings are read
     // from enum members and model getters that run outside the widget tree, and
@@ -138,8 +138,8 @@ class AqaratApp extends ConsumerWidget {
     return MaterialApp(
       title: AppStrings.of(language).appTitle,
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light(),
-      darkTheme: AppTheme.dark(),
+      theme: AppTheme.light(language),
+      darkTheme: AppTheme.dark(language),
       // Restored from the device on startup; ThemeMode.system until it resolves.
       themeMode: ref.watch(themeModeProvider),
 
@@ -163,12 +163,20 @@ class AqaratApp extends ConsumerWidget {
       builder: (context, child) {
         // Publish the palette for the brightness actually being painted, before
         // anything below builds. See AppColors.current.
-        AppColors.current = Theme.of(context).extension<AppColors>()!;
+        final palette = Theme.of(context).extension<AppColors>()!;
+        AppColors.current = palette;
         // Direction follows the language rather than being pinned to RTL —
         // English has to mirror the whole layout back.
-        return Directionality(
-          textDirection: language.direction,
-          child: child!,
+        return AppShellScope(
+          // What every screen depends on through watchAppShell. Brightness
+          // alone is not enough: Kurdish and Arabic are both RTL, so switching
+          // between them changes nothing Flutter tracks, and without this the
+          // screens would keep rendering the language they were built in.
+          revision: Object.hash(palette.pageBg, language),
+          child: Directionality(
+            textDirection: language.direction,
+            child: child!,
+          ),
         );
       },
 
@@ -187,7 +195,7 @@ class _SessionGate extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    watchPalette(context);
+    watchAppShell(context);
     // On sign-out, pop any pushed routes (Settings, create screens, …) back to
     // the root. Otherwise a still-mounted pushed screen rebuilds against a null
     // session and `currentUserProvider` throws — the red "No active session"
@@ -236,7 +244,7 @@ class _DemoExpiredScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    watchPalette(context);
+    watchAppShell(context);
     return Scaffold(
       body: Center(
         child: Padding(
@@ -274,7 +282,7 @@ class _WebOnlyScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    watchPalette(context);
+    watchAppShell(context);
     return Scaffold(
       body: Center(
         child: Column(
@@ -306,7 +314,7 @@ class _NoAccessScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    watchPalette(context);
+    watchAppShell(context);
     return Scaffold(
       body: Center(
         child: Column(

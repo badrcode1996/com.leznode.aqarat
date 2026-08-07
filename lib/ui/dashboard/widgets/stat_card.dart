@@ -44,11 +44,14 @@ class StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    watchPalette(context);
+    watchAppShell(context);
     // ڕێکخستنی ڕەنگەکان بۆ دۆخی ئاسایی و دۆخی ئاگادارکردنەوە
-    final Color bgColor = highlight ? modernRed.withValues(alpha: 0.06) : Colors.white;
+    final Color bgColor =
+        highlight ? modernRed.withValues(alpha: 0.06) : AppColors.current.card;
     final Color valueColor = highlight ? modernRed : accent;
-    final Color borderColor = highlight ? modernRed.withValues(alpha: 0.3) : AppColors.current.divider;
+    final Color borderColor = highlight
+        ? modernRed.withValues(alpha: 0.3)
+        : AppColors.current.divider;
 
     final card = Container(
       width: width,
@@ -135,7 +138,9 @@ class StatCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: highlight ? modernRed.withValues(alpha: 0.9) : AppColors.current.textMuted,
+                  color: highlight
+                      ? modernRed.withValues(alpha: 0.9)
+                      : AppColors.current.textMuted,
                 ),
               ),
             ],
@@ -157,7 +162,7 @@ class _Sparkline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    watchPalette(context);
+    watchAppShell(context);
     final spots = [
       for (var i = 0; i < data.length; i++) FlSpot(i.toDouble(), data[i]),
     ];
@@ -175,7 +180,8 @@ class _Sparkline extends StatelessWidget {
             LineChartBarData(
               spots: spots,
               isCurved: true,
-              color: color.withValues(alpha: 0.3), // ڕەنگی هێڵەکە کەمێک کاڵتر کراوە
+              color: color.withValues(
+                  alpha: 0.3), // ڕەنگی هێڵەکە کەمێک کاڵتر کراوە
               barWidth: 2.5,
               dotData: const FlDotData(show: false),
               belowBarData: BarAreaData(

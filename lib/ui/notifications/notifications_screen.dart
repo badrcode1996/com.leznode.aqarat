@@ -27,7 +27,7 @@ class NotificationsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    watchPalette(context);
+    watchAppShell(context);
     final uid = ref.watch(currentUserProvider).uid;
     final async = ref.watch(notificationsProvider);
     final items = async.valueOrNull ?? const <AppNotification>[];
@@ -173,7 +173,7 @@ class _NotificationCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    watchPalette(context);
+    watchAppShell(context);
     final uid = ref.watch(currentUserProvider).uid;
     final unread = !notification.isReadBy(uid);
     final style = _style(notification.type);

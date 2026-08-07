@@ -107,7 +107,7 @@ class _MainShellState extends ConsumerState<MainShell> {
 
   @override
   Widget build(BuildContext context) {
-    watchPalette(context);
+    watchAppShell(context);
     return Scaffold(
       extendBody: true,
       body: IndexedStack(index: _index, children: _tabs),

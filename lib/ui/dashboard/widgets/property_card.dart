@@ -27,11 +27,14 @@ class PropertyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    watchPalette(context);
+    watchAppShell(context);
     // گۆڕینی ڕەنگەکان بەپێی ئەوەی داواکارییەکەی گونجاوە یان نا
-    final Color accentColor = matched ? modernGreen : AppColors.current.textStrong;
-    final Color bgColor = matched ? modernGreen.withValues(alpha: 0.05) : Colors.white;
-    final Color borderColor = matched ? modernGreen.withValues(alpha: 0.3) : Colors.transparent;
+    final Color accentColor =
+        matched ? modernGreen : AppColors.current.textStrong;
+    final Color bgColor =
+        matched ? modernGreen.withValues(alpha: 0.05) : AppColors.current.card;
+    final Color borderColor =
+        matched ? modernGreen.withValues(alpha: 0.3) : Colors.transparent;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -71,7 +74,8 @@ class PropertyCard extends StatelessWidget {
                       DealBadge(deal: listing.deal, kind: listing.kind),
                       const Spacer(),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: inputFillColor,
                           borderRadius: BorderRadius.circular(8),
@@ -79,7 +83,8 @@ class PropertyCard extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.square_foot_rounded, size: 14, color: AppColors.current.textBody),
+                            Icon(Icons.square_foot_rounded,
+                                size: 14, color: AppColors.current.textBody),
                             const SizedBox(width: 4),
                             Text(
                               S.areaSqm(listing.area),
@@ -147,12 +152,14 @@ class PropertyCard extends StatelessWidget {
                   // ناونیشان / گەڕەک
                   Row(
                     children: [
-                      Icon(Icons.location_on_outlined, size: 14, color: AppColors.current.textMuted),
+                      Icon(Icons.location_on_outlined,
+                          size: 14, color: AppColors.current.textMuted),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
                           listing.projectName,
-                          style: TextStyle(fontSize: 13, color: AppColors.current.textMuted),
+                          style: TextStyle(
+                              fontSize: 13, color: AppColors.current.textMuted),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -171,23 +178,29 @@ class PropertyCard extends StatelessWidget {
                       CircleAvatar(
                         radius: 10,
                         backgroundColor: primaryDarkBlue.withValues(alpha: 0.1),
-                        child: Icon(Icons.person, size: 12, color: AppColors.current.textStrong),
+                        child: Icon(Icons.person,
+                            size: 12, color: AppColors.current.textStrong),
                       ),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
                           listing.agentName,
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.current.textBody),
+                          style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.current.textBody),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Icon(Icons.access_time_rounded, size: 12, color: AppColors.current.textFaint),
+                      Icon(Icons.access_time_rounded,
+                          size: 12, color: AppColors.current.textFaint),
                       const SizedBox(width: 4),
                       Text(
                         _date.format(listing.createdAt),
-                        style: TextStyle(fontSize: 11, color: AppColors.current.textMuted),
+                        style: TextStyle(
+                            fontSize: 11, color: AppColors.current.textMuted),
                       ),
                     ],
                   ),
@@ -233,15 +246,13 @@ class PropertyCard extends StatelessWidget {
       height: 84,
       child: Stack(
         children: [
-          HouseThumb(
-              url: listing.coverUrl, size: 84, placeholder: placeholder),
+          HouseThumb(url: listing.coverUrl, size: 84, placeholder: placeholder),
           if (listing.imageUrls.length > 1)
             PositionedDirectional(
               end: 4,
               bottom: 4,
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                 decoration: BoxDecoration(
                   color: Colors.black.withValues(alpha: 0.6),
                   borderRadius: BorderRadius.circular(6),

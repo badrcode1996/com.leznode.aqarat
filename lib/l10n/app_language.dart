@@ -24,6 +24,19 @@ enum AppLanguage {
 
   bool get isRtl => direction == TextDirection.rtl;
 
+  /// The UI typeface for this language, or null to let the platform choose.
+  ///
+  /// SPEDA is a Kurdish face. It sets Kurdish beautifully, but it is not an
+  /// Arabic font: several Arabic letters fail to join, which is exactly why the
+  /// PDF renderer already switches to Amiri for Arabic documents. Its Latin is
+  /// an afterthought too.
+  ///
+  /// Arabic and English therefore fall back to the platform's own UI font —
+  /// Segoe UI on Windows, SF on Apple, Noto on Android — each of which shapes
+  /// its script correctly. That beats bundling a second webfont for every
+  /// visitor who will never switch language.
+  String? get fontFamily => this == AppLanguage.ku ? 'Speda' : null;
+
   /// The locale handed to Flutter's own widget localizations. Central Kurdish
   /// has no bundled delegate, so it borrows Arabic — also RTL, and the only
   /// thing it drives is built-in labels like the date picker's buttons.

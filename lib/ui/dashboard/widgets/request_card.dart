@@ -21,11 +21,15 @@ class RequestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    watchPalette(context);
+    watchAppShell(context);
     // ڕێکخستنی ڕەنگەکان بەپێی ئەوەی موڵکێکی گونجاوی بۆ هەیە یان نا
-    final Color accentColor = matched ? modernGreen : AppColors.current.textStrong;
-    final Color bgColor = matched ? modernGreen.withValues(alpha: 0.06) : Colors.white;
-    final Color borderColor = matched ? modernGreen.withValues(alpha: 0.3) : AppColors.current.divider;
+    final Color accentColor =
+        matched ? modernGreen : AppColors.current.textStrong;
+    final Color bgColor =
+        matched ? modernGreen.withValues(alpha: 0.06) : AppColors.current.card;
+    final Color borderColor = matched
+        ? modernGreen.withValues(alpha: 0.3)
+        : AppColors.current.divider;
 
     return Container(
       width: 260,
@@ -60,13 +64,17 @@ class RequestCard extends StatelessWidget {
                   color: accentColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(Icons.person_search_rounded, size: 20, color: accentColor),
+                child: Icon(Icons.person_search_rounded,
+                    size: 20, color: accentColor),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   listing.ownerName,
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.current.textStrong),
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: AppColors.current.textStrong),
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
                 ),
@@ -74,7 +82,8 @@ class RequestCard extends StatelessWidget {
               if (matched) ...[
                 const SizedBox(width: 4),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                   decoration: BoxDecoration(
                     color: modernGreen.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(6),
@@ -82,11 +91,15 @@ class RequestCard extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.handshake_rounded, size: 12, color: modernGreen),
+                      Icon(Icons.handshake_rounded,
+                          size: 12, color: modernGreen),
                       const SizedBox(width: 4),
                       Text(
                         S.matchedBadge,
-                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: modernGreen),
+                        style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: modernGreen),
                       ),
                     ],
                   ),
@@ -102,7 +115,10 @@ class RequestCard extends StatelessWidget {
             S.lookingFor(listing.propertyType.label),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 13, color: AppColors.current.textBody, fontWeight: FontWeight.w600),
+            style: TextStyle(
+                fontSize: 13,
+                color: AppColors.current.textBody,
+                fontWeight: FontWeight.w600),
           ),
 
           const SizedBox(height: 12),
@@ -111,7 +127,8 @@ class RequestCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: _miniChip(Icons.location_on_outlined, listing.projectName),
+                child:
+                    _miniChip(Icons.location_on_outlined, listing.projectName),
               ),
               const SizedBox(width: 8),
               _miniChip(Icons.square_foot_rounded, S.areaSqm(listing.area)),
@@ -124,25 +141,28 @@ class RequestCard extends StatelessWidget {
 
   // دیزاینی مۆدێرن بۆ تاگە بچووکەکان
   Widget _miniChip(IconData icon, String label) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-    decoration: BoxDecoration(
-      color: inputFillColor,
-      borderRadius: BorderRadius.circular(8),
-    ),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 14, color: AppColors.current.textMuted),
-        const SizedBox(width: 4),
-        Flexible(
-          child: Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.current.textBody),
-          ),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        decoration: BoxDecoration(
+          color: inputFillColor,
+          borderRadius: BorderRadius.circular(8),
         ),
-      ],
-    ),
-  );
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: AppColors.current.textMuted),
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.current.textBody),
+              ),
+            ),
+          ],
+        ),
+      );
 }

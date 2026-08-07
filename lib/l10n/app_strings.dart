@@ -236,6 +236,106 @@ class AppStrings {
     required this.cannotOpen,
     // ---- cards ----
     required this.matchedBadge,
+    // ---- rent installments ----
+    required this.instPending,
+    required this.instReceived,
+    required this.instDelivered,
+    required this.collectRent,
+    required this.payRentBack,
+    required this.noteOrCode,
+    required this.noteOrCodeHint,
+    required this.withoutReceipt,
+    required this.createReceipt,
+    // ---- archive sub-tabs ----
+    required this.contractRent,
+    required this.contractSale,
+    required this.tabRentReceipts,
+    required this.tabExternalReceipts,
+    // ---- contract steppers ----
+    required this.stepParties,
+    required this.stepProperty,
+    required this.stepFinancials,
+    required this.next,
+    required this.back,
+    required this.party1,
+    required this.party2,
+    required this.party1Mobile,
+    required this.party2Mobile,
+    required this.party1Seller,
+    required this.party2Buyer,
+    required this.sellerMobile,
+    required this.buyerMobile,
+    required this.propertyTypeHint,
+    required this.propertyNumber,
+    required this.rentAmount,
+    required this.rentPeriodMonths,
+    required this.downPayment,
+    required this.downPaymentMonths,
+    required this.paymentEveryMonths,
+    required this.guaranteeAmount,
+    required this.gracePeriod,
+    required this.rentalPurpose,
+    required this.lateFeePerDay,
+    required this.startDate,
+    required this.handoverDate,
+    required this.currencyType,
+    required this.notes,
+    required this.notesSection,
+    required this.notesHint,
+    required this.installmentsAuto,
+    required this.salePrice,
+    required this.downPaymentSale,
+    required this.paymentMethod,
+    required this.withdrawalAmount,
+    required this.commissionRate,
+    required this.deliveryDate,
+    required this.lawyer,
+    required this.pickFromList,
+    required this.pickLawyer,
+    required this.noLawyersHint,
+    required this.newRentContract,
+    required this.editRentContract,
+    required this.newSaleContract,
+    required this.editSaleContract,
+    required this.savingContract,
+    required this.updatingContract,
+    required this.rentContractUpdated,
+    required this.saleContractUpdated,
+    required this.docLanguage,
+    required this.langKurdish,
+    required this.langArabic,
+    required this.attachments,
+    required this.printAttachments,
+    required this.shareOrSave,
+    required this.attachmentNotDownloaded,
+    // ---- receipts list ----
+    required this.noRentReceipts,
+    required this.noExternalReceipts,
+    required this.deleteReceipt,
+    required this.receiptDeleted,
+    required this.print,
+    // ---- archive lists, receipt form, previews ----
+    required this.preview,
+    required this.previewHint,
+    required this.printArabic,
+    required this.share,
+    required this.pickViewLanguage,
+    required this.deleteContract,
+    required this.contractDeleted,
+    required this.noRentContracts,
+    required this.noSaleContracts,
+    required this.searchHint,
+    required this.attachmentsEmpty,
+    required this.attachmentsNoneHint,
+    required this.previewFailedTitle,
+    required this.previewFailedBody,
+    required this.amount,
+    required this.date,
+    required this.purpose,
+    required this.receivedFrom,
+    required this.paidTo,
+    required this.createAndPrint,
+    required this.emptyFunctionResponse,
   });
 
   final AppLanguage language;
@@ -462,6 +562,116 @@ class AppStrings {
 
   final String matchedBadge;
 
+  /// The three states of a rent installment: nothing collected yet, collected
+  /// from the tenant, and handed on to the owner.
+  final String instPending;
+  final String instReceived;
+  final String instDelivered;
+
+  final String collectRent;
+  final String payRentBack;
+  final String noteOrCode;
+  final String noteOrCodeHint;
+
+  /// Records the payment but does not open a voucher — for tenants and owners
+  /// who don't want the paper.
+  final String withoutReceipt;
+  final String createReceipt;
+
+  /// Short forms for the Archive's sub-tabs and the type badge on a
+  /// contract row. Deliberately not [dealSale]/[dealRent], whose English
+  /// reads "For sale"/"For rent" — that is listing wording, not a contract
+  /// type.
+  final String contractRent;
+  final String contractSale;
+  final String tabRentReceipts;
+  final String tabExternalReceipts;
+
+  final String stepParties;
+  final String stepProperty;
+  final String stepFinancials;
+  final String next;
+  final String back;
+  final String party1;
+  final String party2;
+  final String party1Mobile;
+  final String party2Mobile;
+  final String party1Seller;
+  final String party2Buyer;
+  final String sellerMobile;
+  final String buyerMobile;
+  final String propertyTypeHint;
+  final String propertyNumber;
+  final String rentAmount;
+  final String rentPeriodMonths;
+  final String downPayment;
+  final String downPaymentMonths;
+  final String paymentEveryMonths;
+  final String guaranteeAmount;
+  final String gracePeriod;
+  final String rentalPurpose;
+  final String lateFeePerDay;
+  final String startDate;
+  final String handoverDate;
+  final String currencyType;
+  final String notes;
+  final String notesSection;
+  final String notesHint;
+  final String installmentsAuto;
+  final String salePrice;
+  final String downPaymentSale;
+  final String paymentMethod;
+  final String withdrawalAmount;
+  final String commissionRate;
+  final String deliveryDate;
+  final String lawyer;
+  final String pickFromList;
+  final String pickLawyer;
+  final String noLawyersHint;
+  final String newRentContract;
+  final String editRentContract;
+  final String newSaleContract;
+  final String editSaleContract;
+  final String savingContract;
+  final String updatingContract;
+  final String rentContractUpdated;
+  final String saleContractUpdated;
+  final String docLanguage;
+  final String langKurdish;
+  final String langArabic;
+  final String attachments;
+  final String printAttachments;
+  final String shareOrSave;
+  final String attachmentNotDownloaded;
+
+  final String noRentReceipts;
+  final String noExternalReceipts;
+  final String deleteReceipt;
+  final String receiptDeleted;
+  final String print;
+
+  final String preview;
+  final String previewHint;
+  final String printArabic;
+  final String share;
+  final String pickViewLanguage;
+  final String deleteContract;
+  final String contractDeleted;
+  final String noRentContracts;
+  final String noSaleContracts;
+  final String searchHint;
+  final String attachmentsEmpty;
+  final String attachmentsNoneHint;
+  final String previewFailedTitle;
+  final String previewFailedBody;
+  final String amount;
+  final String date;
+  final String purpose;
+  final String receivedFrom;
+  final String paidTo;
+  final String createAndPrint;
+  final String emptyFunctionResponse;
+
   // -------------------------------------------------------------------------
   // Interpolated strings. Methods, not fields, so each language controls where
   // the value lands in the sentence.
@@ -491,6 +701,109 @@ class AppStrings {
         AppLanguage.ar => '$amount / شهرياً',
         AppLanguage.en => '$amount / month',
         _ => '$amount / مانگانە',
+      };
+
+  /// "Rent receipt #12 created" — the voucher kind is already localised, so
+  /// it arrives as text rather than being rebuilt here.
+  String receiptCreated(String kind, Object number) => switch (language) {
+        AppLanguage.ar => 'تم إنشاء $kind #$number',
+        AppLanguage.en => '$kind #$number created',
+        _ => '$kind #$number دروستکرا',
+      };
+
+  /// "Rent contract created (abc123)" — the contract kind arrives already
+  /// localised, so the sentence is assembled per language rather than by
+  /// gluing fragments in Kurdish word order.
+  String contractCreated(String kind, String id) => switch (language) {
+        AppLanguage.ar => 'تم إنشاء $kind ($id)',
+        AppLanguage.en => '$kind created ($id)',
+        _ => '$kind دروستکرا ($id)',
+      };
+
+  String deleteReceiptConfirm(Object number) => switch (language) {
+        AppLanguage.ar => 'هل تريد حذف الوصل #$number؟ لا يمكن التراجع عن هذا الإجراء.',
+        AppLanguage.en => 'Delete receipt #$number? This cannot be undone.',
+        _ => 'دڵنیایت لە سڕینەوەی پسولە #$number؟ ئەم کردارە ناگەڕێتەوە.',
+      };
+
+  String deleteContractConfirm(Object number, String title) =>
+      switch (language) {
+        AppLanguage.ar => 'هل تريد حذف العقد #$number ($title)؟ لا يمكن التراجع.',
+        AppLanguage.en => 'Delete contract #$number ($title)? This cannot be undone.',
+        _ => 'دڵنیایت لە سڕینەوەی گرێبەست #$number ($title)؟ ئەم کردارە ناگەڕێتەوە.',
+      };
+
+  String noResultsFor(String query) => switch (language) {
+        AppLanguage.ar => 'لا نتائج لـ «$query»',
+        AppLanguage.en => 'No results for "$query"',
+        _ => 'هیچ ئەنجامێک نەدۆزرایەوە بۆ «$query»',
+      };
+
+  String attachmentsCount(int n) => switch (language) {
+        AppLanguage.ar => 'المستندات ($n)',
+        AppLanguage.en => 'Attachments ($n)',
+        _ => 'بەڵگەکان ($n)',
+      };
+
+  String printFailed(Object e) => switch (language) {
+        AppLanguage.ar => 'فشلت الطباعة: $e',
+        AppLanguage.en => 'Printing failed: $e',
+        _ => 'پرینت سەرکەوتوو نەبوو: $e',
+      };
+
+  String contractTitle(Object number) => switch (language) {
+        AppLanguage.ar => 'عقد #$number',
+        AppLanguage.en => 'Contract #$number',
+        _ => 'گرێبەست #$number',
+      };
+
+  String receiptTitle(Object number) => switch (language) {
+        AppLanguage.ar => 'وصل #$number',
+        AppLanguage.en => 'Receipt #$number',
+        _ => 'پسولە #$number',
+      };
+
+  String editReceiptTitle(Object number) => switch (language) {
+        AppLanguage.ar => 'تعديل الوصل #$number',
+        AppLanguage.en => 'Edit receipt #$number',
+        _ => 'دەستکاری پسولە #$number',
+      };
+
+  /// The purpose line printed on a rent voucher: which period it covers.
+  String rentPeriodPurpose(String from, String to) => switch (language) {
+        AppLanguage.ar => 'بدل إيجار من $from إلى $to',
+        AppLanguage.en => 'Rent for $from to $to',
+        _ => 'لە بڕی کرێی $from تاکو $to',
+      };
+
+  String dateWithValue(String date) => switch (language) {
+        AppLanguage.ar => 'التاريخ: $date',
+        AppLanguage.en => 'Date: $date',
+        _ => 'بەروار: $date',
+      };
+
+  String saveFailed(Object e) => switch (language) {
+        AppLanguage.ar => 'فشل الحفظ: $e',
+        AppLanguage.en => 'Save failed: $e',
+        _ => 'سەرکەوتوو نەبوو: $e',
+      };
+
+  String attachmentUploadFailed(Object e) => switch (language) {
+        AppLanguage.ar => 'فشل رفع المستندات: $e',
+        AppLanguage.en => 'Uploading the attachments failed: $e',
+        _ => 'بارکردنی بەڵگەکان سەرکەوتوو نەبوو: $e',
+      };
+
+  String shareFailed(Object e) => switch (language) {
+        AppLanguage.ar => 'فشلت المشاركة: $e',
+        AppLanguage.en => 'Sharing failed: $e',
+        _ => 'هاوبەشکردن سەرکەوتوو نەبوو: $e',
+      };
+
+  String photoFailed(Object e) => switch (language) {
+        AppLanguage.ar => 'تعذّر حفظ الصورة: $e',
+        AppLanguage.en => 'The photo could not be saved: $e',
+        _ => 'وێنە هەڵنەگیرا: $e',
       };
 
   String areaSqm(Object area) => switch (language) {
@@ -695,6 +1008,27 @@ class AppStrings {
         addressLabel, socialMedia, whatsapp, facebook, instagram, tiktok,
         madeBy, cannotOpen,
         matchedBadge,
+        instPending, instReceived, instDelivered, collectRent, payRentBack,
+        noteOrCode, noteOrCodeHint, withoutReceipt, createReceipt,
+        contractRent, contractSale, tabRentReceipts, tabExternalReceipts,
+        stepParties, stepProperty, stepFinancials, next, back, party1, party2,
+        party1Mobile, party2Mobile, party1Seller, party2Buyer, sellerMobile, buyerMobile,
+        propertyTypeHint, propertyNumber, rentAmount, rentPeriodMonths, downPayment,
+        downPaymentMonths, paymentEveryMonths, guaranteeAmount, gracePeriod,
+        rentalPurpose, lateFeePerDay, startDate, handoverDate, currencyType,
+        notes, notesSection, notesHint, installmentsAuto, salePrice, downPaymentSale,
+        paymentMethod, withdrawalAmount, commissionRate, deliveryDate, lawyer,
+        pickFromList, pickLawyer, noLawyersHint, newRentContract, editRentContract,
+        newSaleContract, editSaleContract, savingContract, updatingContract,
+        rentContractUpdated, saleContractUpdated, docLanguage, langKurdish,
+        langArabic, attachments, printAttachments, shareOrSave,
+        attachmentNotDownloaded,
+        noRentReceipts, noExternalReceipts, deleteReceipt, receiptDeleted,
+        print,
+        preview, previewHint, printArabic, share, pickViewLanguage, deleteContract,
+        contractDeleted, noRentContracts, noSaleContracts, searchHint, attachmentsEmpty,
+        attachmentsNoneHint, previewFailedTitle, previewFailedBody, amount,
+        date, purpose, receivedFrom, paidTo, createAndPrint, emptyFunctionResponse,
       ];
 
   /// The signed-in language. Refreshed by MaterialApp.builder — see the class
@@ -911,6 +1245,101 @@ class AppStrings {
     madeBy: 'دروستکراوە لەلایەن',
     cannotOpen: 'نەتوانرا بکرێتەوە',
     matchedBadge: 'گونجاوە',
+    instPending: 'چاوەڕوان',
+    instReceived: 'وەرگیرا',
+    instDelivered: 'گەیەنرا',
+    collectRent: 'وەرگرتنی کرێ',
+    payRentBack: 'دانەوەی کرێ',
+    noteOrCode: 'تێبینی / کۆد',
+    noteOrCodeHint: 'کۆد یان تێبینی بنووسە (ئارەزوومەندانە)',
+    withoutReceipt: 'بەبێ پسولە',
+    createReceipt: 'دروستکردنی پسولە',
+    contractRent: 'کرێ',
+    contractSale: 'فرۆشتن',
+    tabRentReceipts: 'پسولەی کرێ',
+    tabExternalReceipts: 'پسولەی دەرەکی',
+    stepParties: 'لایەنەکان',
+    stepProperty: 'موڵک',
+    stepFinancials: 'دارایی و بەروار',
+    next: 'دواتر',
+    back: 'گەڕانەوە',
+    party1: 'لایەنی یەکەم',
+    party2: 'لایەنی دووەم',
+    party1Mobile: 'ژمارەی مۆبایل (لایەنی یەکەم)',
+    party2Mobile: 'ژمارەی مۆبایل (لایەنی دووەم)',
+    party1Seller: 'لایەنی یەکەم (فرۆشیار)',
+    party2Buyer: 'لایەنی دووەم (کڕیار)',
+    sellerMobile: 'ژمارەی مۆبایل (فرۆشیار)',
+    buyerMobile: 'ژمارەی مۆبایل (کڕیار)',
+    propertyTypeHint: 'جۆری موڵک (بۆ نموونە: خانوو)',
+    propertyNumber: 'ژمارەی عەقار',
+    rentAmount: 'بڕی کرێ',
+    rentPeriodMonths: 'ماوەی بەکرێگرتن (بە مانگ)',
+    downPayment: 'بڕی پێشەکی',
+    downPaymentMonths: 'بۆ چەند مانگ',
+    paymentEveryMonths: 'کرێدان چەند مانگ جارێکە؟',
+    guaranteeAmount: 'بڕی دڵنیایی (الضمان)',
+    gracePeriod: 'ماوەی ڕێپێدان (السماح)',
+    rentalPurpose: 'هۆکاری بەکرێگرتن',
+    lateFeePerDay: 'بڕی غەرامەی دواکەوتن بە ڕۆژ',
+    startDate: 'بەرواری بەکرێگرتن',
+    handoverDate: 'بەرواری ڕادەستکردن',
+    currencyType: 'جۆری دراو',
+    notes: 'تێبینی',
+    notesSection: 'تێبینییەکان',
+    notesHint: 'تا ٥ لاین تێبینی بنووسە...',
+    installmentsAuto: '١٢ قیست بە شێوەی خۆکار دروست دەکرێن.',
+    salePrice: 'نرخی فرۆشتن',
+    downPaymentSale: 'پێشەکی (عربون)',
+    paymentMethod: 'شێوازی پارەدان',
+    withdrawalAmount: 'بڕی پاشگەزبوونەوە',
+    commissionRate: 'ڕێژەی عمولە % (هەر لایەک)',
+    deliveryDate: 'ڕێکەوتی تەسلیم',
+    lawyer: 'پارێزەر',
+    pickFromList: 'هەڵبژاردن لە لیست',
+    pickLawyer: 'هەڵبژاردنی پارێزەر',
+    noLawyersHint: 'لە ڕێکخستن > پارێزەران دەیانخەیتە سەر',
+    newRentContract: 'گرێبەستی کرێی نوێ',
+    editRentContract: 'دەستکاری گرێبەستی کرێ',
+    newSaleContract: 'گرێبەستی فرۆشتنی نوێ',
+    editSaleContract: 'دەستکاری گرێبەستی فرۆشتن',
+    savingContract: 'چاوەڕێ بە، گرێبەستەکە دروست دەکرێت...',
+    updatingContract: 'چاوەڕێ بە، گرێبەستەکە نوێ دەکرێتەوە...',
+    rentContractUpdated: 'گرێبەستی کرێ نوێکرایەوە',
+    saleContractUpdated: 'گرێبەستی فرۆشتن نوێکرایەوە',
+    docLanguage: 'زمانی گرێبەست',
+    langKurdish: 'کوردی',
+    langArabic: 'عەرەبی',
+    attachments: 'بەڵگەکان',
+    printAttachments: 'چاپکردنی بەڵگەکان لەگەڵ گرێبەست',
+    shareOrSave: 'هاوبەشکردن / پاشەکەوتکردن',
+    attachmentNotDownloaded: 'بەڵگەکە دانەبەزێنرا',
+    noRentReceipts: 'هیچ پسولەیەکی کرێ نییە',
+    noExternalReceipts: 'هیچ پسولەیەکی دەرەکی نییە',
+    deleteReceipt: 'سڕینەوەی پسولە',
+    receiptDeleted: 'پسولە سڕایەوە',
+    print: 'پرینت',
+    preview: 'پێشبینین',
+    previewHint: 'پێشبینین (دایبگرە بۆ هەڵبژاردنی زمان)',
+    printArabic: 'پرینتی عەرەبی',
+    share: 'هاوبەشکردن',
+    pickViewLanguage: 'بینینی گرێبەست بە کام زمان؟',
+    deleteContract: 'سڕینەوەی گرێبەست',
+    contractDeleted: 'گرێبەست سڕایەوە',
+    noRentContracts: 'هیچ گرێبەستێکی کرێ نییە',
+    noSaleContracts: 'هیچ گرێبەستێکی فرۆشتن نییە',
+    searchHint: 'گەڕان بە ناو، ژمارەی مۆبایل، ژمارەی عەقار…',
+    attachmentsEmpty: 'بەڵگەکان (بەتاڵ)',
+    attachmentsNoneHint: 'هیچ بەڵگەیەک زیاد نەکراوە — لە دەستکاریدا دەتوانیت زیادی بکەیت',
+    previewFailedTitle: 'کێشە لە پێشبینینی فایلی PDF',
+    previewFailedBody: 'پێشبینین نەکرایەوە لەسەر شاشەکە، بەڵام هێشتا دەتوانیت لە ڕێگەی دوگمەکانی سەرەوە پرینتی بکەیت یان هاوبەشی پێ بکەیت.',
+    amount: 'بڕی پارە',
+    date: 'بەروار',
+    purpose: 'لە بڕی (مەبەست)',
+    receivedFrom: 'وەرمگرت لە بەڕێز',
+    paidTo: 'پێدرا بە بەڕێز',
+    createAndPrint: 'دروستکردن و پرینت',
+    emptyFunctionResponse: 'وەڵامی فەنکشن بەتاڵە',
   );
 
   // -------------------------------------------------------------------------
@@ -1116,6 +1545,101 @@ class AppStrings {
     madeBy: 'تطوير',
     cannotOpen: 'تعذّر الفتح',
     matchedBadge: 'مطابق',
+    instPending: 'قيد الانتظار',
+    instReceived: 'مستلم',
+    instDelivered: 'مسلَّم',
+    collectRent: 'استلام الإيجار',
+    payRentBack: 'صرف الإيجار',
+    noteOrCode: 'ملاحظة / رمز',
+    noteOrCodeHint: 'اكتب رمزاً أو ملاحظة (اختياري)',
+    withoutReceipt: 'بدون وصل',
+    createReceipt: 'إنشاء وصل',
+    contractRent: 'إيجار',
+    contractSale: 'بيع',
+    tabRentReceipts: 'وصولات الإيجار',
+    tabExternalReceipts: 'وصولات خارجية',
+    stepParties: 'الأطراف',
+    stepProperty: 'العقار',
+    stepFinancials: 'المالية والتواريخ',
+    next: 'التالي',
+    back: 'رجوع',
+    party1: 'الطرف الأول',
+    party2: 'الطرف الثاني',
+    party1Mobile: 'رقم موبايل (الطرف الأول)',
+    party2Mobile: 'رقم موبايل (الطرف الثاني)',
+    party1Seller: 'الطرف الأول (البائع)',
+    party2Buyer: 'الطرف الثاني (المشتري)',
+    sellerMobile: 'رقم موبايل (البائع)',
+    buyerMobile: 'رقم موبايل (المشتري)',
+    propertyTypeHint: 'نوع العقار (مثلاً: دار)',
+    propertyNumber: 'رقم العقار',
+    rentAmount: 'مبلغ الإيجار',
+    rentPeriodMonths: 'مدة الإيجار (بالأشهر)',
+    downPayment: 'المبلغ المقدَّم',
+    downPaymentMonths: 'لكم شهر',
+    paymentEveryMonths: 'الإيجار يُدفع كل كم شهر؟',
+    guaranteeAmount: 'مبلغ الضمان',
+    gracePeriod: 'مدة السماح',
+    rentalPurpose: 'الغرض من الإيجار',
+    lateFeePerDay: 'غرامة التأخير لليوم',
+    startDate: 'تاريخ بدء الإيجار',
+    handoverDate: 'تاريخ التسليم',
+    currencyType: 'نوع العملة',
+    notes: 'ملاحظة',
+    notesSection: 'الملاحظات',
+    notesHint: 'اكتب حتى ٥ أسطر من الملاحظات...',
+    installmentsAuto: 'تُنشأ ١٢ قسطاً تلقائياً.',
+    salePrice: 'سعر البيع',
+    downPaymentSale: 'العربون',
+    paymentMethod: 'طريقة الدفع',
+    withdrawalAmount: 'مبلغ التراجع',
+    commissionRate: 'نسبة العمولة % (لكل طرف)',
+    deliveryDate: 'تاريخ التسليم',
+    lawyer: 'المحامي',
+    pickFromList: 'اختيار من القائمة',
+    pickLawyer: 'اختيار المحامي',
+    noLawyersHint: 'أضِفهم من الإعدادات > المحامون',
+    newRentContract: 'عقد إيجار جديد',
+    editRentContract: 'تعديل عقد الإيجار',
+    newSaleContract: 'عقد بيع جديد',
+    editSaleContract: 'تعديل عقد البيع',
+    savingContract: 'انتظر، يجري إنشاء العقد...',
+    updatingContract: 'انتظر، يجري تحديث العقد...',
+    rentContractUpdated: 'تم تحديث عقد الإيجار',
+    saleContractUpdated: 'تم تحديث عقد البيع',
+    docLanguage: 'لغة العقد',
+    langKurdish: 'الكردية',
+    langArabic: 'العربية',
+    attachments: 'المستندات',
+    printAttachments: 'طباعة المستندات مع العقد',
+    shareOrSave: 'مشاركة / حفظ',
+    attachmentNotDownloaded: 'تعذّر تنزيل المستند',
+    noRentReceipts: 'لا توجد وصولات إيجار',
+    noExternalReceipts: 'لا توجد وصولات خارجية',
+    deleteReceipt: 'حذف الوصل',
+    receiptDeleted: 'تم حذف الوصل',
+    print: 'طباعة',
+    preview: 'معاينة',
+    previewHint: 'معاينة (اضغط مطوّلاً لاختيار اللغة)',
+    printArabic: 'طباعة بالعربية',
+    share: 'مشاركة',
+    pickViewLanguage: 'بأي لغة تريد عرض العقد؟',
+    deleteContract: 'حذف العقد',
+    contractDeleted: 'تم حذف العقد',
+    noRentContracts: 'لا توجد عقود إيجار',
+    noSaleContracts: 'لا توجد عقود بيع',
+    searchHint: 'ابحث بالاسم أو رقم الموبايل أو رقم العقار…',
+    attachmentsEmpty: 'المستندات (فارغة)',
+    attachmentsNoneHint: 'لم تُضف أي مستندات — يمكنك إضافتها من التعديل',
+    previewFailedTitle: 'تعذّرت معاينة ملف PDF',
+    previewFailedBody: 'تعذّر عرض المعاينة على الشاشة، لكن ما زال بإمكانك الطباعة أو المشاركة من الأزرار في الأعلى.',
+    amount: 'المبلغ',
+    date: 'التاريخ',
+    purpose: 'بدل (الغرض)',
+    receivedFrom: 'استلمت من السيد',
+    paidTo: 'دُفع إلى السيد',
+    createAndPrint: 'إنشاء وطباعة',
+    emptyFunctionResponse: 'استجابة الدالة فارغة',
   );
 
   // -------------------------------------------------------------------------
@@ -1323,6 +1847,101 @@ class AppStrings {
     madeBy: 'Built by',
     cannotOpen: 'Could not open',
     matchedBadge: 'Matched',
+    instPending: 'Pending',
+    instReceived: 'Collected',
+    instDelivered: 'Handed over',
+    collectRent: 'Collect rent',
+    payRentBack: 'Pay rent out',
+    noteOrCode: 'Note / code',
+    noteOrCodeHint: 'Type a code or note (optional)',
+    withoutReceipt: 'No voucher',
+    createReceipt: 'Create voucher',
+    contractRent: 'Rent',
+    contractSale: 'Sale',
+    tabRentReceipts: 'Rent receipts',
+    tabExternalReceipts: 'External receipts',
+    stepParties: 'Parties',
+    stepProperty: 'Property',
+    stepFinancials: 'Financials and dates',
+    next: 'Next',
+    back: 'Back',
+    party1: 'First party',
+    party2: 'Second party',
+    party1Mobile: 'Mobile (first party)',
+    party2Mobile: 'Mobile (second party)',
+    party1Seller: 'First party (seller)',
+    party2Buyer: 'Second party (buyer)',
+    sellerMobile: 'Mobile (seller)',
+    buyerMobile: 'Mobile (buyer)',
+    propertyTypeHint: 'Property type (e.g. house)',
+    propertyNumber: 'Property number',
+    rentAmount: 'Rent amount',
+    rentPeriodMonths: 'Rental term (months)',
+    downPayment: 'Down payment',
+    downPaymentMonths: 'For how many months',
+    paymentEveryMonths: 'Rent paid every how many months?',
+    guaranteeAmount: 'Deposit amount',
+    gracePeriod: 'Grace period',
+    rentalPurpose: 'Purpose of the rental',
+    lateFeePerDay: 'Late fee per day',
+    startDate: 'Rental start date',
+    handoverDate: 'Handover date',
+    currencyType: 'Currency',
+    notes: 'Note',
+    notesSection: 'Notes',
+    notesHint: 'Up to 5 lines of notes...',
+    installmentsAuto: '12 installments are created automatically.',
+    salePrice: 'Sale price',
+    downPaymentSale: 'Down payment',
+    paymentMethod: 'Payment method',
+    withdrawalAmount: 'Withdrawal amount',
+    commissionRate: 'Commission % (each party)',
+    deliveryDate: 'Delivery date',
+    lawyer: 'Lawyer',
+    pickFromList: 'Pick from the list',
+    pickLawyer: 'Pick a lawyer',
+    noLawyersHint: 'Add them under Settings > Lawyers',
+    newRentContract: 'New rent contract',
+    editRentContract: 'Edit rent contract',
+    newSaleContract: 'New sale contract',
+    editSaleContract: 'Edit sale contract',
+    savingContract: 'Please wait, the contract is being created...',
+    updatingContract: 'Please wait, the contract is being updated...',
+    rentContractUpdated: 'Rent contract updated',
+    saleContractUpdated: 'Sale contract updated',
+    docLanguage: 'Contract language',
+    langKurdish: 'Kurdish',
+    langArabic: 'Arabic',
+    attachments: 'Attachments',
+    printAttachments: 'Print the attachments with the contract',
+    shareOrSave: 'Share / save',
+    attachmentNotDownloaded: 'The attachment could not be downloaded',
+    noRentReceipts: 'No rent receipts',
+    noExternalReceipts: 'No external receipts',
+    deleteReceipt: 'Delete receipt',
+    receiptDeleted: 'Receipt deleted',
+    print: 'Print',
+    preview: 'Preview',
+    previewHint: 'Preview (long-press to pick the language)',
+    printArabic: 'Print in Arabic',
+    share: 'Share',
+    pickViewLanguage: 'Which language should the contract open in?',
+    deleteContract: 'Delete contract',
+    contractDeleted: 'Contract deleted',
+    noRentContracts: 'No rent contracts',
+    noSaleContracts: 'No sale contracts',
+    searchHint: 'Search by name, mobile or property number…',
+    attachmentsEmpty: 'Attachments (none)',
+    attachmentsNoneHint: 'No attachments added — you can add them from Edit',
+    previewFailedTitle: 'The PDF preview failed',
+    previewFailedBody: 'The preview could not be shown on screen, but you can still print or share it with the buttons above.',
+    amount: 'Amount',
+    date: 'Date',
+    purpose: 'For (purpose)',
+    receivedFrom: 'Received from',
+    paidTo: 'Paid to',
+    createAndPrint: 'Create and print',
+    emptyFunctionResponse: 'The function returned an empty response',
   );
 }
 

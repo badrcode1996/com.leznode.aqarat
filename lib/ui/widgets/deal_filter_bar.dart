@@ -33,19 +33,22 @@ class DealFilterBar extends StatelessWidget {
   };
 
   @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          color: _inputFill,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Row(
-          children: [
-            for (final d in DealKind.values)
-              Expanded(child: _pill(d, d == selected)),
-          ],
-        ),
-      );
+  Widget build(BuildContext context) {
+    watchAppShell(context);
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: _inputFill,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          for (final d in DealKind.values)
+            Expanded(child: _pill(d, d == selected)),
+        ],
+      ),
+    );
+  }
 
   Widget _pill(DealKind deal, bool active) => GestureDetector(
         onTap: () => onChanged(deal),
@@ -92,11 +95,12 @@ class DealBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    watchPalette(context);
+    watchAppShell(context);
     final rent = deal == DealKind.rent;
     // Rent borrows the amber accent already used for demands; sale keeps the
     // brand blue, so the two never read as the same tag at a glance.
-    final color = rent ? AppColors.current.warning : AppColors.current.textStrong;
+    final color =
+        rent ? AppColors.current.warning : AppColors.current.textStrong;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(

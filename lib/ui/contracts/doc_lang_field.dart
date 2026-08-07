@@ -76,7 +76,7 @@ class DocLangField extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    watchPalette(context);
+    watchAppShell(context);
     if (!arabicDocAvailable(ref, isRent: isRent)) return const SizedBox.shrink();
 
     return Padding(
@@ -91,7 +91,7 @@ class DocLangField extends ConsumerWidget {
                 Icon(Icons.translate_rounded,
                     size: 18, color: AppColors.current.textStrong),
                 const SizedBox(width: 8),
-                Text('زمانی گرێبەست',
+                Text(S.docLanguage,
                     style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: AppColors.current.textStrong)),
@@ -110,17 +110,17 @@ class DocLangField extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(16)),
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
-              segments: const [
+              segments: [
                 ButtonSegment(
                   value: 'ku',
-                  label: Text('کوردی',
-                      style: TextStyle(
+                  label: Text(S.langKurdish,
+                      style: const TextStyle(
                           fontWeight: FontWeight.bold, fontSize: 15)),
                 ),
                 ButtonSegment(
                   value: 'ar',
-                  label: Text('عەرەبی',
-                      style: TextStyle(
+                  label: Text(S.langArabic,
+                      style: const TextStyle(
                           fontWeight: FontWeight.bold, fontSize: 15)),
                 ),
               ],

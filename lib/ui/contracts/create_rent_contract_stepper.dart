@@ -12,6 +12,7 @@ import 'contract_preview_screen.dart';
 import 'doc_lang_field.dart';
 import 'widgets/contract_docs_field.dart';
 import 'widgets/saving_dialog.dart';
+import '../../l10n/app_strings.dart';
 
 // ڕەنگە سەرەکییەکان بۆ یەکپارچەیی دیزاینەکە
 Color get primaryDarkBlue => AppColors.current.brand;
@@ -190,8 +191,8 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
     // Blocking dialog for the whole save — uploads + transaction. Closed in
     // _closeSavingDialog on every exit path, success or failure.
     showSavingDialog(context, widget.existing == null
-        ? 'چاوەڕێ بە، گرێبەستەکە دروست دەکرێت...'
-        : 'چاوەڕێ بە، گرێبەستەکە نوێ دەکرێتەوە...');
+        ? S.savingContract
+        : S.updatingContract);
     _savingDialogOpen = true;
 
     final user = ref.read(currentUserProvider);
@@ -209,7 +210,7 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
       _closeSavingDialog();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('بارکردنی بەڵگەکان سەرکەوتوو نەبوو: $e'),
+            content: Text(S.attachmentUploadFailed(e)),
             backgroundColor: AppColors.current.danger));
         setState(() => _saving = false);
       }
@@ -275,7 +276,7 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
         _closeSavingDialog();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: const Text('گرێبەستی کرێ نوێکرایەوە'), backgroundColor: AppColors.current.success));
+              SnackBar(content: Text(S.rentContractUpdated), backgroundColor: AppColors.current.success));
           Navigator.of(context).pop(existing.id);
         }
         return;
@@ -287,7 +288,7 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
       _closeSavingDialog();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('گرێبەستی کرێ دروستکرا ($id)'), backgroundColor: AppColors.current.success));
+          SnackBar(content: Text(S.contractCreated(S.rentContract, id)), backgroundColor: AppColors.current.success));
       // Replace the stepper with the new contract's preview, so going back
       // lands on the list instead of a filled-in form.
       if (saved != null) {
@@ -306,7 +307,7 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
       _closeSavingDialog();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('سەرکەوتوو نەبوو: $e'), backgroundColor: AppColors.current.danger));
+            SnackBar(content: Text(S.saveFailed(e)), backgroundColor: AppColors.current.danger));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -319,20 +320,20 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('تێبینی', style: TextStyle(color: AppColors.current.textStrong, fontWeight: FontWeight.bold)),
+        title: Text(S.notes, style: TextStyle(color: AppColors.current.textStrong, fontWeight: FontWeight.bold)),
         content: TextField(
           controller: controller,
           maxLines: 5,
           minLines: 5,
           maxLength: 500,
-          decoration: modernInputDecoration(label: 'تا ٥ لاین تێبینی بنووسە...'),
+          decoration: modernInputDecoration(label: S.notesHint),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('پاشگەزبوونەوە', style: TextStyle(color: AppColors.current.textMuted))),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(S.cancel, style: TextStyle(color: AppColors.current.textMuted))),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: primaryDarkBlue, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
             onPressed: () => Navigator.pop(ctx, controller.text),
-            child: const Text('پاشەکەوت', style: TextStyle(color: Colors.white)),
+            child: Text(S.saveShort, style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -352,11 +353,11 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
 
   @override
   Widget build(BuildContext context) {
-    watchPalette(context);
+    watchAppShell(context);
     return Scaffold(
       backgroundColor: appBackgroundColor,
       appBar: AppBar(
-        title: Text(_isEdit ? 'دەستکاری گرێبەستی کرێ' : 'گرێبەستی کرێی نوێ', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        title: Text(_isEdit ? S.editRentContract : S.newRentContract, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         backgroundColor: primaryDarkBlue,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -384,8 +385,8 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
                     child: _step == 2
                         ? (_saving
                         ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-                        : Text(_isEdit ? 'پاشەکەوتکردن' : 'دروستکردن', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)))
-                        : const Text('دواتر', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        : Text(_isEdit ? S.save : S.create, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)))
+                        : Text(S.next, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -399,7 +400,7 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
                       onPressed: details.onStepCancel,
-                      child: const Text('گەڕانەوە', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      child: Text(S.back, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
                   ),
               ],
@@ -407,7 +408,7 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
           ),
           steps: [
             Step(
-              title: const Text('لایەنەکان', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              title: Text(S.stepParties, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               isActive: _step >= 0,
               state: _step > 0 ? StepState.complete : StepState.indexed,
               content: Form(
@@ -416,18 +417,18 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
                   padding: const EdgeInsets.only(top: 16),
                   child: Column(
                     children: [
-                      _text(_party1Name, 'لایەنی یەکەم', icon: Icons.person_outline),
-                      _text(_party1Mobile, 'ژمارەی مۆبایل (لایەنی یەکەم)', keyboard: TextInputType.phone, icon: Icons.phone_iphone),
+                      _text(_party1Name, S.party1, icon: Icons.person_outline),
+                      _text(_party1Mobile, S.party1Mobile, keyboard: TextInputType.phone, icon: Icons.phone_iphone),
                       const Divider(height: 32),
-                      _text(_party2Name, 'لایەنی دووەم', icon: Icons.person_outline),
-                      _text(_party2Mobile, 'ژمارەی مۆبایل (لایەنی دووەم)', keyboard: TextInputType.phone, icon: Icons.phone_iphone),
+                      _text(_party2Name, S.party2, icon: Icons.person_outline),
+                      _text(_party2Mobile, S.party2Mobile, keyboard: TextInputType.phone, icon: Icons.phone_iphone),
                     ],
                   ),
                 ),
               ),
             ),
             Step(
-              title: const Text('موڵک', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              title: Text(S.stepProperty, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               isActive: _step >= 1,
               state: _step > 1 ? StepState.complete : StepState.indexed,
               content: Form(
@@ -436,17 +437,17 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
                   padding: const EdgeInsets.only(top: 16),
                   child: Column(
                     children: [
-                      _text(_propertyType, 'جۆری موڵک (بۆ نموونە: خانوو)', icon: Icons.home_work_outlined),
-                      _text(_projectName, 'پڕۆژە / گەرەک', icon: Icons.location_city_outlined),
-                      _text(_propertyNumber, 'ژمارەی عەقار', icon: Icons.numbers),
-                      _text(_area, 'ڕووبەر (م²)', keyboard: const TextInputType.numberWithOptions(decimal: true), icon: Icons.square_foot),
+                      _text(_propertyType, S.propertyTypeHint, icon: Icons.home_work_outlined),
+                      _text(_projectName, S.projectOrNeighborhood, icon: Icons.location_city_outlined),
+                      _text(_propertyNumber, S.propertyNumber, icon: Icons.numbers),
+                      _text(_area, S.areaLabel, keyboard: const TextInputType.numberWithOptions(decimal: true), icon: Icons.square_foot),
                     ],
                   ),
                 ),
               ),
             ),
             Step(
-              title: const Text('دارایی و بەروار', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              title: Text(S.stepFinancials, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               isActive: _step >= 2,
               content: Form(
                 key: _financialsKey,
@@ -455,14 +456,14 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _text(_rentAmount, 'بڕی کرێ', keyboard: const TextInputType.numberWithOptions(decimal: true), icon: Icons.payments_outlined),
+                      _text(_rentAmount, S.rentAmount, keyboard: const TextInputType.numberWithOptions(decimal: true), icon: Icons.payments_outlined),
 
                       Padding(
                         padding: const EdgeInsets.only(bottom: 16),
                         child: DropdownButtonFormField<Currency>(
                           isExpanded: true,
                           initialValue: _currency,
-                          decoration: modernInputDecoration(label: 'جۆری دراو', icon: Icons.money),
+                          decoration: modernInputDecoration(label: S.currencyType, icon: Icons.money),
                           items: Currency.values
                               .map((c) => DropdownMenuItem(value: c, child: Text(c.label, style: const TextStyle(fontWeight: FontWeight.bold))))
                               .toList(),
@@ -470,36 +471,36 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
                         ),
                       ),
 
-                      _text(_rentalPeriod, 'ماوەی بەکرێگرتن (بە مانگ)', keyboard: TextInputType.number, icon: Icons.calendar_month_outlined),
+                      _text(_rentalPeriod, S.rentPeriodMonths, keyboard: TextInputType.number, icon: Icons.calendar_month_outlined),
 
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
                             flex: 3,
-                            child: _text(_downPayment, 'بڕی پێشەکی', keyboard: const TextInputType.numberWithOptions(decimal: true), icon: Icons.monetization_on_outlined),
+                            child: _text(_downPayment, S.downPayment, keyboard: const TextInputType.numberWithOptions(decimal: true), icon: Icons.monetization_on_outlined),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
                             flex: 2,
-                            child: _text(_downPaymentMonths, 'بۆ چەند مانگ', keyboard: TextInputType.number),
+                            child: _text(_downPaymentMonths, S.downPaymentMonths, keyboard: TextInputType.number),
                           ),
                         ],
                       ),
 
                       // هەڵبژاردنی بەرواری بەکرێگرتن، بەرواری ڕادەستکردن خۆکارانە
                       // دەبێتە ساڵێک دواتر (دەکرێت دواتر بەدەست بگۆڕدرێت).
-                      _datePicker('بەرواری بەکرێگرتن', _startDate, (d) => setState(() {
+                      _datePicker(S.startDate, _startDate, (d) => setState(() {
                         _startDate = d;
                         _handoverDate = DateTime(d.year + 1, d.month, d.day);
                       })),
-                      _datePicker('بەرواری ڕادەستکردن', _handoverDate, (d) => setState(() => _handoverDate = d)),
+                      _datePicker(S.handoverDate, _handoverDate, (d) => setState(() => _handoverDate = d)),
 
-                      _text(_paymentFrequency, 'کرێدان چەند مانگ جارێکە؟', keyboard: TextInputType.number, icon: Icons.update),
-                      _text(_guarantee, 'بڕی دڵنیایی (الضمان)', keyboard: const TextInputType.numberWithOptions(decimal: true), icon: Icons.security),
-                      _text(_gracePeriod, 'ماوەی ڕێپێدان (السماح)', icon: Icons.timer_outlined),
-                      _text(_rentalPurpose, 'هۆکاری بەکرێگرتن', icon: Icons.info_outline),
-                      _text(_lateFee, 'بڕی غەرامەی دواکەوتن بە ڕۆژ', keyboard: const TextInputType.numberWithOptions(decimal: true), icon: Icons.warning_amber_rounded),
+                      _text(_paymentFrequency, S.paymentEveryMonths, keyboard: TextInputType.number, icon: Icons.update),
+                      _text(_guarantee, S.guaranteeAmount, keyboard: const TextInputType.numberWithOptions(decimal: true), icon: Icons.security),
+                      _text(_gracePeriod, S.gracePeriod, icon: Icons.timer_outlined),
+                      _text(_rentalPurpose, S.rentalPurpose, icon: Icons.info_outline),
+                      _text(_lateFee, S.lateFeePerDay, keyboard: const TextInputType.numberWithOptions(decimal: true), icon: Icons.warning_amber_rounded),
 
                       const SizedBox(height: 12),
                       Container(
@@ -516,12 +517,12 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
                               children: [
                                 Icon(Icons.note_alt_outlined, color: AppColors.current.textStrong),
                                 const SizedBox(width: 8),
-                                Text('تێبینییەکان', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.current.textBody)),
+                                Text(S.notesSection, style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.current.textBody)),
                                 const Spacer(),
                                 TextButton(
                                   onPressed: _editNotes,
                                   style: TextButton.styleFrom(foregroundColor: AppColors.current.textStrong),
-                                  child: Text(_notes.isEmpty ? 'زیادکردن' : 'دەستکاری'),
+                                  child: Text(_notes.isEmpty ? S.add : S.edit),
                                 ),
                               ],
                             ),
@@ -548,7 +549,7 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
                           children: [
                             Icon(Icons.info, size: 16, color: accentYellow),
                             const SizedBox(width: 8),
-                            Text('١٢ قیست بە شێوەی خۆکار دروست دەکرێن.', style: TextStyle(color: AppColors.current.textBody, fontSize: 12, fontWeight: FontWeight.bold)),
+                            Text(S.installmentsAuto, style: TextStyle(color: AppColors.current.textBody, fontSize: 12, fontWeight: FontWeight.bold)),
                           ],
                         ),
                       ),
@@ -571,7 +572,7 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
           controller: c,
           keyboardType: keyboard,
           decoration: modernInputDecoration(label: label, icon: icon),
-          validator: (v) => (v == null || v.trim().isEmpty) ? 'پێویستە' : null,
+          validator: (v) => (v == null || v.trim().isEmpty) ? S.requiredField : null,
         ),
       );
 

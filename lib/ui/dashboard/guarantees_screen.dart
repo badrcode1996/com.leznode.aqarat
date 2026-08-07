@@ -28,7 +28,7 @@ class GuaranteesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    watchPalette(context);
+    watchAppShell(context);
     final async = ref.watch(contractsStreamProvider);
     return Scaffold(
       backgroundColor: _appBg,
@@ -153,7 +153,7 @@ class _GuaranteeCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    watchPalette(context);
+    watchAppShell(context);
     final returned = contract.guaranteeReturned;
     return Container(
       padding: const EdgeInsets.all(16),
@@ -200,7 +200,7 @@ class _GuaranteeCard extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '${GuaranteesScreen._money.format(contract.guaranteeAmount)} ${contract.currency.label}',
+                    '${GuaranteesScreen._money.format(contract.guaranteeAmount)} ${contract.currency.uiLabel}',
                     style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: AppColors.current.textStrong,
