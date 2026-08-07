@@ -8,8 +8,9 @@ import '../../models/enums.dart';
 import '../../models/receipt_model.dart';
 import '../widgets/processing_dialog.dart';
 import 'receipt_preview_screen.dart';
+import '../../theme/app_colors.dart';
 
-const Color _appBg = Color(0xFFF5F7FA);
+Color get _appBg => AppColors.current.pageBg;
 
 /// Create an external receipt (پسولەی دەرەکی) — or edit any existing receipt
 /// when [existing] is supplied (admin only). In edit mode the type is fixed by
@@ -120,7 +121,7 @@ class _CreateReceiptScreenState extends ConsumerState<CreateReceiptScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('هەڵە: $e'), backgroundColor: Colors.red.shade700));
+            SnackBar(content: Text('هەڵە: $e'), backgroundColor: AppColors.current.danger));
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -129,6 +130,7 @@ class _CreateReceiptScreenState extends ConsumerState<CreateReceiptScreen> {
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     return Scaffold(
       backgroundColor: _appBg,
       appBar: AppBar(

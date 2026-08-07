@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/session.dart';
+import '../../theme/app_colors.dart';
+import '../../l10n/app_strings.dart';
 
 /// Real Firebase Auth email/password sign-in with Modern UI.
 class LoginScreen extends ConsumerStatefulWidget {
@@ -21,10 +23,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   String? _error;
   bool _obscurePassword = true;
 
-  // ڕەنگە سەرەکییەکان بۆ دیزاینەکە
-  final Color primaryDarkBlue = const Color(0xFF0F2C59);
-  final Color accentYellow = const Color(0xFFF8B115);
-  final Color inputFillColor = const Color(0xFFF3F4F6);
+  // ڕەنگە سەرەکییەکان بۆ دیزاینەکە. Getter ـن نەک فیلدی `final`: فیلدێک
+  // تەنها یەک جار لە دروستبوونی State دا حیساب دەکرێت، بۆیە گۆڕینی ڕووکار
+  // ڕەنگەکانی نوێ نەدەکرد.
+  Color get primaryDarkBlue => AppColors.current.brand;
+  Color get accentYellow => AppColors.current.accent;
+  Color get inputFillColor => AppColors.current.inputFill;
 
   @override
   void dispose() {
@@ -58,15 +62,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   String _msg(String code) => switch (code) {
-    'invalid-email' => 'ئیمەیڵ هەڵەیە',
-    'user-not-found' => 'بەکارهێنەر نەدۆزرایەوە',
-    'wrong-password' || 'invalid-credential' => 'ئیمەیڵ یان وشەی نهێنی هەڵەیە',
-    'too-many-requests' => 'هەوڵی زۆر — کەمێک چاوەڕێ بکە',
-    _ => 'هەڵە: $code',
+    'invalid-email' => S.badEmail,
+    'user-not-found' => S.userNotFound,
+    'wrong-password' || 'invalid-credential' => S.wrongCredentials,
+    'too-many-requests' => S.tooManyAttempts,
+    _ => S.error(code),
   };
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     return Scaffold(
       backgroundColor: primaryDarkBlue,
       body: SafeArea(
@@ -82,11 +87,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.current.card,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.2),
+                          color: AppColors.current.shadow,
                           blurRadius: 20,
                           offset: const Offset(0, 8),
                         ),
@@ -100,9 +105,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    'خانووبەرە',
-                    style: TextStyle(
+                  Text(
+                    S.appBrandName,
+                    style: const TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
@@ -111,7 +116,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'سیستەمی بەڕێوەبردنی ئەقارات',
+                    S.appTagline,
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.white.withValues(alpha: 0.8),
@@ -123,11 +128,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   Container(
                     padding: const EdgeInsets.all(28),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.current.card,
                       borderRadius: BorderRadius.circular(30),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.15),
+                          color: AppColors.current.shadow,
                           blurRadius: 20,
                           offset: const Offset(0, 10),
                         ),
@@ -139,13 +144,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const Text(
-                            'چوونەژوورەوە',
+                          Text(
+                            S.signIn,
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                              color: AppColors.current.textBody,
                             ),
                           ),
                           const SizedBox(height: 24),
@@ -156,11 +161,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             keyboardType: TextInputType.emailAddress,
                             textDirection: TextDirection.ltr,
                             decoration: _inputDecoration(
-                              label: 'ئیمەیڵ',
+                              label: S.email,
                               icon: Icons.email_outlined,
                             ),
                             validator: (v) =>
-                            (v == null || !v.contains('@')) ? 'ئیمەیڵێکی دروست بنووسە' : null,
+                            (v == null || !v.contains('@')) ? S.emailInvalid : null,
                           ),
                           const SizedBox(height: 16),
 
@@ -170,13 +175,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             obscureText: _obscurePassword,
                             textDirection: TextDirection.ltr,
                             decoration: _inputDecoration(
-                              label: 'وشەی نهێنی',
+                              label: S.password,
                               icon: Icons.lock_outline,
                             ).copyWith(
                               suffixIcon: IconButton(
                                 icon: Icon(
                                   _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                                  color: Colors.grey.shade600,
+                                  color: AppColors.current.textMuted,
                                 ),
                                 onPressed: () {
                                   setState(() {
@@ -186,7 +191,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ),
                             ),
                             validator: (v) =>
-                            (v == null || v.length < 6) ? 'لانیکەم ٦ پیت یان ژمارە' : null,
+                            (v == null || v.length < 6) ? S.passwordTooShort : null,
                           ),
 
                           // پیشاندانی هەڵە ئەگەر هەبێت
@@ -195,12 +200,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: Colors.red.shade50,
+                                color: AppColors.current.danger.withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Text(
                                 _error!,
-                                style: TextStyle(color: Colors.red.shade700, fontSize: 13),
+                                style: TextStyle(color: AppColors.current.danger, fontSize: 13),
                                 textAlign: TextAlign.center,
                               ),
                             ),
@@ -229,9 +234,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 color: Colors.white,
                               ),
                             )
-                                : const Text(
-                              'چوونەژوورەوە',
-                              style: TextStyle(
+                                : Text(
+                              S.signIn,
+                              style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 0.5,
@@ -257,8 +262,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   InputDecoration _inputDecoration({required String label, required IconData icon}) {
     return InputDecoration(
       labelText: label,
-      labelStyle: TextStyle(color: Colors.grey.shade600, fontSize: 14),
-      prefixIcon: Icon(icon, color: primaryDarkBlue),
+      labelStyle: TextStyle(color: AppColors.current.textMuted, fontSize: 14),
+      prefixIcon: Icon(icon, color: AppColors.current.textStrong),
       filled: true,
       fillColor: inputFillColor,
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
@@ -268,7 +273,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: Colors.grey.shade200, width: 1),
+        borderSide: BorderSide(color: AppColors.current.divider, width: 1),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
@@ -276,7 +281,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: Colors.red.shade300, width: 1),
+        borderSide: BorderSide(color: AppColors.current.danger, width: 1),
       ),
     );
   }

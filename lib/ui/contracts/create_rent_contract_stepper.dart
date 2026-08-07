@@ -1,3 +1,4 @@
+import '../../theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -13,17 +14,17 @@ import 'widgets/contract_docs_field.dart';
 import 'widgets/saving_dialog.dart';
 
 // ڕەنگە سەرەکییەکان بۆ یەکپارچەیی دیزاینەکە
-const Color primaryDarkBlue = Color(0xFF0F2C59);
-const Color accentYellow = Color(0xFFF8B115);
-const Color appBackgroundColor = Color(0xFFF5F7FA);
-const Color inputFillColor = Color(0xFFF3F4F6);
+Color get primaryDarkBlue => AppColors.current.brand;
+Color get accentYellow => AppColors.current.accent;
+Color get appBackgroundColor => AppColors.current.pageBg;
+Color get inputFillColor => AppColors.current.inputFill;
 
 // فەنکشن بۆ دیزاینی فۆڕمەکان
 InputDecoration modernInputDecoration({required String label, IconData? icon}) {
   return InputDecoration(
     labelText: label,
-    labelStyle: TextStyle(color: Colors.grey.shade600, fontSize: 14),
-    prefixIcon: icon != null ? Icon(icon, color: primaryDarkBlue, size: 22) : null,
+    labelStyle: TextStyle(color: AppColors.current.textMuted, fontSize: 14),
+    prefixIcon: icon != null ? Icon(icon, color: AppColors.current.textStrong, size: 22) : null,
     filled: true,
     fillColor: inputFillColor,
     contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -33,15 +34,15 @@ InputDecoration modernInputDecoration({required String label, IconData? icon}) {
     ),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(16),
-      borderSide: BorderSide(color: Colors.grey.shade200, width: 1),
+      borderSide: BorderSide(color: AppColors.current.divider, width: 1),
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(16),
-      borderSide: const BorderSide(color: accentYellow, width: 2),
+      borderSide: BorderSide(color: accentYellow, width: 2),
     ),
     errorBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(16),
-      borderSide: BorderSide(color: Colors.red.shade300, width: 1),
+      borderSide: BorderSide(color: AppColors.current.danger, width: 1),
     ),
   );
 }
@@ -80,7 +81,15 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
   /// Language of the document produced for this contract — 'ku' or 'ar'. Only
   /// governs the PDF that opens after saving; the stored contract is language
   /// neutral, so the archive can still print either edition later.
-  String _docLang = 'ku';
+  ///
+  /// Null until the user picks one, so the default keeps tracking
+  /// [defaultDocLang] — which needs the template stream, and that resolves a
+  /// frame or two after this screen opens. Pinning it in initState would lock
+  /// in "Kurdish" before we know whether Arabic is available.
+  String? _pickedDocLang;
+
+  String get _docLang =>
+      _pickedDocLang ?? defaultDocLang(ref, isRent: true);
 
   /// Pops the progress dialog exactly once, so later navigation (preview, or
   /// popping this screen) doesn't tear down the wrong route.
@@ -201,7 +210,7 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text('بارکردنی بەڵگەکان سەرکەوتوو نەبوو: $e'),
-            backgroundColor: Colors.red.shade700));
+            backgroundColor: AppColors.current.danger));
         setState(() => _saving = false);
       }
       return;
@@ -266,7 +275,7 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
         _closeSavingDialog();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('گرێبەستی کرێ نوێکرایەوە'), backgroundColor: Colors.green));
+              SnackBar(content: const Text('گرێبەستی کرێ نوێکرایەوە'), backgroundColor: AppColors.current.success));
           Navigator.of(context).pop(existing.id);
         }
         return;
@@ -278,7 +287,7 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
       _closeSavingDialog();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('گرێبەستی کرێ دروستکرا ($id)'), backgroundColor: Colors.green));
+          SnackBar(content: Text('گرێبەستی کرێ دروستکرا ($id)'), backgroundColor: AppColors.current.success));
       // Replace the stepper with the new contract's preview, so going back
       // lands on the list instead of a filled-in form.
       if (saved != null) {
@@ -297,7 +306,7 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
       _closeSavingDialog();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('سەرکەوتوو نەبوو: $e'), backgroundColor: Colors.red.shade700));
+            SnackBar(content: Text('سەرکەوتوو نەبوو: $e'), backgroundColor: AppColors.current.danger));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -310,7 +319,7 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('تێبینی', style: TextStyle(color: primaryDarkBlue, fontWeight: FontWeight.bold)),
+        title: Text('تێبینی', style: TextStyle(color: AppColors.current.textStrong, fontWeight: FontWeight.bold)),
         content: TextField(
           controller: controller,
           maxLines: 5,
@@ -319,7 +328,7 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
           decoration: modernInputDecoration(label: 'تا ٥ لاین تێبینی بنووسە...'),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('پاشگەزبوونەوە', style: TextStyle(color: Colors.grey))),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('پاشگەزبوونەوە', style: TextStyle(color: AppColors.current.textMuted))),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: primaryDarkBlue, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
             onPressed: () => Navigator.pop(ctx, controller.text),
@@ -343,6 +352,7 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     return Scaffold(
       backgroundColor: appBackgroundColor,
       appBar: AppBar(
@@ -352,13 +362,10 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
         elevation: 0,
         centerTitle: true,
       ),
+      // ڕەنگی هەنگاوە چالاکەکان لە ڕووکاری ئەپەکەوە دێت — پێشتر ColorScheme.light
+      // ـی زۆرەملێ بوو، کە لە دۆخی تاریکدا ساڵنامەیەکی سپی دەردەخست.
       body: Theme(
-        // ڕێکخستنی ڕەنگی Stepper
-        data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.light(
-            primary: primaryDarkBlue, // ڕەنگی هەنگاوە چالاکەکان
-          ),
-        ),
+        data: Theme.of(context),
         child: Stepper(
           currentStep: _step,
           type: StepperType.vertical,
@@ -386,9 +393,9 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
                   Expanded(
                     child: OutlinedButton(
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: primaryDarkBlue,
+                        foregroundColor: AppColors.current.textStrong,
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        side: const BorderSide(color: primaryDarkBlue, width: 1.5),
+                        side: BorderSide(color: primaryDarkBlue, width: 1.5),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
                       onPressed: details.onStepCancel,
@@ -498,29 +505,29 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.current.card,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.grey.shade300),
+                          border: Border.all(color: AppColors.current.divider),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
                               children: [
-                                const Icon(Icons.note_alt_outlined, color: primaryDarkBlue),
+                                Icon(Icons.note_alt_outlined, color: AppColors.current.textStrong),
                                 const SizedBox(width: 8),
-                                Text('تێبینییەکان', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey.shade800)),
+                                Text('تێبینییەکان', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.current.textBody)),
                                 const Spacer(),
                                 TextButton(
                                   onPressed: _editNotes,
-                                  style: TextButton.styleFrom(foregroundColor: primaryDarkBlue),
+                                  style: TextButton.styleFrom(foregroundColor: AppColors.current.textStrong),
                                   child: Text(_notes.isEmpty ? 'زیادکردن' : 'دەستکاری'),
                                 ),
                               ],
                             ),
                             if (_notes.isNotEmpty) ...[
                               const Divider(),
-                              Text(_notes, style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
+                              Text(_notes, style: TextStyle(color: AppColors.current.textBody, fontSize: 13)),
                             ]
                           ],
                         ),
@@ -532,16 +539,16 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
                       DocLangField(
                         isRent: true,
                         value: _docLang,
-                        onChanged: (v) => setState(() => _docLang = v),
+                        onChanged: (v) => setState(() => _pickedDocLang = v),
                       ),
 
-                      const Padding(
-                        padding: EdgeInsets.only(top: 16),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16),
                         child: Row(
                           children: [
                             Icon(Icons.info, size: 16, color: accentYellow),
-                            SizedBox(width: 8),
-                            Text('١٢ قیست بە شێوەی خۆکار دروست دەکرێن.', style: TextStyle(color: Colors.black54, fontSize: 12, fontWeight: FontWeight.bold)),
+                            const SizedBox(width: 8),
+                            Text('١٢ قیست بە شێوەی خۆکار دروست دەکرێن.', style: TextStyle(color: AppColors.current.textBody, fontSize: 12, fontWeight: FontWeight.bold)),
                           ],
                         ),
                       ),
@@ -580,24 +587,12 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
               initialDate: value,
               firstDate: DateTime(2020),
               lastDate: DateTime(2100),
-              builder: (context, child) {
-                return Theme(
-                  data: Theme.of(context).copyWith(
-                    colorScheme: const ColorScheme.light(
-                      primary: primaryDarkBlue, // ڕەنگی سەرەوەی ساڵنامەکە
-                      onPrimary: Colors.white,
-                      onSurface: primaryDarkBlue,
-                    ),
-                  ),
-                  child: child!,
-                );
-              },
             );
             if (picked != null) onPick(picked);
           },
           child: InputDecorator(
             decoration: modernInputDecoration(label: label, icon: Icons.calendar_today_rounded),
-            child: Text(_date.format(value), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87)),
+            child: Text(_date.format(value), style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.current.textBody)),
           ),
         ),
       );

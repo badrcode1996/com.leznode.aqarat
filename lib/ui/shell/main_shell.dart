@@ -3,21 +3,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/plan_config_repository.dart';
 import '../../models/enums.dart';
+import '../../services/push_service.dart';
 import '../archive/archive_screen.dart';
 import '../contracts/create_rent_contract_stepper.dart';
 import '../contracts/create_sale_contract_stepper.dart';
 import '../dashboard/dashboard_screen.dart';
 import '../listings/create_listing_screen.dart';
-// بازار کاتی شاراوەتەوە — بۆ گەڕاندنەوەی، ئەم import ـە + MarketScreen() لە _tabs
-// + دوگمەی navـی 'بازاڕ' ی خوارەوە دووبارە چالاک بکەرەوە.
-// import '../market/market_screen.dart';
 import '../listings/my_listings_screen.dart';
 import '../receipts/create_receipt_screen.dart';
 import '../tenants/tenants_screen.dart';
+import '../../theme/app_colors.dart';
+import '../../l10n/app_strings.dart';
 
 // ڕەنگە سەرەکییەکان
-const Color primaryDarkBlue = Color(0xFF0F2C59);
-const Color accentYellow = Color(0xFFF8B115);
+Color get primaryDarkBlue => AppColors.current.brand;
+Color get accentYellow => AppColors.current.accent;
 
 /// Main app shell: 4-tab bottom navigation with a centered docked FAB.
 class MainShell extends ConsumerStatefulWidget {
@@ -30,12 +30,23 @@ class MainShell extends ConsumerStatefulWidget {
 class _MainShellState extends ConsumerState<MainShell> {
   int _index = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    // Registered here rather than in main(): the shell is the first screen that
+    // only ever builds for a signed-in, provisioned, non-expired member, which
+    // is exactly who should have a device token stored. Not awaited — the
+    // permission prompt must not hold up the first frame.
+    ref.read(pushServiceProvider).start();
+  }
+
   static const _tabs = [
     DashboardScreen(),
     TenantsScreen(),
     ArchiveScreen(),
-    MyListingsScreen(), // داواکاری و خستنەڕوو
-    // MarketScreen(), // بازار کاتی شاراوەتەوە
+    // داواکاری و خستنەڕوو — بازاڕی گشتیش لێرەوەیە، وەک بەشێکی سێیەمی
+    // فلتەرەکە (بۆ سیلڤەر بەرەوژوور).
+    MyListingsScreen(),
   ];
 
   void _openQuickActions() {
@@ -43,7 +54,7 @@ class _MainShellState extends ConsumerState<MainShell> {
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.current.card,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (_) => SafeArea(
         child: Padding(
@@ -51,24 +62,24 @@ class _MainShellState extends ConsumerState<MainShell> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 child: Align(
                   alignment: AlignmentDirectional.centerStart,
-                  child: Text('کردارە خێراکان', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: primaryDarkBlue)),
+                  child: Text(S.quickActions, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.current.textStrong)),
                 ),
               ),
               // گرێبەستی کرێ و فرۆشتن و پسولەکان — کردارە بنەڕەتییەکانن،
               // لە هەموو پلانێکدا بەردەستن و بە پلان gate ناکرێن.
-              _action(Icons.home_work_outlined, 'گرێبەستی کرێ', const Color(0xFF10B981), () => _push(const CreateRentContractStepper())),
-              _action(Icons.sell_outlined, 'گرێبەستی فرۆشتن', const Color(0xFF3B82F6), () => _push(const CreateSaleContractStepper())),
+              _action(Icons.home_work_outlined, S.rentContract, AppColors.current.success, () => _push(const CreateRentContractStepper())),
+              _action(Icons.sell_outlined, S.saleContract, AppColors.current.info, () => _push(const CreateSaleContractStepper())),
               if (features.offers)
-                _action(Icons.add_home_work_outlined, 'خستنەڕووی موڵک', const Color(0xFFF59E0B), () => _push(const CreateListingScreen(kind: ListingKind.offer))),
+                _action(Icons.add_home_work_outlined, S.listProperty, AppColors.current.warning, () => _push(const CreateListingScreen(kind: ListingKind.offer))),
               if (features.requests)
-                _action(Icons.person_search_outlined, 'داواکاری موشتەری', const Color(0xFF8B5CF6), () => _push(const CreateListingScreen(kind: ListingKind.demand))),
+                _action(Icons.person_search_outlined, S.customerRequest, AppColors.current.violet, () => _push(const CreateListingScreen(kind: ListingKind.demand))),
               const Divider(indent: 20, endIndent: 20, height: 8),
-              _action(Icons.south_west_rounded, 'پسولەی پارە وەرگرتن', const Color(0xFF10B981), () => _push(const CreateReceiptScreen(type: ReceiptType.externalReceive))),
-              _action(Icons.north_east_rounded, 'پسولەی پارەدان', const Color(0xFFEF4444), () => _push(const CreateReceiptScreen(type: ReceiptType.externalPay))),
+              _action(Icons.south_west_rounded, S.receiptIn, AppColors.current.success, () => _push(const CreateReceiptScreen(type: ReceiptType.externalReceive))),
+              _action(Icons.north_east_rounded, S.receiptOut, AppColors.current.danger, () => _push(const CreateReceiptScreen(type: ReceiptType.externalPay))),
               const SizedBox(height: 16),
             ],
           ),
@@ -96,6 +107,7 @@ class _MainShellState extends ConsumerState<MainShell> {
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     return Scaffold(
       extendBody: true,
       body: IndexedStack(index: _index, children: _tabs),
@@ -103,7 +115,7 @@ class _MainShellState extends ConsumerState<MainShell> {
       floatingActionButton: FloatingActionButton(
         onPressed: _openQuickActions,
         backgroundColor: accentYellow,
-        foregroundColor: primaryDarkBlue,
+        foregroundColor: AppColors.current.onAccent,
         elevation: 4,
         shape: const CircleBorder(),
         child: const Icon(Icons.add, size: 30),
@@ -112,16 +124,16 @@ class _MainShellState extends ConsumerState<MainShell> {
         height: 70,
         shape: const CircularNotchedRectangle(),
         notchMargin: 10,
-        color: Colors.white,
+        color: AppColors.current.card,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _navItem(0, Icons.home_outlined, Icons.home_rounded, 'سەرەکی'),
-            _navItem(1, Icons.people_outline, Icons.people_rounded, 'کرێچیەکان'),
+            _navItem(0, Icons.home_outlined, Icons.home_rounded, S.navHome),
+            _navItem(1, Icons.people_outline, Icons.people_rounded, S.navTenants),
             const SizedBox(width: 40), // notch gap
-            _navItem(2, Icons.inventory_2_outlined, Icons.inventory_2, 'ئەرشیف'),
+            _navItem(2, Icons.inventory_2_outlined, Icons.inventory_2, S.navArchive),
             _navItem(3, Icons.storefront_outlined, Icons.storefront_rounded,
-                'داواکاری و خستنەڕوو'),
+                S.navListings),
           ],
         ),
       ),
@@ -137,7 +149,7 @@ class _MainShellState extends ConsumerState<MainShell> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(selected ? active : icon, size: 24, color: selected ? primaryDarkBlue : Colors.grey.shade500),
+            Icon(selected ? active : icon, size: 24, color: selected ? AppColors.current.textStrong : AppColors.current.textMuted),
             const SizedBox(height: 2),
             // FittedBox ناوە درێژەکان بچووک دەکاتەوە بۆ پانی خانەکە
             // (بۆ نموونە «داواکاری و خستنەڕوو») بەبێ شکان یان بڕان.
@@ -151,7 +163,7 @@ class _MainShellState extends ConsumerState<MainShell> {
                     style: TextStyle(
                         fontSize: 10,
                         fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-                        color: selected ? primaryDarkBlue : Colors.grey.shade500
+                        color: selected ? AppColors.current.textStrong : AppColors.current.textMuted
                     )
                 ),
               ),

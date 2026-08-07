@@ -4,11 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/contract_repository.dart';
 import '../../models/contract_model.dart';
 import '../contracts/installment_grid.dart';
+import '../../theme/app_colors.dart';
+import '../../l10n/app_strings.dart';
 
-const Color _primaryDarkBlue = Color(0xFF0F2C59);
-const Color _accentYellow = Color(0xFFF8B115);
-const Color _appBg = Color(0xFFF5F7FA);
-const Color _inputFill = Color(0xFFF3F4F6);
+Color get _primaryDarkBlue => AppColors.current.brand;
+Color get _accentYellow => AppColors.current.accent;
+Color get _appBg => AppColors.current.pageBg;
+Color get _inputFill => AppColors.current.inputFill;
 
 /// Tenants tab: a simple list of rent-contract tenants by name. Tapping a name
 /// opens its 12 rent installment cells (the day-to-day rent tracking). Full
@@ -18,12 +20,13 @@ class TenantsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    watchPalette(context);
     final async = ref.watch(contractsStreamProvider);
     return Scaffold(
       backgroundColor: _appBg,
       appBar: AppBar(
-        title: const Text('کرێچیەکان',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+        title: Text(S.tenants,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
         backgroundColor: _primaryDarkBlue,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -31,9 +34,9 @@ class TenantsScreen extends ConsumerWidget {
       ),
       body: async.when(
         loading: () =>
-            const Center(child: CircularProgressIndicator(color: _primaryDarkBlue)),
+            Center(child: CircularProgressIndicator(color: AppColors.current.textStrong)),
         error: (e, _) => Center(
-            child: Text('هەڵە: $e', style: const TextStyle(color: Colors.red))),
+            child: Text(S.error(e), style: TextStyle(color: AppColors.current.danger))),
         data: (all) {
           final tenants = all.whereType<RentContract>().toList();
           if (tenants.isEmpty) {
@@ -54,11 +57,11 @@ class TenantsScreen extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.people_outline, size: 72, color: Colors.grey.shade300),
+            Icon(Icons.people_outline, size: 72, color: AppColors.current.divider),
             const SizedBox(height: 16),
-            Text('هیچ کرێچییەک نییە',
+            Text(S.noTenants,
                 style: TextStyle(
-                    color: Colors.grey.shade600,
+                    color: AppColors.current.textMuted,
                     fontWeight: FontWeight.bold,
                     fontSize: 16)),
           ],
@@ -101,13 +104,14 @@ class _TenantRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.current.card,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppColors.current.shadow,
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -126,26 +130,26 @@ class _TenantRow extends StatelessWidget {
                 Container(
                   width: 44,
                   height: 44,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     color: _inputFill,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.person_outline,
-                      color: _primaryDarkBlue),
+                  child: Icon(Icons.person_outline,
+                      color: AppColors.current.textStrong),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Text(
                     _name,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: _primaryDarkBlue),
+                        color: AppColors.current.textStrong),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const Icon(Icons.chevron_left_rounded, color: _accentYellow),
+                Icon(Icons.chevron_left_rounded, color: _accentYellow),
               ],
             ),
           ),

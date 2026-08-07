@@ -5,11 +5,13 @@ import 'package:intl/intl.dart';
 import '../../auth/session.dart';
 import '../../data/contract_repository.dart';
 import '../../data/listing_repository.dart';
+import '../../data/notification_repository.dart';
 import '../../data/plan_config_repository.dart';
 import '../../models/contract_model.dart';
 import '../../models/enums.dart';
 import '../../models/property_model.dart';
 import '../listings/my_listings_screen.dart';
+import '../notifications/notifications_screen.dart';
 import '../settings/settings_screen.dart';
 import 'commissions_screen.dart';
 import 'guarantees_screen.dart';
@@ -17,11 +19,13 @@ import 'overdue_screen.dart';
 import 'widgets/property_card.dart';
 import 'widgets/request_card.dart';
 import 'widgets/stat_card.dart';
+import '../../theme/app_colors.dart';
+import '../../l10n/app_strings.dart';
 
 // ڕەنگە سەرەکییەکان بۆ یەکپارچەیی دیزاینەکە
-const Color primaryDarkBlue = Color(0xFF0F2C59);
-const Color accentYellow = Color(0xFFF8B115);
-const Color appBackgroundColor = Color(0xFFF5F7FA);
+Color get primaryDarkBlue => AppColors.current.brand;
+Color get accentYellow => AppColors.current.accent;
+Color get appBackgroundColor => AppColors.current.pageBg;
 
 /// Dashboard (Home tab) built with slivers. All data is real (Firestore);
 /// sections show empty states until data exists.
@@ -32,6 +36,7 @@ class DashboardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    watchPalette(context);
     final user = ref.watch(currentUserProvider);
     final features = ref.watch(currentPlanFeaturesProvider);
     // valueOrNull (NOT .value): .value RETHROWS when a provider is in its error
@@ -43,6 +48,7 @@ class DashboardScreen extends ConsumerWidget {
     final contracts = ref.watch(contractsStreamProvider).valueOrNull ?? const [];
     final offers = ref.watch(myListingsProvider(ListingKind.offer)).valueOrNull;
     final demands = ref.watch(myListingsProvider(ListingKind.demand)).valueOrNull;
+    final unread = ref.watch(unreadNotificationCountProvider);
 
     // Matchmaking: a demand and an offer "match" when they share the same
     // property type + project/neighborhood. Matched ones are shown green.
@@ -118,12 +124,21 @@ class DashboardScreen extends ConsumerWidget {
             scrolledUnderElevation: 4,
             toolbarHeight: 76,
             backgroundColor: primaryDarkBlue,
-            shadowColor: Colors.black.withValues(alpha: 0.3),
+            shadowColor: AppColors.current.shadow,
             leading: IconButton(
-              icon: const Icon(Icons.notifications_active_outlined, color: accentYellow, size: 28),
-              onPressed: () {
-                // نۆتیفیکەیشنەکان
-              },
+              icon: Badge(
+                // 99+ so a long-neglected inbox can't widen the icon out of
+                // the leading slot.
+                label: unread > 99 ? const Text('99+') : Text('$unread'),
+                isLabelVisible: unread > 0,
+                backgroundColor: AppColors.current.danger,
+                child: Icon(Icons.notifications_active_outlined,
+                    color: accentYellow, size: 28),
+              ),
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+              ),
             ),
             titleSpacing: 0,
             title: Column(
@@ -132,7 +147,7 @@ class DashboardScreen extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'بەخێربێیتەوە 👋',
+                  S.welcomeBack,
                   style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.8)),
                 ),
                 const SizedBox(height: 2),
@@ -154,19 +169,19 @@ class DashboardScreen extends ConsumerWidget {
                   ),
                   child: Container(
                   padding: const EdgeInsets.all(2),
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     color: accentYellow,
                     shape: BoxShape.circle,
                   ),
                   child: CircleAvatar(
                     radius: 22,
-                    backgroundColor: Colors.white,
+                    backgroundColor: AppColors.current.card,
                     backgroundImage: (company?.logoUrl.isNotEmpty ?? false) ? NetworkImage(company!.logoUrl) : null,
                     child: (company?.logoUrl.isNotEmpty ?? false)
                         ? null
                         : Text(
                       user.displayName.isNotEmpty ? user.displayName.characters.first : '?',
-                      style: const TextStyle(fontWeight: FontWeight.bold, color: primaryDarkBlue, fontSize: 18),
+                      style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.current.textStrong, fontSize: 18),
                     ),
                   ),
                 ),
@@ -187,20 +202,20 @@ class DashboardScreen extends ConsumerWidget {
                   physics: const BouncingScrollPhysics(),
                   children: [
                     StatCard(
-                      title: 'قاسەی نووسینگە',
-                      value: '${_money.format(collectedIqd)} د.ع',
+                      title: S.officeCashbox,
+                      value: '${_money.format(collectedIqd)} ${Currency.iqd.uiSymbol}',
                       secondValue: '${_money.format(collectedUsd)} \$',
                       icon: Icons.account_balance_wallet_rounded,
-                      accent: primaryDarkBlue, // ڕەنگی مۆدێرن بۆ قاسە
+                      accent: AppColors.current.textStrong, // ڕەنگی مۆدێرن بۆ قاسە
                     ),
                     if (features.guarantees) ...[
                       const SizedBox(width: 12),
                       StatCard(
-                        title: 'کۆی دڵنیایی',
-                        value: '${_money.format(guaranteeIqd)} د.ع',
+                        title: S.totalGuarantees,
+                        value: '${_money.format(guaranteeIqd)} ${Currency.iqd.uiSymbol}',
                         secondValue: '${_money.format(guaranteeUsd)} \$',
                         icon: Icons.shield_outlined,
-                        accent: const Color(0xFF8B5CF6), // مۆری بۆ دڵنیایی
+                        accent: AppColors.current.violet, // مۆری بۆ دڵنیایی
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -211,11 +226,11 @@ class DashboardScreen extends ConsumerWidget {
                     if (features.commission) ...[
                       const SizedBox(width: 12),
                       StatCard(
-                        title: 'عمولەی ئەم مانگە',
-                        value: '${_money.format(commissionIqd)} د.ع',
+                        title: S.commissionThisMonth,
+                        value: '${_money.format(commissionIqd)} ${Currency.iqd.uiSymbol}',
                         secondValue: '${_money.format(commissionUsd)} \$',
                         icon: Icons.percent_rounded,
-                        accent: const Color(0xFF0EA5E9), // شینی بۆ عمولە
+                        accent: AppColors.current.info, // شینی بۆ عمولە
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -225,19 +240,19 @@ class DashboardScreen extends ConsumerWidget {
                     ],
                     const SizedBox(width: 12),
                     StatCard(
-                      title: 'گرێبەستەکانی ئەم مانگە',
+                      title: S.contractsThisMonth,
                       value: '$contractsThisMonth',
                       icon: Icons.description_rounded,
-                      accent: const Color(0xFF10B981), // سەوزی کاڵ
+                      accent: AppColors.current.success, // سەوزی کاڵ
                     ),
                     if (features.overdue) ...[
                       const SizedBox(width: 12),
                       StatCard(
-                        title: 'پارەی دواکەوتوو',
-                        value: '${_money.format(overdueIqd)} د.ع',
+                        title: S.overdueMoney,
+                        value: '${_money.format(overdueIqd)} ${Currency.iqd.uiSymbol}',
                         secondValue: '${_money.format(overdueUsd)} \$',
                         icon: Icons.warning_rounded,
-                        accent: const Color(0xFFEF4444), // سووری کاڵ
+                        accent: AppColors.current.danger, // سووری کاڵ
                         highlight: true,
                         onTap: () => Navigator.push(
                           context,
@@ -248,7 +263,7 @@ class DashboardScreen extends ConsumerWidget {
                     ],
                     const SizedBox(width: 12),
                     StatCard(
-                      title: 'کۆی گرێبەستەکان',
+                      title: S.totalContracts,
                       value: '${stats?.contractCount ?? 0}',
                       icon: Icons.folder_copy_rounded,
                       accent: accentYellow,
@@ -260,16 +275,16 @@ class DashboardScreen extends ConsumerWidget {
           ),
 
           // ---------- Active demands (real) ----------
-          _sectionTitle('داواکارییە چالاکەکان', icon: Icons.person_search_rounded, onSeeAll: () {
+          _sectionTitle(S.activeDemands, icon: Icons.person_search_rounded, onSeeAll: () {
             Navigator.push(context, MaterialPageRoute(builder: (_) => const MyListingsScreen(initialIndex: 1)));
           }),
           SliverToBoxAdapter(
             child: SizedBox(
               height: 160,
               child: (demands == null)
-                  ? const Center(child: CircularProgressIndicator(color: primaryDarkBlue))
+                  ? Center(child: CircularProgressIndicator(color: AppColors.current.textStrong))
                   : demands.isEmpty
-                  ? _emptyBox('هیچ داواکارییەکی نوێ نییە', Icons.search_off_rounded)
+                  ? _emptyBox(S.noNewDemands, Icons.search_off_rounded)
                   : ListView.separated(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -282,18 +297,18 @@ class DashboardScreen extends ConsumerWidget {
           ),
 
           // ---------- Recent offers (real) ----------
-          _sectionTitle('نوێترین موڵکەکان', icon: Icons.real_estate_agent_rounded, onSeeAll: () {
+          _sectionTitle(S.latestProperties, icon: Icons.real_estate_agent_rounded, onSeeAll: () {
             Navigator.push(context, MaterialPageRoute(builder: (_) => const MyListingsScreen(initialIndex: 0)));
           }),
           if (offers == null)
-            const SliverToBoxAdapter(
+            SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.all(40),
-                child: Center(child: CircularProgressIndicator(color: primaryDarkBlue)),
+                padding: const EdgeInsets.all(40),
+                child: Center(child: CircularProgressIndicator(color: AppColors.current.textStrong)),
               ),
             )
           else if (offers.isEmpty)
-            SliverToBoxAdapter(child: _emptyBox('هێشتا هیچ موڵکێک داخڵ نەکراوە', Icons.maps_home_work_outlined)),
+            SliverToBoxAdapter(child: _emptyBox(S.noPropertiesYet, Icons.maps_home_work_outlined)),
           if (offers != null && offers.isNotEmpty)
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 100), // بۆشایی خوارەوە بۆ ئەوەی دوگمەی FAB دای نەپۆشێت
@@ -314,19 +329,19 @@ class DashboardScreen extends ConsumerWidget {
       margin: const EdgeInsets.all(8),
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.current.card,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.shade200, width: 1.5),
+        border: Border.all(color: AppColors.current.divider, width: 1.5),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 42, color: Colors.grey.shade400),
+          Icon(icon, size: 42, color: AppColors.current.textFaint),
           const SizedBox(height: 12),
           Text(
             text,
-            style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.bold, fontSize: 14),
+            style: TextStyle(color: AppColors.current.textMuted, fontWeight: FontWeight.bold, fontSize: 14),
           ),
         ],
       ),
@@ -350,22 +365,22 @@ class DashboardScreen extends ConsumerWidget {
           const SizedBox(width: 8),
           Text(
             title,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: primaryDarkBlue),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.current.textStrong),
           ),
           const Spacer(),
           TextButton(
             onPressed: onSeeAll ?? () {},
             style: TextButton.styleFrom(
-              foregroundColor: primaryDarkBlue,
+              foregroundColor: AppColors.current.textStrong,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
-              children: const [
-                Text('هەمووی', style: TextStyle(fontWeight: FontWeight.bold)),
-                SizedBox(width: 4),
-                Icon(Icons.arrow_forward_ios_rounded, size: 12),
+              children: [
+                Text(S.seeAll, style: const TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(width: 4),
+                const Icon(Icons.arrow_forward_ios_rounded, size: 12),
               ],
             ),
           ),

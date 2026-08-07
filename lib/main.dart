@@ -11,8 +11,13 @@ import 'package:firebase_core/firebase_core.dart';
 import 'auth/session.dart';
 import 'data/plan_config_repository.dart';
 import 'firebase_options.dart';
+import 'l10n/app_strings.dart';
+import 'l10n/language_controller.dart';
 import 'models/enums.dart';
+import 'services/push_service.dart';
+import 'theme/app_colors.dart';
 import 'theme/app_theme.dart';
+import 'theme/theme_mode_controller.dart';
 import 'ui/admin/super_admin_panel.dart';
 import 'ui/auth/login_screen.dart';
 import 'ui/shell/main_shell.dart';
@@ -88,25 +93,25 @@ class _StartupErrorApp extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.cloud_off_rounded,
-                        size: 64, color: Colors.grey),
+                    Icon(Icons.cloud_off_rounded,
+                        size: 64, color: AppColors.current.textMuted),
                     const SizedBox(height: 16),
-                    const Text(
-                      'ئەپەکە نەیتوانی پەیوەندی بکات',
-                      style: TextStyle(
+                    Text(
+                      S.cannotConnect,
+                      style: const TextStyle(
                           fontSize: 18, fontWeight: FontWeight.bold),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      'تکایە ئینتەرنێتەکەت بپشکنە و ئەپەکە دووبارە بکەرەوە.',
-                      style: TextStyle(color: Colors.grey),
+                    Text(
+                      S.checkInternet,
+                      style: TextStyle(color: AppColors.current.textMuted),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 16),
                     Text(
                       '$error',
-                      style: const TextStyle(fontSize: 11, color: Colors.grey),
+                      style: TextStyle(fontSize: 11, color: AppColors.current.textMuted),
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -123,17 +128,29 @@ class AqaratApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    watchPalette(context);
+    final language = ref.watch(languageProvider);
+    // Publish the catalogue BEFORE building, not in `builder`: strings are read
+    // from enum members and model getters that run outside the widget tree, and
+    // those must already see the right language on this frame.
+    AppStrings.current = AppStrings.of(language);
+
     return MaterialApp(
-      title: 'گرێبەست',
+      title: AppStrings.of(language).appTitle,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
+      // Restored from the device on startup; ThemeMode.system until it resolves.
+      themeMode: ref.watch(themeModeProvider),
 
-      // Flutter's bundled delegates don't ship Central Kurdish (ckb), so we
-      // resolve to Arabic — also RTL and fully supported — for built-in widget
-      // labels (date picker buttons, etc.). Our own UI text is hardcoded
-      // Kurdish. To get fully localized `ckb`, add a custom
-      // LocalizationsDelegate and list it here.
-      locale: const Locale('ar'),
+      // Lets a push tap open the notification centre from outside the widget
+      // tree (see PushService).
+      navigatorKey: navigatorKey,
+
+      // Flutter's bundled delegates don't ship Central Kurdish (ckb), so it
+      // borrows Arabic — also RTL and fully supported — for built-in widget
+      // labels (date picker buttons, etc.). See AppLanguage.materialLocale.
+      locale: language.materialLocale,
       supportedLocales: const [
         Locale('ar'),
         Locale('en'),
@@ -143,11 +160,17 @@ class AqaratApp extends ConsumerWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      // Force RTL layout regardless of device locale resolution.
-      builder: (context, child) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: child!,
-      ),
+      builder: (context, child) {
+        // Publish the palette for the brightness actually being painted, before
+        // anything below builds. See AppColors.current.
+        AppColors.current = Theme.of(context).extension<AppColors>()!;
+        // Direction follows the language rather than being pinned to RTL —
+        // English has to mirror the whole layout back.
+        return Directionality(
+          textDirection: language.direction,
+          child: child!,
+        );
+      },
 
       home: const _SessionGate(),
     );
@@ -164,6 +187,7 @@ class _SessionGate extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    watchPalette(context);
     // On sign-out, pop any pushed routes (Settings, create screens, …) back to
     // the root. Otherwise a still-mounted pushed screen rebuilds against a null
     // session and `currentUserProvider` throws — the red "No active session"
@@ -182,7 +206,7 @@ class _SessionGate extends ConsumerWidget {
     return session.when(
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (e, _) => Scaffold(body: Center(child: Text('هەڵە: $e'))),
+      error: (e, _) => Scaffold(body: Center(child: Text(S.error(e)))),
       data: (user) {
         if (user == null) return const _NoAccessScreen();
         if (user.role == UserRole.superAdmin) return const SuperAdminPanel();
@@ -212,6 +236,7 @@ class _DemoExpiredScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    watchPalette(context);
     return Scaffold(
       body: Center(
         child: Padding(
@@ -219,23 +244,19 @@ class _DemoExpiredScreen extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.timelapse_outlined,
-                  size: 64, color: Color(0xFFEF4444)),
+              Icon(Icons.timelapse_outlined,
+                  size: 64, color: AppColors.current.danger),
               const SizedBox(height: 16),
-              const Text(
-                'ماوەی دیمۆ تەواو بوو',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              Text(
+                S.demoOver,
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'ماوەی ٧ ڕۆژی تاقیکردنەوەی ئەم هەژمارە کۆتایی هات.\n'
-                'بۆ بەردەوامبوون پەیوەندی بە لەزنۆدەوە بکە.',
-                textAlign: TextAlign.center,
-              ),
+              Text(S.demoOverBody, textAlign: TextAlign.center),
               const SizedBox(height: 16),
               TextButton.icon(
                 icon: const Icon(Icons.logout),
-                label: const Text('دەرچوون'),
+                label: Text(S.signOut),
                 onPressed: () => ref.read(authRepositoryProvider).signOut(),
               ),
             ],
@@ -253,6 +274,7 @@ class _WebOnlyScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    watchPalette(context);
     return Scaffold(
       body: Center(
         child: Column(
@@ -260,18 +282,14 @@ class _WebOnlyScreen extends ConsumerWidget {
           children: [
             const Icon(Icons.public, size: 64),
             const SizedBox(height: 12),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 32),
-              child: Text(
-                'ئەم هەژمارە تەنها لە وێب کاردەکات.\n'
-                'تکایە لە ڕێگەی aqarat.leznode.com بچۆ ژوورەوە.',
-                textAlign: TextAlign.center,
-              ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Text(S.webOnlyBody, textAlign: TextAlign.center),
             ),
             const SizedBox(height: 16),
             TextButton.icon(
               icon: const Icon(Icons.logout),
-              label: const Text('دەرچوون'),
+              label: Text(S.signOut),
               onPressed: () => ref.read(authRepositoryProvider).signOut(),
             ),
           ],
@@ -288,6 +306,7 @@ class _NoAccessScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    watchPalette(context);
     return Scaffold(
       body: Center(
         child: Column(
@@ -295,18 +314,14 @@ class _NoAccessScreen extends ConsumerWidget {
           children: [
             const Icon(Icons.no_accounts, size: 64),
             const SizedBox(height: 12),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 32),
-              child: Text(
-                'ئەم هەژمارە بە هیچ کۆمپانیایەکەوە پەیوەست نییە.\n'
-                'تکایە پەیوەندی بە بەڕێوەبەرەوە بکە.',
-                textAlign: TextAlign.center,
-              ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Text(S.noCompanyBody, textAlign: TextAlign.center),
             ),
             const SizedBox(height: 16),
             TextButton.icon(
               icon: const Icon(Icons.logout),
-              label: const Text('دەرچوون'),
+              label: Text(S.signOut),
               onPressed: () => ref.read(authRepositoryProvider).signOut(),
             ),
           ],

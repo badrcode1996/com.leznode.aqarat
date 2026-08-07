@@ -9,11 +9,12 @@ import '../../models/company_model.dart';
 import '../../models/contract_model.dart';
 import '../../models/contract_template_model.dart';
 import '../../services/pdf/contract_pdf_remote.dart';
+import '../../theme/app_colors.dart';
 
 // ڕەنگە سەرەکییەکان بۆ یەکپارچەیی دیزاینەکە
-const Color primaryDarkBlue = Color(0xFF0F2C59);
-const Color accentYellow = Color(0xFFF8B115);
-const Color appBackgroundColor = Color(0xFFF5F7FA);
+Color get primaryDarkBlue => AppColors.current.brand;
+Color get accentYellow => AppColors.current.accent;
+Color get appBackgroundColor => AppColors.current.pageBg;
 
 /// On-screen PDF preview. Builds the bytes, rasterizes the pages to images and
 /// shows them. Both steps are guarded so a failure surfaces the real error
@@ -104,7 +105,7 @@ class _ContractPreviewScreenState
         margin: const EdgeInsets.symmetric(vertical: 10),
         padding: const EdgeInsets.all(3),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.15),
+          color: AppColors.current.card.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
@@ -133,7 +134,7 @@ class _ContractPreviewScreenState
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.bold,
-            color: active ? primaryDarkBlue : Colors.white70,
+            color: active ? AppColors.current.textStrong : Colors.white70,
           ),
         ),
       ),
@@ -148,7 +149,7 @@ class _ContractPreviewScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('هەڵە: $e', style: const TextStyle(fontWeight: FontWeight.bold)),
-            backgroundColor: Colors.red.shade700,
+            backgroundColor: AppColors.current.danger,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -168,6 +169,7 @@ class _ContractPreviewScreenState
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     return Scaffold(
       backgroundColor: appBackgroundColor,
       appBar: AppBar(
@@ -187,7 +189,7 @@ class _ContractPreviewScreenState
             onPressed: () => _run(_share),
           ),
           Padding(
-            padding: const EdgeInsets.only(right: 8, left: 8),
+            padding: const EdgeInsetsDirectional.only(end: 8, start: 8),
             child: Container(
               margin: const EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
@@ -196,7 +198,7 @@ class _ContractPreviewScreenState
               ),
               child: IconButton(
                 tooltip: 'پرینت',
-                icon: const Icon(Icons.print_rounded, color: primaryDarkBlue),
+                icon: Icon(Icons.print_rounded, color: AppColors.current.onAccent),
                 onPressed: () => _run(_print),
               ),
             ),
@@ -207,8 +209,8 @@ class _ContractPreviewScreenState
         future: _pages,
         builder: (context, snap) {
           if (snap.connectionState != ConnectionState.done) {
-            return const Center(
-              child: CircularProgressIndicator(color: primaryDarkBlue, strokeWidth: 3),
+            return Center(
+              child: CircularProgressIndicator(color: AppColors.current.textStrong, strokeWidth: 3),
             );
           }
           if (snap.hasError || (snap.data?.isEmpty ?? true)) {
@@ -221,11 +223,11 @@ class _ContractPreviewScreenState
             separatorBuilder: (_, __) => const SizedBox(height: 24),
             itemBuilder: (_, i) => Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.current.card,
                 borderRadius: BorderRadius.circular(4), // گۆشەی زۆر کەم بۆ ئەوەی وەک کاغەز بێت
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
+                    color: AppColors.current.shadow,
                     blurRadius: 15,
                     offset: const Offset(0, 5),
                   ),
@@ -253,6 +255,7 @@ class _ErrorFallback extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     // Show the first few stack frames to pinpoint the source of the error.
     final frames = stack?.toString().split('\n').take(8).join('\n') ?? '';
     return Center(
@@ -261,11 +264,11 @@ class _ErrorFallback extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.current.card,
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
+                color: AppColors.current.shadow,
                 blurRadius: 15,
                 offset: const Offset(0, 5),
               ),
@@ -280,32 +283,32 @@ class _ErrorFallback extends StatelessWidget {
                   color: accentYellow.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.picture_as_pdf_rounded, size: 48, color: accentYellow),
+                child: Icon(Icons.picture_as_pdf_rounded, size: 48, color: accentYellow),
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'کێشە لە پێشبینینی فایلی PDF',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: primaryDarkBlue),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.current.textStrong),
               ),
               const SizedBox(height: 8),
               Text(
                 'پێشبینین نەکرایەوە لەسەر شاشەکە، بەڵام هێشتا دەتوانیت لە ڕێگەی دوگمەکانی سەرەوە پرینتی بکەیت یان هاوبەشی پێ بکەیت.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: Colors.grey.shade600, height: 1.5),
+                style: TextStyle(fontSize: 14, color: AppColors.current.textMuted, height: 1.5),
               ),
               if (error != null) ...[
                 const SizedBox(height: 24),
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.red.shade50,
+                    color: AppColors.current.danger.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: SelectableText(
                     '$error',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 12, color: Colors.red.shade700),
+                    style: TextStyle(fontSize: 12, color: AppColors.current.danger),
                   ),
                 ),
               ],
@@ -315,14 +318,14 @@ class _ErrorFallback extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
+                    color: AppColors.current.inputFill,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade300),
+                    border: Border.all(color: AppColors.current.divider),
                   ),
                   child: SelectableText(
                     frames,
                     textDirection: TextDirection.ltr,
-                    style: const TextStyle(fontSize: 10, color: Colors.black54, fontFamily: 'monospace'),
+                    style: TextStyle(fontSize: 10, color: AppColors.current.textBody, fontFamily: 'monospace'),
                   ),
                 ),
               ],

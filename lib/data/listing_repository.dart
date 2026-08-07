@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,7 +28,7 @@ class ListingRepository {
       _db.collection('market');
 
   Map<String, dynamic> _marketData(PropertyListing l,
-          {required String city, required String imageUrl}) =>
+          {required String city, required List<String> imageUrls}) =>
       {
         'company_id': l.companyId,
         'listing_kind': l.kind.wire,
@@ -38,10 +36,18 @@ class ListingRepository {
         'property_type': l.propertyType.wire,
         'project_name': l.projectName,
         'area': l.area,
+        'price': l.price,
+        'currency': l.currency.wire,
+        'rooms': l.rooms,
+        'bathrooms': l.bathrooms,
+        'floors': l.floors,
         'agent_name': l.agentName,
         'agent_phone': l.agentPhone,
         'city': city,
-        'image_url': imageUrl,
+        'image_urls': imageUrls,
+        // Cover kept under the old key too, for clients still on the
+        // single-image build. See PropertyListing.toJson.
+        'image_url': imageUrls.isEmpty ? '' : imageUrls.first,
         'created_at': Timestamp.fromDate(l.createdAt),
       };
 
@@ -80,7 +86,7 @@ class ListingRepository {
       if (l.isPublic) {
         await _market
             .doc(id)
-            .set(_marketData(l, city: l.city.wire, imageUrl: l.imageUrl));
+            .set(_marketData(l, city: l.city.wire, imageUrls: l.imageUrls));
       }
     }
   }
@@ -115,16 +121,58 @@ class ListingRepository {
     });
   }
 
-  /// Uploads a house image and returns its download URL.
-  Future<String> _uploadImage(
-    String id,
-    Uint8List bytes,
-    String contentType,
+  /// Brings the stored gallery in line with what the form now holds: uploads
+  /// every fresh pick, keeps the already-stored ones in the order given, and
+  /// deletes the objects that were dropped. Returns the new URL list, cover
+  /// first.
+  ///
+  /// Object names carry a timestamp rather than the photo's position, so
+  /// re-ordering or replacing a photo can never overwrite an object another
+  /// entry in the same gallery still points at.
+  ///
+  /// The flat `<listingId>_<millis>_<n>` shape is deliberate: the Storage rule
+  /// for `property_images/{companyId}/{fileName}` matches exactly one path
+  /// segment, so a nested folder per listing would fall through to the
+  /// deny-all rule.
+  Future<List<String>> _syncImages(
+    String listingId,
+    List<ListingImage> images,
+    List<String> previous,
   ) async {
-    final ref =
-        FirebaseStorage.instance.ref('property_images/${_user.companyId}/$id');
-    await ref.putData(bytes, SettableMetadata(contentType: contentType));
-    return ref.getDownloadURL();
+    final stamp = DateTime.now().millisecondsSinceEpoch;
+    final urls = <String>[];
+    var i = 0;
+
+    for (final image in images.take(kMaxListingImages)) {
+      if (!image.isNew) {
+        urls.add(image.url);
+        continue;
+      }
+      final ref = FirebaseStorage.instance
+          .ref('property_images/${_user.companyId}/${listingId}_${stamp}_${i++}');
+      await ref.putData(
+        image.bytes!,
+        SettableMetadata(contentType: image.contentType),
+      );
+      urls.add(await ref.getDownloadURL());
+    }
+
+    for (final old in previous) {
+      if (!urls.contains(old)) await _deleteObject(old);
+    }
+    return urls;
+  }
+
+  /// Best-effort delete of one stored image. A listing may reference an object
+  /// that is already gone (a failed upload, a manual cleanup), and that must
+  /// never fail the edit or delete that triggered it.
+  Future<void> _deleteObject(String url) async {
+    if (url.isEmpty) return;
+    try {
+      await FirebaseStorage.instance.refFromURL(url).delete();
+    } catch (_) {
+      // Already gone, or not a Storage URL we own.
+    }
   }
 
   /// Applies an edit to an existing listing.
@@ -134,17 +182,17 @@ class ListingRepository {
   /// pin the first two and because re-stamping the creator would misattribute
   /// the listing to whoever edited it.
   ///
-  /// A new [imageBytes] replaces the picture; passing none keeps the current
-  /// one. The public `market` projection is rewritten to match, or dropped if
-  /// the listing stopped being public.
+  /// [images] is the gallery exactly as the form left it — already-stored
+  /// photos and fresh picks in display order. Anything the user removed is
+  /// deleted from Storage. The public `market` projection is rewritten to
+  /// match, or dropped if the listing stopped being public.
   Future<void> update(
     PropertyListing listing, {
-    Uint8List? imageBytes,
-    String imageContentType = 'image/jpeg',
+    List<ListingImage> images = const [],
+    required List<String> previousImageUrls,
   }) async {
-    final imageUrl = imageBytes == null
-        ? listing.imageUrl
-        : await _uploadImage(listing.id, imageBytes, imageContentType);
+    final imageUrls =
+        await _syncImages(listing.id, images, previousImageUrls);
     await _col(listing.kind).doc(listing.id).update({
       'deal_kind': listing.deal.wire,
       'owner_name': listing.ownerName,
@@ -152,15 +200,20 @@ class ListingRepository {
       'project_name': listing.projectName,
       'property_type': listing.propertyType.wire,
       'area': listing.area,
+      'price': listing.price,
+      'currency': listing.currency.wire,
+      'rooms': listing.rooms,
+      'bathrooms': listing.bathrooms,
+      'floors': listing.floors,
       'is_public': listing.isPublic,
-      'image_url': imageUrl,
+      'image_urls': imageUrls,
+      'image_url': imageUrls.isEmpty ? '' : imageUrls.first,
     });
     // Archived listings are absent from the market by design; re-publishing one
     // here would resurrect it behind the archive filter.
     if (listing.isPublic && !listing.isArchived) {
-      await _market
-          .doc(listing.id)
-          .set(_marketData(listing, city: _user.city.wire, imageUrl: imageUrl));
+      await _market.doc(listing.id).set(
+          _marketData(listing, city: _user.city.wire, imageUrls: imageUrls));
     } else {
       await _deleteMarketDoc(listing.id);
     }
@@ -180,42 +233,42 @@ class ListingRepository {
     }
   }
 
-  /// Removes a listing, its market projection and its uploaded image.
+  /// Removes a listing, its market projection and every photo in its gallery.
   ///
-  /// The image delete is best-effort: a listing saved without one has no object
-  /// to remove, and a missing object must not block deleting the document.
+  /// The document is read first so the objects to remove come from what was
+  /// actually stored, rather than from a caller's possibly stale copy. Image
+  /// deletes are best-effort — a missing object must not block the delete.
   Future<void> delete(ListingKind kind, String id) async {
+    final snap = await _col(kind).doc(id).get();
+    final data = snap.data();
+    final urls = data == null
+        ? const <String>[]
+        : PropertyListing.imagesFrom(data);
+
     await _col(kind).doc(id).delete();
     await _deleteMarketDoc(id);
-    try {
-      await FirebaseStorage.instance
-          .ref('property_images/${_user.companyId}/$id')
-          .delete();
-    } catch (_) {
-      // No image stored, or already gone.
+    for (final url in urls) {
+      await _deleteObject(url);
     }
   }
 
-  /// Creates a listing, optionally with a single house image (uploaded first so
-  /// the document already carries its `image_url`).
+  /// Creates a listing with its photo gallery (uploaded first so the document
+  /// already carries its `image_urls`).
   Future<String> create(
     PropertyListing listing, {
-    Uint8List? imageBytes,
-    String imageContentType = 'image/jpeg',
+    List<ListingImage> images = const [],
   }) async {
     final ref = _col(listing.kind).doc();
-    final imageUrl = imageBytes == null
-        ? ''
-        : await _uploadImage(ref.id, imageBytes, imageContentType);
+    final imageUrls = await _syncImages(ref.id, images, const []);
     final data = listing.toJson()
-      ..['image_url'] = imageUrl
+      ..['image_urls'] = imageUrls
+      ..['image_url'] = imageUrls.isEmpty ? '' : imageUrls.first
       ..['city'] = _user.city.wire; // denormalize the company's city
     await ref.set(data);
     // Publish an owner-free projection to the public market (only when public).
     if (listing.isPublic) {
-      await _market
-          .doc(ref.id)
-          .set(_marketData(listing, city: _user.city.wire, imageUrl: imageUrl));
+      await _market.doc(ref.id).set(
+          _marketData(listing, city: _user.city.wire, imageUrls: imageUrls));
     }
     return ref.id;
   }

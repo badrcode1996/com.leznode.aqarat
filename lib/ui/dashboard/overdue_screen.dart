@@ -6,10 +6,12 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../data/contract_repository.dart';
 import '../../models/contract_model.dart';
 import '../../models/enums.dart';
+import '../../theme/app_colors.dart';
+import '../../l10n/app_strings.dart';
 
-const Color _primaryDarkBlue = Color(0xFF0F2C59);
-const Color _appBg = Color(0xFFF5F7FA);
-const Color _red = Color(0xFFEF4444);
+Color get _primaryDarkBlue => AppColors.current.brand;
+Color get _appBg => AppColors.current.pageBg;
+Color get _red => AppColors.current.danger;
 
 /// One overdue rent installment for a tenant.
 class _Overdue {
@@ -28,12 +30,13 @@ class OverdueScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    watchPalette(context);
     final async = ref.watch(contractsStreamProvider);
     return Scaffold(
       backgroundColor: _appBg,
       appBar: AppBar(
-        title: const Text('کرێچییە دواکەوتووەکان',
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(S.overdueTenants,
+            style: const TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: _primaryDarkBlue,
         foregroundColor: Colors.white,
         centerTitle: true,
@@ -41,8 +44,8 @@ class OverdueScreen extends ConsumerWidget {
       ),
       body: async.when(
         loading: () =>
-            const Center(child: CircularProgressIndicator(color: _primaryDarkBlue)),
-        error: (e, _) => Center(child: Text('هەڵە: $e')),
+            Center(child: CircularProgressIndicator(color: AppColors.current.textStrong)),
+        error: (e, _) => Center(child: Text(S.error(e))),
         data: (contracts) {
           final now = DateTime.now();
           final items = <_Overdue>[];
@@ -59,18 +62,18 @@ class OverdueScreen extends ConsumerWidget {
           items.sort((a, b) => a.inst.dueDate.compareTo(b.inst.dueDate));
 
           if (items.isEmpty) {
-            return const Center(
+            return Center(
               child: Padding(
-                padding: EdgeInsets.all(32),
+                padding: const EdgeInsets.all(32),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.check_circle_outline_rounded,
-                        size: 56, color: Color(0xFF10B981)),
-                    SizedBox(height: 12),
-                    Text('هیچ کرێیەکی دواکەوتوو نییە',
+                        size: 56, color: AppColors.current.success),
+                    const SizedBox(height: 12),
+                    Text(S.noOverdue,
                         style: TextStyle(
-                            color: Colors.grey, fontWeight: FontWeight.bold)),
+                            color: AppColors.current.textMuted, fontWeight: FontWeight.bold)),
                   ],
                 ),
               ),
@@ -100,14 +103,15 @@ class _OverdueCard extends StatelessWidget {
     } else if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: const Text('ناتوانرێت پەیوەندی بکرێت'),
-            backgroundColor: Colors.red.shade700),
+            content: Text(S.cannotCall),
+            backgroundColor: AppColors.current.danger),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     final c = item.contract;
     final inst = item.inst;
     final days = DateTime.now().difference(inst.dueDate).inDays;
@@ -115,12 +119,12 @@ class _OverdueCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.current.card,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _red.withValues(alpha: 0.2)),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
+              color: AppColors.current.shadow,
               blurRadius: 10,
               offset: const Offset(0, 4)),
         ],
@@ -132,7 +136,7 @@ class _OverdueCard extends StatelessWidget {
             CircleAvatar(
               radius: 24,
               backgroundColor: _red.withValues(alpha: 0.1),
-              child: const Icon(Icons.person_rounded, color: _red),
+              child: Icon(Icons.person_rounded, color: _red),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -140,21 +144,21 @@ class _OverdueCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    c.party2Name.isEmpty ? '—' : c.party2Name,
-                    style: const TextStyle(
+                    c.party2Name.isEmpty ? S.emptyValue : c.party2Name,
+                    style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
-                        color: _primaryDarkBlue),
+                        color: AppColors.current.textStrong),
                   ),
                   const SizedBox(height: 2),
                   Row(
                     children: [
                       Icon(Icons.phone_rounded,
-                          size: 13, color: Colors.grey.shade500),
+                          size: 13, color: AppColors.current.textMuted),
                       const SizedBox(width: 4),
-                      Text(phone.isEmpty ? '—' : phone,
+                      Text(phone.isEmpty ? S.emptyValue : phone,
                           style: TextStyle(
-                              fontSize: 13, color: Colors.grey.shade700)),
+                              fontSize: 13, color: AppColors.current.textBody)),
                     ],
                   ),
                   const SizedBox(height: 4),
@@ -163,11 +167,11 @@ class _OverdueCard extends StatelessWidget {
                     runSpacing: 2,
                     children: [
                       _chip(Icons.event_busy_rounded,
-                          'بەروار: ${OverdueScreen._date.format(inst.dueDate)}'),
+                          S.dateWith(OverdueScreen._date.format(inst.dueDate))),
                       _chip(Icons.payments_rounded,
                           '${OverdueScreen._money.format(c.rentAmount)} ${c.currency.label}'),
-                      _chip(Icons.tag_rounded, 'مانگی ${inst.monthNumber}'),
-                      _chip(Icons.timelapse_rounded, '$days ڕۆژ دواکەوتوو',
+                      _chip(Icons.tag_rounded, S.monthNumber(inst.monthNumber)),
+                      _chip(Icons.timelapse_rounded, S.daysOverdue(days),
                           color: _red),
                     ],
                   ),
@@ -176,11 +180,11 @@ class _OverdueCard extends StatelessWidget {
             ),
             if (phone.isNotEmpty)
               IconButton(
-                tooltip: 'پەیوەندی',
-                icon: const CircleAvatar(
-                  backgroundColor: Color(0xFF10B981),
+                tooltip: S.callAction,
+                icon: CircleAvatar(
+                  backgroundColor: AppColors.current.success,
                   radius: 20,
-                  child: Icon(Icons.call_rounded, color: Colors.white, size: 20),
+                  child: const Icon(Icons.call_rounded, color: Colors.white, size: 20),
                 ),
                 onPressed: () => _call(context, phone),
               ),
@@ -193,12 +197,12 @@ class _OverdueCard extends StatelessWidget {
   Widget _chip(IconData icon, String text, {Color? color}) => Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: color ?? Colors.grey.shade500),
+          Icon(icon, size: 12, color: color ?? AppColors.current.textMuted),
           const SizedBox(width: 3),
           Text(text,
               style: TextStyle(
                   fontSize: 11.5,
-                  color: color ?? Colors.grey.shade700,
+                  color: color ?? AppColors.current.textBody,
                   fontWeight: color != null ? FontWeight.bold : FontWeight.w500)),
         ],
       );

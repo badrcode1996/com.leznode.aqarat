@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../models/enums.dart';
+import '../../theme/app_colors.dart';
 
-const Color _primaryDarkBlue = Color(0xFF0F2C59);
-const Color _inputFill = Color(0xFFF3F4F6);
+Color get _primaryDarkBlue => AppColors.current.brand;
+Color get _inputFill => AppColors.current.inputFill;
 
 /// فرۆشتن / کرێ — the split applied to both Offers and Demands, in "My
 /// Listings" and in the Global Market alike. On the Demands side the sale pill
@@ -64,14 +65,14 @@ class DealFilterBar extends StatelessWidget {
             children: [
               Icon(_icons[deal],
                   size: 17,
-                  color: active ? Colors.white : Colors.grey.shade600),
+                  color: active ? Colors.white : AppColors.current.textMuted),
               const SizedBox(width: 6),
               Text(
                 deal.labelFor(kind),
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
-                  color: active ? Colors.white : Colors.grey.shade700,
+                  color: active ? Colors.white : AppColors.current.textBody,
                 ),
               ),
             ],
@@ -91,10 +92,11 @@ class DealBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     final rent = deal == DealKind.rent;
     // Rent borrows the amber accent already used for demands; sale keeps the
     // brand blue, so the two never read as the same tag at a glance.
-    final color = rent ? const Color(0xFFB45309) : _primaryDarkBlue;
+    final color = rent ? AppColors.current.warning : AppColors.current.textStrong;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(

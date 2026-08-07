@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../theme/app_colors.dart';
 
-const Color _primaryDarkBlue = Color(0xFF0F2C59);
 
 /// Blocking "please wait" dialog shown while a contract is being saved.
 ///
@@ -18,7 +18,7 @@ Future<void> showSavingDialog(BuildContext context, String message) {
       // Back/Escape must not dismiss it: the write is already in flight.
       canPop: false,
       child: Dialog(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.current.card,
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16)),
         child: Padding(
@@ -26,20 +26,20 @@ Future<void> showSavingDialog(BuildContext context, String message) {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const SizedBox(
+              SizedBox(
                 width: 26,
                 height: 26,
                 child: CircularProgressIndicator(
-                    strokeWidth: 3, color: _primaryDarkBlue),
+                    strokeWidth: 3, color: AppColors.current.textStrong),
               ),
               const SizedBox(width: 18),
               Flexible(
                 child: Text(
                   message,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
-                      color: _primaryDarkBlue),
+                      color: AppColors.current.textStrong),
                 ),
               ),
             ],

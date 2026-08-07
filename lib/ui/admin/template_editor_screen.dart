@@ -1,3 +1,4 @@
+import '../../theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -5,9 +6,9 @@ import '../../data/template_repository.dart';
 import '../../models/company_model.dart';
 import '../../models/contract_template_model.dart';
 
-const Color _primaryDarkBlue = Color(0xFF0F2C59);
-const Color _accentYellow = Color(0xFFF8B115);
-const Color _appBg = Color(0xFFF5F7FA);
+Color get _primaryDarkBlue => AppColors.current.brand;
+Color get _accentYellow => AppColors.current.accent;
+Color get _appBg => AppColors.current.pageBg;
 
 /// Super-admin editor for a company's contract template: clauses (rent/sale)
 /// plus a few design knobs (primary color, titles, clause font size). Saving
@@ -128,15 +129,15 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
       ref.invalidate(contractTemplateProvider(widget.company.id));
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('تێمپلەیت پاشەکەوتکرا'),
-            backgroundColor: Color(0xFF10B981)));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: const Text('تێمپلەیت پاشەکەوتکرا'),
+            backgroundColor: AppColors.current.success));
       }
     } catch (e) {
       if (mounted) {
         setState(() => _saving = false);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('هەڵە: $e'), backgroundColor: Colors.red.shade700));
+            content: Text('هەڵە: $e'), backgroundColor: AppColors.current.danger));
       }
     }
   }
@@ -146,18 +147,18 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('گەڕاندنەوە بۆ بنەڕەت',
+        title: Text('گەڕاندنەوە بۆ بنەڕەت',
             style: TextStyle(
-                color: _primaryDarkBlue, fontWeight: FontWeight.bold)),
+                color: AppColors.current.textStrong, fontWeight: FontWeight.bold)),
         content: const Text(
             'هەموو دەستکارییەکان دەسڕێنەوە و تێمپلەیتی بنەڕەتی (default) دەگەڕێتەوە. دڵنیایت؟'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('نەخێر', style: TextStyle(color: Colors.grey))),
+              child: Text('نەخێر', style: TextStyle(color: AppColors.current.textMuted))),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red.shade700,
+                backgroundColor: AppColors.current.danger,
                 foregroundColor: Colors.white),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('گەڕاندنەوە'),
@@ -170,14 +171,15 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
     ref.invalidate(contractTemplateProvider(widget.company.id));
     setState(() => _apply(ContractTemplate.defaults()));
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('گەڕایەوە بۆ بنەڕەت'),
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: const Text('گەڕایەوە بۆ بنەڕەت'),
           backgroundColor: _primaryDarkBlue));
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     return Scaffold(
       backgroundColor: _appBg,
       appBar: AppBar(
@@ -200,21 +202,21 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
           ? null
           : FloatingActionButton.extended(
               backgroundColor: _accentYellow,
-              foregroundColor: _primaryDarkBlue,
+              foregroundColor: AppColors.current.textStrong,
               icon: _saving
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 18,
                       height: 18,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: _primaryDarkBlue))
+                          strokeWidth: 2, color: AppColors.current.textStrong))
                   : const Icon(Icons.save_rounded),
               label: const Text('پاشەکەوتکردن',
                   style: TextStyle(fontWeight: FontWeight.bold)),
               onPressed: _saving ? null : _save,
             ),
       body: _loading
-          ? const Center(
-              child: CircularProgressIndicator(color: _primaryDarkBlue))
+          ? Center(
+              child: CircularProgressIndicator(color: AppColors.current.textStrong))
           : ListView(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 90),
               children: [
@@ -274,7 +276,7 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
               decoration: BoxDecoration(
                 color: _swatchColor(_color.text),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey.shade300),
+                border: Border.all(color: AppColors.current.divider),
               ),
             ),
           ],
@@ -291,7 +293,7 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
                 max: 16,
                 divisions: 16,
                 label: _fontSize.toStringAsFixed(1),
-                activeColor: _primaryDarkBlue,
+                activeColor: AppColors.current.textStrong,
                 onChanged: (v) => setState(() => _fontSize = v),
               ),
             ),
@@ -304,7 +306,7 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
   Color _swatchColor(String hex) {
     final h = hex.trim().replaceAll('#', '');
     final v = int.tryParse(h, radix: 16);
-    if (h.length != 6 || v == null) return Colors.grey.shade300;
+    if (h.length != 6 || v == null) return AppColors.current.divider;
     return Color(0xFF000000 | v);
   }
 
@@ -329,7 +331,7 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
               decoration: BoxDecoration(
                 color: _swatchColor(_receiptColor.text),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey.shade300),
+                border: Border.all(color: AppColors.current.divider),
               ),
             ),
           ],
@@ -346,7 +348,7 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
                 max: 14,
                 divisions: 12,
                 label: _receiptFontSize.toStringAsFixed(1),
-                activeColor: _primaryDarkBlue,
+                activeColor: AppColors.current.textStrong,
                 onChanged: (v) => setState(() => _receiptFontSize = v),
               ),
             ),
@@ -359,19 +361,19 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
   // --------------------------- token legend ---------------------------
   Widget _tokenLegend() => Container(
         decoration: BoxDecoration(
-            color: Colors.white, borderRadius: BorderRadius.circular(16)),
+            color: AppColors.current.card, borderRadius: BorderRadius.circular(16)),
         child: ExpansionTile(
           shape: const Border(),
-          leading: const Icon(Icons.help_outline, color: _primaryDarkBlue),
+          leading: Icon(Icons.help_outline, color: AppColors.current.textStrong),
           title: const Text('کۆدەکانی جێگرەوە (tokens)',
               style: TextStyle(fontWeight: FontWeight.bold)),
           childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
           children: [
-            const Align(
+            Align(
               alignment: Alignment.centerRight,
               child: Text(
                   'لەناو بەندەکاندا ئەم کۆدانە بەکاربهێنە؛ خۆکارانە بە داتای گرێبەست پڕدەبنەوە.',
-                  style: TextStyle(fontSize: 12, color: Colors.grey)),
+                  style: TextStyle(fontSize: 12, color: AppColors.current.textMuted)),
             ),
             const SizedBox(height: 8),
             Wrap(
@@ -384,7 +386,7 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
                         decoration: BoxDecoration(
                           color: _appBg,
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.grey.shade200),
+                          border: Border.all(color: AppColors.current.divider),
                         ),
                         child: Text('${e.key} = ${e.value}',
                             style: const TextStyle(fontSize: 11)),
@@ -400,11 +402,11 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
       {bool arabic = false}) {
     return _panel(title, [
       if (arabic && list.isEmpty)
-        const Padding(
-          padding: EdgeInsets.only(bottom: 8),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
           child: Text(
             'هێشتا هیچ بەندێکی عەرەبی نەنووسراوە — گرێبەستی عەرەبی بۆ ئەم کۆمپانیایە بەردەست نابێت.',
-            style: TextStyle(fontSize: 12, color: Colors.grey),
+            style: TextStyle(fontSize: 12, color: AppColors.current.textMuted),
           ),
         ),
       for (var i = 0; i < list.length; i++) _clauseRow(list, i),
@@ -412,10 +414,10 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
       Align(
         alignment: Alignment.centerRight,
         child: TextButton.icon(
-          icon: const Icon(Icons.add, color: _primaryDarkBlue),
-          label: const Text('بەندی نوێ',
+          icon: Icon(Icons.add, color: AppColors.current.textStrong),
+          label: Text('بەندی نوێ',
               style: TextStyle(
-                  color: _primaryDarkBlue, fontWeight: FontWeight.bold)),
+                  color: AppColors.current.textStrong, fontWeight: FontWeight.bold)),
           onPressed: () =>
               setState(() => list.add(TextEditingController())),
         ),
@@ -433,14 +435,14 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: _accentYellow.withValues(alpha: 0.5)),
         ),
-        child: const Column(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('گرێبەستی عەرەبی',
                 style: TextStyle(
-                    fontWeight: FontWeight.bold, color: _primaryDarkBlue)),
-            SizedBox(height: 6),
-            Text(
+                    fontWeight: FontWeight.bold, color: AppColors.current.textStrong)),
+            const SizedBox(height: 6),
+            const Text(
               'ئەم بەندانە بە عەرەبی بنووسە تاوەکو کۆمپانیاکە بتوانێت گرێبەستەکە بە عەرەبی چاپ بکات. '
               'هەمان تۆکنەکانی سەرەوە ({party1}، {total_price}، …) لێرەش کار دەکەن. '
               'هیچ وەرگێڕانێکی خۆکار نییە — دەقێکی یاسایییە و دەبێت پارێزەر پێداچوونەوەی بۆ بکات.',
@@ -477,10 +479,10 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
               radius: 13,
               backgroundColor: _primaryDarkBlue.withValues(alpha: 0.1),
               child: Text('${i + 1}',
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
-                      color: _primaryDarkBlue)),
+                      color: AppColors.current.textStrong)),
             ),
             const SizedBox(width: 8),
             Expanded(
@@ -506,7 +508,7 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
                 _iconBtn(Icons.arrow_downward,
                     i == list.length - 1 ? null : () => _move(list, i, 1)),
                 _iconBtn(Icons.delete_outline, () => _remove(list, i),
-                    color: Colors.red.shade400),
+                    color: AppColors.current.danger),
               ],
             ),
           ],
@@ -520,7 +522,7 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
         child: IconButton(
           padding: EdgeInsets.zero,
           iconSize: 18,
-          color: color ?? Colors.grey.shade600,
+          color: color ?? AppColors.current.textMuted,
           icon: Icon(icon),
           onPressed: onTap,
         ),
@@ -544,11 +546,11 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
         width: double.infinity,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.current.card,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
+                color: AppColors.current.shadow,
                 blurRadius: 10,
                 offset: const Offset(0, 4)),
           ],
@@ -557,10 +559,10 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(title,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: _primaryDarkBlue)),
+                    color: AppColors.current.textStrong)),
             const SizedBox(height: 12),
             ...children,
           ],

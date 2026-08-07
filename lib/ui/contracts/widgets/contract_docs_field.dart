@@ -1,3 +1,4 @@
+import '../../../theme/app_colors.dart';
 import 'dart:typed_data';
 
 import 'package:firebase_storage/firebase_storage.dart';
@@ -5,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
 
-const Color _primaryDarkBlue = Color(0xFF0F2C59);
 
 /// Holds the attachment state for a contract form: already-uploaded URLs
 /// (edit mode), newly picked-but-not-yet-uploaded images, and the
@@ -91,6 +91,7 @@ class AttachmentImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     return FutureBuilder<Uint8List>(
       future: attachmentBytes(reference),
       builder: (_, snap) {
@@ -99,7 +100,7 @@ class AttachmentImage extends StatelessWidget {
             height: loadingHeight,
             child: Center(
               child: Icon(Icons.broken_image_outlined,
-                  color: Colors.grey.shade400),
+                  color: AppColors.current.textFaint),
             ),
           );
         }
@@ -153,7 +154,7 @@ class _ContractDocsFieldState extends State<ContractDocsField> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text('وێنە هەڵنەگیرا: $e'),
-            backgroundColor: Colors.red.shade700));
+            backgroundColor: AppColors.current.danger));
       }
     }
   }
@@ -168,8 +169,8 @@ class _ContractDocsFieldState extends State<ContractDocsField> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.photo_camera_outlined,
-                  color: _primaryDarkBlue),
+              leading: Icon(Icons.photo_camera_outlined,
+                  color: AppColors.current.textStrong),
               title: const Text('کامێرا'),
               onTap: () {
                 Navigator.pop(ctx);
@@ -177,8 +178,8 @@ class _ContractDocsFieldState extends State<ContractDocsField> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library_outlined,
-                  color: _primaryDarkBlue),
+              leading: Icon(Icons.photo_library_outlined,
+                  color: AppColors.current.textStrong),
               title: const Text('گالەری'),
               onTap: () {
                 Navigator.pop(ctx);
@@ -205,7 +206,7 @@ class _ContractDocsFieldState extends State<ContractDocsField> {
               child: Container(
                 padding: const EdgeInsets.all(2),
                 decoration: BoxDecoration(
-                    color: Colors.red.shade700, shape: BoxShape.circle),
+                    color: AppColors.current.danger, shape: BoxShape.circle),
                 child: const Icon(Icons.close, size: 14, color: Colors.white),
               ),
             ),
@@ -215,34 +216,35 @@ class _ContractDocsFieldState extends State<ContractDocsField> {
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.current.card,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade300),
+        border: Border.all(color: AppColors.current.divider),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.photo_camera_outlined, color: _primaryDarkBlue),
+              Icon(Icons.photo_camera_outlined, color: AppColors.current.textStrong),
               const SizedBox(width: 8),
               Text('بەڵگەکان',
                   style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Colors.grey.shade800)),
+                      color: AppColors.current.textBody)),
               if (_count > 0)
                 Padding(
-                  padding: const EdgeInsets.only(right: 6),
+                  padding: const EdgeInsetsDirectional.only(end: 6),
                   child: Text('($_count)',
-                      style: TextStyle(color: Colors.grey.shade600)),
+                      style: TextStyle(color: AppColors.current.textMuted)),
                 ),
               const Spacer(),
               TextButton.icon(
                 onPressed: _chooseSource,
-                style: TextButton.styleFrom(foregroundColor: _primaryDarkBlue),
+                style: TextButton.styleFrom(foregroundColor: AppColors.current.textStrong),
                 icon: const Icon(Icons.add_a_photo_outlined, size: 18),
                 label: const Text('زیادکردن'),
               ),
@@ -265,7 +267,7 @@ class _ContractDocsFieldState extends State<ContractDocsField> {
                       future: file.readAsBytes(),
                       builder: (_, snap) => snap.hasData
                           ? Image.memory(snap.data!, fit: BoxFit.cover)
-                          : Container(color: Colors.grey.shade200),
+                          : Container(color: AppColors.current.divider),
                     ),
                     () => setState(() => _c.pending.remove(file)),
                   ),
@@ -275,7 +277,7 @@ class _ContractDocsFieldState extends State<ContractDocsField> {
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               dense: true,
-              activeThumbColor: _primaryDarkBlue,
+              activeThumbColor: AppColors.current.textStrong,
               title: const Text('چاپکردنی بەڵگەکان لەگەڵ گرێبەست',
                   style: TextStyle(fontSize: 13)),
               value: _c.printDocs,
@@ -314,7 +316,7 @@ class _DocsGalleryState extends State<_DocsGallery> {
   void _snack(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(message), backgroundColor: Colors.red.shade700));
+        content: Text(message), backgroundColor: AppColors.current.danger));
   }
 
   /// Shares the decoded image itself. Never the stored reference: when that
@@ -341,6 +343,7 @@ class _DocsGalleryState extends State<_DocsGallery> {
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -393,6 +396,7 @@ class ContractDocsViewer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     if (urls.isEmpty) return const SizedBox.shrink();
     // Cap the width so attachments don't stretch across a wide desktop
     // window — keep them a readable, page-like column, centred.
@@ -409,20 +413,20 @@ class ContractDocsViewer extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.current.card,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: AppColors.current.divider),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.folder_open_outlined, color: _primaryDarkBlue),
-              SizedBox(width: 8),
+              Icon(Icons.folder_open_outlined, color: AppColors.current.textStrong),
+              const SizedBox(width: 8),
               Text('بەڵگەکان',
                   style: TextStyle(
-                      fontWeight: FontWeight.bold, color: _primaryDarkBlue)),
+                      fontWeight: FontWeight.bold, color: AppColors.current.textStrong)),
             ],
           ),
           const SizedBox(height: 12),
@@ -433,7 +437,7 @@ class ContractDocsViewer extends StatelessWidget {
               children: [
                 Text('${i + 1} / ${urls.length}',
                     style: TextStyle(
-                        fontSize: 12, color: Colors.grey.shade600)),
+                        fontSize: 12, color: AppColors.current.textMuted)),
               ],
             ),
             const SizedBox(height: 6),
@@ -444,7 +448,7 @@ class ContractDocsViewer extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 child: Container(
                   width: double.infinity,
-                  color: Colors.grey.shade100,
+                  color: AppColors.current.inputFill,
                   child: AttachmentImage(
                     reference: urls[i],
                     fit: BoxFit.contain,
