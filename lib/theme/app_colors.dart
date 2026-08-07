@@ -222,3 +222,19 @@ class AppColors extends ThemeExtension<AppColors> {
 extension AppColorsX on BuildContext {
   AppColors get c => Theme.of(this).extension<AppColors>()!;
 }
+
+/// Call this at the top of any `build` that reads colours from
+/// [AppColors.current].
+///
+/// The palette is a static so it can be reached from enum members and model
+/// getters that have no BuildContext. The price is that Flutter cannot SEE that
+/// dependency: a widget reading `AppColors.current` never registers with the
+/// Theme, so switching brightness leaves it painting the old colours until
+/// something unrelated happens to rebuild it. That is why dark mode first
+/// landed as a patchwork — only freshly-pushed routes came out dark, and the
+/// tab screens (held in a `const` list, so never rebuilt) stayed light.
+///
+/// This registers the dependency the static hides. It reads nothing; the
+/// colours still come from [AppColors.current], which [AppTheme] refreshes
+/// before any of this builds.
+void watchPalette(BuildContext context) => Theme.of(context);

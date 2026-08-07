@@ -13,6 +13,7 @@ class PlanLocked extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),

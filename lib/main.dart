@@ -128,6 +128,7 @@ class AqaratApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    watchPalette(context);
     final language = ref.watch(languageProvider);
     // Publish the catalogue BEFORE building, not in `builder`: strings are read
     // from enum members and model getters that run outside the widget tree, and
@@ -186,6 +187,7 @@ class _SessionGate extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    watchPalette(context);
     // On sign-out, pop any pushed routes (Settings, create screens, …) back to
     // the root. Otherwise a still-mounted pushed screen rebuilds against a null
     // session and `currentUserProvider` throws — the red "No active session"
@@ -234,6 +236,7 @@ class _DemoExpiredScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    watchPalette(context);
     return Scaffold(
       body: Center(
         child: Padding(
@@ -271,6 +274,7 @@ class _WebOnlyScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    watchPalette(context);
     return Scaffold(
       body: Center(
         child: Column(
@@ -302,6 +306,7 @@ class _NoAccessScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    watchPalette(context);
     return Scaffold(
       body: Center(
         child: Column(

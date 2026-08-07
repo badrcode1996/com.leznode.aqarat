@@ -41,6 +41,7 @@ class _GlobalMarketTabState extends ConsumerState<GlobalMarketTab> {
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     final async = ref.watch(globalMarketProvider(widget.kind));
     final isOffer = widget.kind == ListingKind.offer;
 
@@ -152,6 +153,7 @@ class _MarketCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     final isOffer = view.kind == ListingKind.offer;
     final iconColor = isOffer ? AppColors.current.textStrong : accentYellow;
     final bgColor = isOffer ? primaryDarkBlue.withValues(alpha: 0.1) : accentYellow.withValues(alpha: 0.2);

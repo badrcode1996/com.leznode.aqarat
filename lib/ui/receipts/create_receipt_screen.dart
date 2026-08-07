@@ -130,6 +130,7 @@ class _CreateReceiptScreenState extends ConsumerState<CreateReceiptScreen> {
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     return Scaffold(
       backgroundColor: _appBg,
       appBar: AppBar(

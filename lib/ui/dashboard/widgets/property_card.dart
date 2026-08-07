@@ -27,6 +27,7 @@ class PropertyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     // گۆڕینی ڕەنگەکان بەپێی ئەوەی داواکارییەکەی گونجاوە یان نا
     final Color accentColor = matched ? modernGreen : AppColors.current.textStrong;
     final Color bgColor = matched ? modernGreen.withValues(alpha: 0.05) : Colors.white;

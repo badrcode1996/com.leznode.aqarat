@@ -30,6 +30,7 @@ class OverdueScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    watchPalette(context);
     final async = ref.watch(contractsStreamProvider);
     return Scaffold(
       backgroundColor: _appBg,
@@ -110,6 +111,7 @@ class _OverdueCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     final c = item.contract;
     final inst = item.inst;
     final days = DateTime.now().difference(inst.dueDate).inDays;

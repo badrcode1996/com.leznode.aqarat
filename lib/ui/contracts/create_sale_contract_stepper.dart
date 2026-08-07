@@ -311,6 +311,7 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     // Keep the lawyer list warm so the picker is ready by step 3. Plans without
     // the directory must not run this query at all — it would only ever return
     // an empty list for them.

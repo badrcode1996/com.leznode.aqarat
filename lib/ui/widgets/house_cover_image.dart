@@ -77,6 +77,7 @@ class _HouseGalleryState extends State<HouseGallery> {
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     if (widget.urls.isEmpty) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -253,6 +254,7 @@ class HouseThumb extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     if (url.isEmpty) return placeholder;
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),

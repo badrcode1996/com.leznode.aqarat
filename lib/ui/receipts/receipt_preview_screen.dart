@@ -95,6 +95,7 @@ class _ReceiptPreviewScreenState extends State<ReceiptPreviewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     return Scaffold(
       backgroundColor: appBackgroundColor,
       appBar: AppBar(
@@ -177,6 +178,7 @@ class _ErrorFallback extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     final frames = stack?.toString().split('\n').take(8).join('\n') ?? '';
     return Center(
       child: SingleChildScrollView(

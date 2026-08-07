@@ -28,6 +28,7 @@ class GuaranteesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    watchPalette(context);
     final async = ref.watch(contractsStreamProvider);
     return Scaffold(
       backgroundColor: _appBg,
@@ -152,6 +153,7 @@ class _GuaranteeCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    watchPalette(context);
     final returned = contract.guaranteeReturned;
     return Container(
       padding: const EdgeInsets.all(16),

@@ -21,6 +21,7 @@ class LawyersScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    watchPalette(context);
     final async = ref.watch(lawyersStreamProvider);
     // Agents read the directory to pick a lawyer on a sale contract; only a
     // company admin curates it. Mirrored in firestore.rules, so this is a
@@ -86,6 +87,7 @@ class _LawyerCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    watchPalette(context);
     return Container(
       decoration: BoxDecoration(
         color: AppColors.current.card,
@@ -276,6 +278,7 @@ class _LawyerFormState extends ConsumerState<_LawyerForm> {
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     final existingPhoto = widget.existing?.photoUrl ?? '';
     return Padding(
       padding: EdgeInsets.only(

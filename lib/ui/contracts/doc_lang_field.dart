@@ -76,6 +76,7 @@ class DocLangField extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    watchPalette(context);
     if (!arabicDocAvailable(ref, isRent: isRent)) return const SizedBox.shrink();
 
     return Padding(

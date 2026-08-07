@@ -22,6 +22,7 @@ class CommissionsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    watchPalette(context);
     final async = ref.watch(contractsStreamProvider);
     return Scaffold(
       backgroundColor: _appBg,
@@ -155,6 +156,7 @@ class _CommissionCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    watchPalette(context);
     final confirmed = item.confirmed;
     return Container(
       padding: const EdgeInsets.all(16),

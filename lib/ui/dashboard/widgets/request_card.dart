@@ -21,6 +21,7 @@ class RequestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     // ڕێکخستنی ڕەنگەکان بەپێی ئەوەی موڵکێکی گونجاوی بۆ هەیە یان نا
     final Color accentColor = matched ? modernGreen : AppColors.current.textStrong;
     final Color bgColor = matched ? modernGreen.withValues(alpha: 0.06) : Colors.white;

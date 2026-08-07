@@ -28,6 +28,7 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    watchPalette(context);
     final user = ref.watch(currentUserProvider);
     final features = ref.watch(currentPlanFeaturesProvider);
     final company = ref.watch(currentCompanyProvider).value;
@@ -278,6 +279,7 @@ class _ThemePicker extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    watchPalette(context);
     final mode = ref.watch(themeModeProvider);
     return Container(
       padding: const EdgeInsets.all(6),
@@ -346,6 +348,7 @@ class _LanguagePicker extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    watchPalette(context);
     final current = ref.watch(languageProvider);
     return Container(
       decoration: BoxDecoration(
@@ -439,6 +442,7 @@ class _ProfileAvatarState extends ConsumerState<_ProfileAvatar> {
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     final photo = widget.user.photoUrl.isNotEmpty
         ? widget.user.photoUrl
         : widget.companyLogoUrl;

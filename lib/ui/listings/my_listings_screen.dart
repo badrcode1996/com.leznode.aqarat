@@ -31,6 +31,7 @@ class MyListingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     return DefaultTabController(
       length: 2,
       initialIndex: initialIndex,
@@ -79,6 +80,7 @@ class _ListingsTabState extends ConsumerState<_ListingsTab> {
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     // بازاڕی گشتی لە پلانی سیلڤەر بەرەوژوور. بۆ بڕۆنز هەر دەرناکەوێت —
     // وەک کردارە خێراکانی گەڕاوە، فیچەری نەکڕدراو نیشان نادرێت.
     final hasMarket = ref.watch(currentPlanFeaturesProvider).market;
@@ -309,6 +311,7 @@ class _ListingCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    watchPalette(context);
     final isOffer = kind == ListingKind.offer;
     final iconColor = isOffer ? AppColors.current.textStrong : accentYellow;
     final bgColor = isOffer ? primaryDarkBlue.withValues(alpha: 0.1) : accentYellow.withValues(alpha: 0.2);

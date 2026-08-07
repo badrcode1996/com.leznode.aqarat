@@ -91,6 +91,7 @@ class AttachmentImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     return FutureBuilder<Uint8List>(
       future: attachmentBytes(reference),
       builder: (_, snap) {
@@ -215,6 +216,7 @@ class _ContractDocsFieldState extends State<ContractDocsField> {
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -341,6 +343,7 @@ class _DocsGalleryState extends State<_DocsGallery> {
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -393,6 +396,7 @@ class ContractDocsViewer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     if (urls.isEmpty) return const SizedBox.shrink();
     // Cap the width so attachments don't stretch across a wide desktop
     // window — keep them a readable, page-like column, centred.

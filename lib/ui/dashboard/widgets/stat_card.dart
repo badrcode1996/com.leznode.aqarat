@@ -44,6 +44,7 @@ class StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     // ڕێکخستنی ڕەنگەکان بۆ دۆخی ئاسایی و دۆخی ئاگادارکردنەوە
     final Color bgColor = highlight ? modernRed.withValues(alpha: 0.06) : Colors.white;
     final Color valueColor = highlight ? modernRed : accent;
@@ -156,6 +157,7 @@ class _Sparkline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     final spots = [
       for (var i = 0; i < data.length; i++) FlSpot(i.toDouble(), data[i]),
     ];

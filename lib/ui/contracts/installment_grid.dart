@@ -166,6 +166,7 @@ class InstallmentGrid extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    watchPalette(context);
     // Watch the live contract from the stream so a status change shows
     // immediately — the passed-in `contract` is only the initial snapshot.
     var live = contract;

@@ -26,13 +26,13 @@ class AboutScreen extends StatelessWidget {
 
   // A getter, not a const list: the names follow the interface language.
   static List<_Social> get _socials => <_Social>[
-    _Social(S.facebook, Icons.facebook_rounded,
-        'https://www.facebook.com/leznode', const Color(0xFF1877F2)),
-    _Social(S.instagram, Icons.camera_alt_rounded,
-        'https://www.instagram.com/leznode', const Color(0xFFE1306C)),
-    _Social(S.tiktok, Icons.music_note_rounded,
-        'https://www.tiktok.com/@leznode', const Color(0xFF010101)),
-  ];
+        _Social(S.facebook, Icons.facebook_rounded,
+            'https://www.facebook.com/leznode', const Color(0xFF1877F2)),
+        _Social(S.instagram, Icons.camera_alt_rounded,
+            'https://www.instagram.com/leznode', const Color(0xFFE1306C)),
+        _Social(S.tiktok, Icons.music_note_rounded,
+            'https://www.tiktok.com/@leznode', const Color(0xFF010101)),
+      ];
 
   /// A device with no dialer or mail client makes `launchUrl` throw rather than
   /// return false, so both outcomes end at the same snackbar.
@@ -52,6 +52,7 @@ class AboutScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     return Scaffold(
       backgroundColor: _appBackground,
       appBar: AppBar(
@@ -76,8 +77,7 @@ class AboutScreen extends StatelessWidget {
                   icon: Icons.phone_rounded,
                   label: S.phoneLabel,
                   value: _phone,
-                  onTap: () =>
-                      _open(context, Uri(scheme: 'tel', path: _phone)),
+                  onTap: () => _open(context, Uri(scheme: 'tel', path: _phone)),
                 ),
                 _row(
                   icon: Icons.chat_rounded,
@@ -154,7 +154,8 @@ class AboutScreen extends StatelessWidget {
             const SizedBox(height: 6),
             Text(S.appDescription,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.current.textMuted, fontSize: 13)),
+                style: TextStyle(
+                    color: AppColors.current.textMuted, fontSize: 13)),
             const SizedBox(height: 14),
             const _VersionBadge(),
           ],
@@ -197,7 +198,8 @@ class AboutScreen extends StatelessWidget {
       Column(
         children: [
           ListTile(
-            leading: Icon(icon, color: iconColor ?? AppColors.current.textStrong),
+            leading:
+                Icon(icon, color: iconColor ?? AppColors.current.textStrong),
             title: Text(label,
                 style: const TextStyle(fontWeight: FontWeight.w600)),
             subtitle: Text(value,
@@ -205,7 +207,8 @@ class AboutScreen extends StatelessWidget {
                 textDirection: TextDirection.ltr),
             trailing: onTap == null
                 ? null
-                : Icon(Icons.chevron_left_rounded, color: AppColors.current.textMuted),
+                : Icon(Icons.chevron_left_rounded,
+                    color: AppColors.current.textMuted),
             onTap: onTap,
           ),
           if (!last) const Divider(indent: 60, height: 1),
@@ -215,7 +218,8 @@ class AboutScreen extends StatelessWidget {
   Widget _footer() => Column(
         children: [
           Text(S.madeBy,
-              style: TextStyle(color: AppColors.current.textMuted, fontSize: 12)),
+              style:
+                  TextStyle(color: AppColors.current.textMuted, fontSize: 12)),
           const SizedBox(height: 4),
           const Text('LEZNODE',
               style: TextStyle(
@@ -225,7 +229,8 @@ class AboutScreen extends StatelessWidget {
                   color: _accentGold)),
           const SizedBox(height: 8),
           Text(S.allRightsReserved(DateTime.now().year),
-              style: TextStyle(color: AppColors.current.textMuted, fontSize: 11)),
+              style:
+                  TextStyle(color: AppColors.current.textMuted, fontSize: 11)),
         ],
       );
 }
@@ -241,26 +246,29 @@ class _VersionBadge extends StatelessWidget {
   static final Future<PackageInfo> _info = PackageInfo.fromPlatform();
 
   @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-        decoration: BoxDecoration(
-          color: _appBackground,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: FutureBuilder<PackageInfo>(
-          future: _info,
-          builder: (context, snap) {
-            final info = snap.data;
-            return Text(
-              info == null ? '' : 'v${info.version} (${info.buildNumber})',
-              style: TextStyle(
-                  color: AppColors.current.textBody,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600),
-            );
-          },
-        ),
-      );
+  Widget build(BuildContext context) {
+    watchPalette(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+      decoration: BoxDecoration(
+        color: _appBackground,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: FutureBuilder<PackageInfo>(
+        future: _info,
+        builder: (context, snap) {
+          final info = snap.data;
+          return Text(
+            info == null ? '' : 'v${info.version} (${info.buildNumber})',
+            style: TextStyle(
+                color: AppColors.current.textBody,
+                fontSize: 12,
+                fontWeight: FontWeight.w600),
+          );
+        },
+      ),
+    );
+  }
 }
 
 class _Social {

@@ -32,6 +32,7 @@ class ContractsArchiveBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     return DefaultTabController(
       length: 2,
       child: Column(
@@ -87,6 +88,7 @@ class _ContractsListState extends ConsumerState<_ContractsList> {
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     final async = ref.watch(contractsStreamProvider);
     return async.when(
       loading: () => Center(child: CircularProgressIndicator(color: AppColors.current.textStrong)),
@@ -367,6 +369,7 @@ class _ContractCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    watchPalette(context);
     final isRent = contract.type == ContractType.rent;
     final company = ref.watch(currentCompanyProvider).value;
     final template =

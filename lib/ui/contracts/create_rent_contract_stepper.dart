@@ -352,6 +352,7 @@ class _CreateRentContractStepperState extends ConsumerState<CreateRentContractSt
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     return Scaffold(
       backgroundColor: appBackgroundColor,
       appBar: AppBar(

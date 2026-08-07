@@ -179,6 +179,7 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     return Scaffold(
       backgroundColor: _appBg,
       appBar: AppBar(

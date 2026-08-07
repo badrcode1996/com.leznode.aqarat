@@ -169,6 +169,7 @@ class _ContractPreviewScreenState
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     return Scaffold(
       backgroundColor: appBackgroundColor,
       appBar: AppBar(
@@ -254,6 +255,7 @@ class _ErrorFallback extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     // Show the first few stack frames to pinpoint the source of the error.
     final frames = stack?.toString().split('\n').take(8).join('\n') ?? '';
     return Center(

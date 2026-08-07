@@ -97,6 +97,7 @@ class _PlanSettingsScreenState extends ConsumerState<PlanSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     return Scaffold(
       backgroundColor: _appBg,
       appBar: AppBar(

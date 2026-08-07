@@ -92,6 +92,7 @@ class DealBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     final rent = deal == DealKind.rent;
     // Rent borrows the amber accent already used for demands; sale keeps the
     // brand blue, so the two never read as the same tag at a glance.

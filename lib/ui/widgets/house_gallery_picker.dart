@@ -68,17 +68,16 @@ class _HouseGalleryPickerState extends State<HouseGalleryPicker> {
           source: ImageSource.camera, maxWidth: width, imageQuality: quality);
       if (one != null) picked.add(one);
     } else {
-      picked.addAll(await picker.pickMultiImage(
-          maxWidth: width, imageQuality: quality));
+      picked.addAll(
+          await picker.pickMultiImage(maxWidth: width, imageQuality: quality));
     }
     if (picked.isEmpty) return;
 
     final room = kMaxListingImages - _images.length;
     for (final file in picked.take(room)) {
       final bytes = await file.readAsBytes();
-      final contentType = file.name.toLowerCase().endsWith('.png')
-          ? 'image/png'
-          : 'image/jpeg';
+      final contentType =
+          file.name.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
       _images.add(ListingImage.picked(bytes, contentType));
     }
     if (!mounted) return;
@@ -140,8 +139,7 @@ class _HouseGalleryPickerState extends State<HouseGalleryPicker> {
           children: [
             if (index != 0)
               ListTile(
-                leading: Icon(Icons.star_outline_rounded,
-                    color: _accentYellow),
+                leading: Icon(Icons.star_outline_rounded, color: _accentYellow),
                 title: Text(S.makeCover),
                 onTap: () {
                   Navigator.pop(context);
@@ -150,9 +148,10 @@ class _HouseGalleryPickerState extends State<HouseGalleryPicker> {
                 },
               ),
             ListTile(
-              leading: Icon(Icons.delete_outline, color: AppColors.current.danger),
-              title:
-                  Text(S.delete, style: TextStyle(color: AppColors.current.danger)),
+              leading:
+                  Icon(Icons.delete_outline, color: AppColors.current.danger),
+              title: Text(S.delete,
+                  style: TextStyle(color: AppColors.current.danger)),
               onTap: () {
                 Navigator.pop(context);
                 _images.removeAt(index);
@@ -168,6 +167,7 @@ class _HouseGalleryPickerState extends State<HouseGalleryPicker> {
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -181,7 +181,8 @@ class _HouseGalleryPickerState extends State<HouseGalleryPicker> {
             const SizedBox(width: 6),
             Text('(${_images.length}/$kMaxListingImages)',
                 textDirection: TextDirection.ltr,
-                style: TextStyle(fontSize: 12, color: AppColors.current.textMuted)),
+                style: TextStyle(
+                    fontSize: 12, color: AppColors.current.textMuted)),
           ],
         ),
         const SizedBox(height: 10),
@@ -198,7 +199,8 @@ class _HouseGalleryPickerState extends State<HouseGalleryPicker> {
         if (_images.isEmpty) ...[
           const SizedBox(height: 8),
           Text(S.firstIsCover,
-              style: TextStyle(fontSize: 11.5, color: AppColors.current.textMuted)),
+              style: TextStyle(
+                  fontSize: 11.5, color: AppColors.current.textMuted)),
         ],
       ],
     );
@@ -236,8 +238,7 @@ class _HouseGalleryPickerState extends State<HouseGalleryPicker> {
               start: 4,
               top: 4,
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: _accentYellow,
                   borderRadius: BorderRadius.circular(6),
@@ -275,23 +276,27 @@ class DottedAddBox extends StatelessWidget {
   final double size;
 
   @override
-  Widget build(BuildContext context) => Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          color: _fill,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.current.divider, width: 1.5),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.add_a_photo_outlined,
-                size: 26, color: AppColors.current.textStrong),
-            const SizedBox(height: 4),
-            Text(S.addPhoto,
-                style: TextStyle(fontSize: 11, color: AppColors.current.textMuted)),
-          ],
-        ),
-      );
+  Widget build(BuildContext context) {
+    watchPalette(context);
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: _fill,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.current.divider, width: 1.5),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.add_a_photo_outlined,
+              size: 26, color: AppColors.current.textStrong),
+          const SizedBox(height: 4),
+          Text(S.addPhoto,
+              style:
+                  TextStyle(fontSize: 11, color: AppColors.current.textMuted)),
+        ],
+      ),
+    );
+  }
 }

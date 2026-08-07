@@ -21,6 +21,7 @@ class ReceiptsArchiveBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    watchPalette(context);
     return DefaultTabController(
       length: 2,
       child: Column(
@@ -61,6 +62,7 @@ class _ReceiptsList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    watchPalette(context);
     final async = ref.watch(receiptsStreamProvider);
     return async.when(
       loading: () =>
@@ -151,6 +153,7 @@ class _ReceiptCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    watchPalette(context);
     final isPay = receipt.type.isPayment;
     final color = isPay ? AppColors.current.danger : _green;
     final isAdmin = ref.watch(currentUserProvider).isAdmin;
