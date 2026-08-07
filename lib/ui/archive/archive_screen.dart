@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import '../../services/pdf/pdf_warmup.dart';
 import '../contracts/contracts_screen.dart';
 import '../receipts/receipts_screen.dart';
+import '../../theme/app_colors.dart';
+import '../../l10n/app_strings.dart';
 
-const Color _primaryDarkBlue = Color(0xFF0F2C59);
-const Color _accentYellow = Color(0xFFF8B115);
-const Color _appBg = Color(0xFFF5F7FA);
+Color get _primaryDarkBlue => AppColors.current.brand;
+Color get _accentYellow => AppColors.current.accent;
+Color get _appBg => AppColors.current.pageBg;
 
 /// Archive tab: all records, organised as two top sections — contracts and
 /// receipts — each with its own rent/sale (or rent/external) sub-tabs.
@@ -23,21 +25,21 @@ class ArchiveScreen extends StatelessWidget {
       child: Scaffold(
         backgroundColor: _appBg,
         appBar: AppBar(
-          title: const Text('ئەرشیف',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+          title: Text(S.archiveTitle,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
           backgroundColor: _primaryDarkBlue,
           foregroundColor: Colors.white,
           elevation: 0,
           centerTitle: true,
-          bottom: const TabBar(
+          bottom: TabBar(
             indicatorColor: _accentYellow,
             indicatorWeight: 4,
             labelColor: _accentYellow,
             unselectedLabelColor: Colors.white70,
-            labelStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             tabs: [
-              Tab(text: 'گرێبەستەکان'),
-              Tab(text: 'پسولەکان'),
+              Tab(text: S.tabContracts),
+              Tab(text: S.tabReceipts),
             ],
           ),
         ),

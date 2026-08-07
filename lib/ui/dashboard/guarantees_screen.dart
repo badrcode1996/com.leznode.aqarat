@@ -10,11 +10,13 @@ import '../../models/enums.dart';
 import '../../models/receipt_model.dart';
 import '../receipts/receipt_preview_screen.dart';
 import '../widgets/processing_dialog.dart';
+import '../../theme/app_colors.dart';
+import '../../l10n/app_strings.dart';
 
-const Color _primaryDarkBlue = Color(0xFF0F2C59);
-const Color _appBg = Color(0xFFF5F7FA);
-const Color _green = Color(0xFF10B981);
-const Color _purple = Color(0xFF8B5CF6);
+Color get _primaryDarkBlue => AppColors.current.brand;
+Color get _appBg => AppColors.current.pageBg;
+Color get _green => AppColors.current.success;
+Color get _purple => AppColors.current.violet;
 
 /// Itemised list of rent-contract guarantees (deposits). Each can be returned
 /// to the tenant — which records a payment receipt and drops it from the
@@ -30,8 +32,8 @@ class GuaranteesScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: _appBg,
       appBar: AppBar(
-        title: const Text('دڵنیاییەکان',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+        title: Text(S.guarantees,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
         backgroundColor: _primaryDarkBlue,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -39,8 +41,8 @@ class GuaranteesScreen extends ConsumerWidget {
       ),
       body: async.when(
         loading: () =>
-            const Center(child: CircularProgressIndicator(color: _primaryDarkBlue)),
-        error: (e, _) => Center(child: Text('هەڵە: $e')),
+            Center(child: CircularProgressIndicator(color: AppColors.current.textStrong)),
+        error: (e, _) => Center(child: Text(S.error(e))),
         data: (all) {
           final items = all
               .whereType<RentContract>()
@@ -52,11 +54,11 @@ class GuaranteesScreen extends ConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.shield_outlined,
-                      size: 72, color: Colors.grey.shade300),
+                      size: 72, color: AppColors.current.divider),
                   const SizedBox(height: 16),
-                  Text('هیچ دڵنیاییەک نییە',
+                  Text(S.noGuarantees,
                       style: TextStyle(
-                          color: Colors.grey.shade600,
+                          color: AppColors.current.textMuted,
                           fontWeight: FontWeight.bold,
                           fontSize: 16)),
                 ],
@@ -84,21 +86,21 @@ class _GuaranteeCard extends ConsumerWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('گەڕاندنەوەی دڵنیایی',
+        title: Text(S.returnGuaranteeTitle,
             style:
-                TextStyle(color: _primaryDarkBlue, fontWeight: FontWeight.bold)),
+                TextStyle(color: AppColors.current.textStrong, fontWeight: FontWeight.bold)),
         content: Text(
-            'دڵنیاییەکەی «${contract.party2Name}» بگەڕێندرێتەوە؟ پسولەی دانەوەی دڵنیایی دروست دەکرێت.'),
+            S.returnGuaranteeConfirm(contract.party2Name)),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('پاشگەزبوونەوە',
-                  style: TextStyle(color: Colors.grey))),
+              child: Text(S.cancel,
+                  style: TextStyle(color: AppColors.current.textMuted))),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
                 backgroundColor: _green, foregroundColor: Colors.white),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('گەڕاندنەوە'),
+            child: Text(S.returnAction),
           ),
         ],
       ),
@@ -118,7 +120,7 @@ class _GuaranteeCard extends ConsumerWidget {
       personName: contract.party2Name,
       amount: contract.guaranteeAmount,
       currency: contract.currency,
-      paymentPurpose: 'دڵنیایی موڵکی ژمارە ${contract.propertyNumber}',
+      paymentPurpose: S.guaranteeOfProperty(contract.propertyNumber),
       note: '',
       contractId: contract.id,
       monthNumber: 0,
@@ -143,7 +145,7 @@ class _GuaranteeCard extends ConsumerWidget {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('هەڵە: $e'), backgroundColor: Colors.red.shade700));
+            content: Text(S.error(e)), backgroundColor: AppColors.current.danger));
       }
     }
   }
@@ -154,11 +156,11 @@ class _GuaranteeCard extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.current.card,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
+              color: AppColors.current.shadow,
               blurRadius: 10,
               offset: const Offset(0, 4)),
         ],
@@ -170,7 +172,7 @@ class _GuaranteeCard extends ConsumerWidget {
             children: [
               CircleAvatar(
                 backgroundColor: _purple.withValues(alpha: 0.12),
-                child: const Icon(Icons.shield_outlined, color: _purple),
+                child: Icon(Icons.shield_outlined, color: _purple),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -178,17 +180,17 @@ class _GuaranteeCard extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(contract.party2Name,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
-                            color: _primaryDarkBlue),
+                            color: AppColors.current.textStrong),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis),
                     const SizedBox(height: 2),
                     Text(
-                        'گرێبەست #${contract.contractNumber} · موڵک ${contract.propertyNumber}',
+                        S.contractAndProperty(contract.contractNumber, contract.propertyNumber),
                         style: TextStyle(
-                            color: Colors.grey.shade600, fontSize: 12)),
+                            color: AppColors.current.textMuted, fontSize: 12)),
                   ],
                 ),
               ),
@@ -197,9 +199,9 @@ class _GuaranteeCard extends ConsumerWidget {
                 children: [
                   Text(
                     '${GuaranteesScreen._money.format(contract.guaranteeAmount)} ${contract.currency.label}',
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: _primaryDarkBlue,
+                        color: AppColors.current.textStrong,
                         fontSize: 14),
                   ),
                   const SizedBox(height: 4),
@@ -207,15 +209,15 @@ class _GuaranteeCard extends ConsumerWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: (returned ? _green : Colors.grey)
+                      color: (returned ? _green : AppColors.current.textMuted)
                           .withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: Text(returned ? 'گەڕێندراوە' : 'لای کۆمپانیا',
+                    child: Text(returned ? S.returnedLabel : S.atCompany,
                         style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
-                            color: returned ? _green : Colors.grey.shade700)),
+                            color: returned ? _green : AppColors.current.textBody)),
                   ),
                 ],
               ),
@@ -228,13 +230,13 @@ class _GuaranteeCard extends ConsumerWidget {
               child: OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
                   foregroundColor: _green,
-                  side: const BorderSide(color: _green, width: 1.5),
+                  side: BorderSide(color: _green, width: 1.5),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
                 ),
                 icon: const Icon(Icons.assignment_return_outlined, size: 20),
-                label: const Text('گەڕاندنەوەی دڵنیایی',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
+                label: Text(S.returnGuaranteeTitle,
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
                 onPressed: () => _return(context, ref),
               ),
             ),

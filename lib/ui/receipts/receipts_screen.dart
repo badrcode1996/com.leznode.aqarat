@@ -8,10 +8,10 @@ import '../../models/receipt_model.dart';
 import '../../services/pdf/receipt_pdf_remote.dart';
 import 'create_receipt_screen.dart';
 import 'receipt_preview_screen.dart';
+import '../../theme/app_colors.dart';
 
-const Color _primaryDarkBlue = Color(0xFF0F2C59);
-const Color _accentYellow = Color(0xFFF8B115);
-const Color _green = Color(0xFF10B981);
+Color get _accentYellow => AppColors.current.accent;
+Color get _green => AppColors.current.success;
 
 /// Reusable receipts body: two sub-tabs — rent receipts (کرێ) and external
 /// receipts (دەرەکی). Rendered inside the Archive screen's "پسولەکان" tab — no
@@ -21,26 +21,26 @@ class ReceiptsArchiveBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const DefaultTabController(
+    return DefaultTabController(
       length: 2,
       child: Column(
         children: [
           Material(
-            color: Colors.white,
+            color: AppColors.current.card,
             elevation: 1,
             child: TabBar(
               indicatorColor: _accentYellow,
               indicatorWeight: 3,
-              labelColor: _primaryDarkBlue,
-              unselectedLabelColor: Colors.grey,
-              labelStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-              tabs: [
+              labelColor: AppColors.current.textStrong,
+              unselectedLabelColor: AppColors.current.textMuted,
+              labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              tabs: const [
                 Tab(text: 'پسولەی کرێ'),
                 Tab(text: 'پسولەی دەرەکی'),
               ],
             ),
           ),
-          Expanded(
+          const Expanded(
             child: TabBarView(
               children: [
                 _ReceiptsList(rent: true),
@@ -64,15 +64,15 @@ class _ReceiptsList extends ConsumerWidget {
     final async = ref.watch(receiptsStreamProvider);
     return async.when(
       loading: () =>
-          const Center(child: CircularProgressIndicator(color: _primaryDarkBlue)),
+          Center(child: CircularProgressIndicator(color: AppColors.current.textStrong)),
       error: (e, _) => Center(child: Text('هەڵە: $e')),
       data: (all) {
         final list = all.where((r) => r.type.isRent == rent).toList();
         if (list.isEmpty) {
           return Center(
             child: Text(rent ? 'هیچ پسولەیەکی کرێ نییە' : 'هیچ پسولەیەکی دەرەکی نییە',
-                style: const TextStyle(
-                    color: Colors.grey, fontWeight: FontWeight.bold)),
+                style: TextStyle(
+                    color: AppColors.current.textMuted, fontWeight: FontWeight.bold)),
           );
         }
         return ListView.separated(
@@ -108,20 +108,20 @@ class _ReceiptCard extends ConsumerWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('سڕینەوەی پسولە',
+        title: Text('سڕینەوەی پسولە',
             style: TextStyle(
-                color: _primaryDarkBlue, fontWeight: FontWeight.bold)),
+                color: AppColors.current.textStrong, fontWeight: FontWeight.bold)),
         content: Text(
             'دڵنیایت لە سڕینەوەی پسولە #${receipt.receiptNumber}؟ ئەم کردارە ناگەڕێتەوە.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('پاشگەزبوونەوە',
-                style: TextStyle(color: Colors.grey)),
+            child: Text('پاشگەزبوونەوە',
+                style: TextStyle(color: AppColors.current.textMuted)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red.shade700,
+                backgroundColor: AppColors.current.danger,
                 foregroundColor: Colors.white),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('سڕینەوە'),
@@ -134,8 +134,8 @@ class _ReceiptCard extends ConsumerWidget {
       await ref.read(receiptRepositoryProvider).deleteReceipt(receipt);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('پسولە سڕایەوە'), backgroundColor: _green),
+          SnackBar(
+              content: const Text('پسولە سڕایەوە'), backgroundColor: _green),
         );
       }
     } catch (e) {
@@ -143,7 +143,7 @@ class _ReceiptCard extends ConsumerWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text('هەڵە: $e'),
-              backgroundColor: Colors.red.shade700),
+              backgroundColor: AppColors.current.danger),
         );
       }
     }
@@ -152,15 +152,15 @@ class _ReceiptCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isPay = receipt.type.isPayment;
-    final color = isPay ? Colors.red.shade700 : _green;
+    final color = isPay ? AppColors.current.danger : _green;
     final isAdmin = ref.watch(currentUserProvider).isAdmin;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.current.card,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
+              color: AppColors.current.shadow,
               blurRadius: 10,
               offset: const Offset(0, 4)),
         ],
@@ -180,8 +180,8 @@ class _ReceiptCard extends ConsumerWidget {
           child: Icon(isPay ? Icons.north_east : Icons.south_west, color: color),
         ),
         title: Text('${receipt.type.titleKu}  ·  #${receipt.receiptNumber}',
-            style: const TextStyle(
-                fontWeight: FontWeight.bold, color: _primaryDarkBlue, fontSize: 14)),
+            style: TextStyle(
+                fontWeight: FontWeight.bold, color: AppColors.current.textStrong, fontSize: 14)),
         subtitle: Text(
             '${receipt.personName} · ${_money.format(receipt.amount)} ${receipt.currency.label}\n${_df.format(receipt.date)}'),
         isThreeLine: true,
@@ -190,12 +190,12 @@ class _ReceiptCard extends ConsumerWidget {
           children: [
             IconButton(
               tooltip: 'پرینت',
-              icon: const Icon(Icons.print_outlined, color: _primaryDarkBlue),
+              icon: Icon(Icons.print_outlined, color: AppColors.current.textStrong),
               onPressed: () => ReceiptPdfRemote.printReceipt(receipt.id),
             ),
             if (isAdmin)
               PopupMenuButton<String>(
-                icon: const Icon(Icons.more_vert_rounded, color: Colors.grey),
+                icon: Icon(Icons.more_vert_rounded, color: AppColors.current.textMuted),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
                 onSelected: (v) {
@@ -206,14 +206,14 @@ class _ReceiptCard extends ConsumerWidget {
                   }
                 },
                 itemBuilder: (_) => [
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'edit',
                     child: Row(
                       children: [
                         Icon(Icons.edit_outlined,
-                            color: _primaryDarkBlue, size: 20),
-                        SizedBox(width: 12),
-                        Text('دەستکاری'),
+                            color: AppColors.current.textStrong, size: 20),
+                        const SizedBox(width: 12),
+                        const Text('دەستکاری'),
                       ],
                     ),
                   ),
@@ -222,7 +222,7 @@ class _ReceiptCard extends ConsumerWidget {
                     child: Row(
                       children: [
                         Icon(Icons.delete_outline,
-                            color: Colors.red.shade700, size: 20),
+                            color: AppColors.current.danger, size: 20),
                         const SizedBox(width: 12),
                         const Text('سڕینەوە'),
                       ],

@@ -1,4 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Android 13+ gates notifications behind a runtime permission; without
+         this declaration the request dialog never appears. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <application
         android:label="گرێبەست"
         android:name="${applicationName}"
@@ -23,6 +26,13 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+            <!-- Makes a tap on an FCM tray notification reach the Flutter side
+                 (FirebaseMessaging.onMessageOpenedApp). The click_action in the
+                 push payload has to match this action name. -->
+            <intent-filter>
+                <action android:name="FLUTTER_NOTIFICATION_CLICK"/>
+                <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.

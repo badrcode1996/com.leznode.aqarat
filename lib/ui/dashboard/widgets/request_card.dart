@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
 import '../../../models/property_model.dart';
+import '../../../theme/app_colors.dart';
+import '../../../l10n/app_strings.dart';
 
 // ڕەنگە سەرەکییەکان بۆ یەکپارچەیی دیزاینەکە
-const Color primaryDarkBlue = Color(0xFF0F2C59);
-const Color accentYellow = Color(0xFFF8B115);
-const Color modernGreen = Color(0xFF10B981);
-const Color inputFillColor = Color(0xFFF3F4F6);
+Color get primaryDarkBlue => AppColors.current.brand;
+Color get accentYellow => AppColors.current.accent;
+Color get modernGreen => AppColors.current.success;
+Color get inputFillColor => AppColors.current.inputFill;
 
 /// Compact card for a real demand/request listing (the company's own demands).
 class RequestCard extends StatelessWidget {
@@ -20,9 +22,9 @@ class RequestCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // ڕێکخستنی ڕەنگەکان بەپێی ئەوەی موڵکێکی گونجاوی بۆ هەیە یان نا
-    final Color accentColor = matched ? modernGreen : primaryDarkBlue;
+    final Color accentColor = matched ? modernGreen : AppColors.current.textStrong;
     final Color bgColor = matched ? modernGreen.withValues(alpha: 0.06) : Colors.white;
-    final Color borderColor = matched ? modernGreen.withValues(alpha: 0.3) : Colors.grey.shade200;
+    final Color borderColor = matched ? modernGreen.withValues(alpha: 0.3) : AppColors.current.divider;
 
     return Container(
       width: 260,
@@ -37,7 +39,7 @@ class RequestCard extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: AppColors.current.shadow,
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -63,7 +65,7 @@ class RequestCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   listing.ownerName,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: primaryDarkBlue),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.current.textStrong),
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
                 ),
@@ -76,13 +78,13 @@ class RequestCard extends StatelessWidget {
                     color: modernGreen.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.handshake_rounded, size: 12, color: modernGreen),
-                      SizedBox(width: 4),
+                      const SizedBox(width: 4),
                       Text(
-                        'گونجاوە',
+                        S.matchedBadge,
                         style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: modernGreen),
                       ),
                     ],
@@ -96,10 +98,10 @@ class RequestCard extends StatelessWidget {
 
           // زانیاری داواکارییەکە
           Text(
-            'بەدوای ${listing.propertyType.label} دەگەڕێت',
+            S.lookingFor(listing.propertyType.label),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade700, fontWeight: FontWeight.w600),
+            style: TextStyle(fontSize: 13, color: AppColors.current.textBody, fontWeight: FontWeight.w600),
           ),
 
           const SizedBox(height: 12),
@@ -111,7 +113,7 @@ class RequestCard extends StatelessWidget {
                 child: _miniChip(Icons.location_on_outlined, listing.projectName),
               ),
               const SizedBox(width: 8),
-              _miniChip(Icons.square_foot_rounded, '${listing.area} م²'),
+              _miniChip(Icons.square_foot_rounded, S.areaSqm(listing.area)),
             ],
           ),
         ],
@@ -129,14 +131,14 @@ class RequestCard extends StatelessWidget {
     child: Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 14, color: Colors.grey.shade600),
+        Icon(icon, size: 14, color: AppColors.current.textMuted),
         const SizedBox(width: 4),
         Flexible(
           child: Text(
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey.shade800),
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.current.textBody),
           ),
         ),
       ],

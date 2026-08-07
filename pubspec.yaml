@@ -25,6 +25,11 @@ dependencies:
   cloud_functions: ^5.1.3
   firebase_app_check: ^0.3.1
 
+  # Push notifications (rent overdue / due soon / contract expiring). The
+  # notifications themselves are raised by the scanDueDates schedule; this only
+  # registers the device token and routes a tap.
+  firebase_messaging: ^15.1.3
+
   # PDF generation + printing (RTL Kurdish/Arabic)
   pdf: ^3.12.0
   printing: ^5.13.3
@@ -49,6 +54,10 @@ dependencies:
 
   # Utils
   intl: ^0.20.2
+
+  # Local settings that must survive a restart and work offline — currently the
+  # light/dark theme choice.
+  shared_preferences: ^2.3.2
 
   # Reads version/build straight from the bundle for the About screen.
   package_info_plus: ^8.1.1

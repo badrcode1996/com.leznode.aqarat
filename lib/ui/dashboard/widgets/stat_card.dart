@@ -1,8 +1,9 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import '../../../theme/app_colors.dart';
 
 // ڕەنگە سەرەکییەکان بۆ یەکپارچەیی دیزاینەکە
-const Color modernRed = Color(0xFFEF4444);
+Color get modernRed => AppColors.current.danger;
 
 /// A compact statistic card for the dashboard stats row.
 ///
@@ -46,7 +47,7 @@ class StatCard extends StatelessWidget {
     // ڕێکخستنی ڕەنگەکان بۆ دۆخی ئاسایی و دۆخی ئاگادارکردنەوە
     final Color bgColor = highlight ? modernRed.withValues(alpha: 0.06) : Colors.white;
     final Color valueColor = highlight ? modernRed : accent;
-    final Color borderColor = highlight ? modernRed.withValues(alpha: 0.3) : Colors.grey.shade200;
+    final Color borderColor = highlight ? modernRed.withValues(alpha: 0.3) : AppColors.current.divider;
 
     final card = Container(
       width: width,
@@ -58,7 +59,7 @@ class StatCard extends StatelessWidget {
         border: Border.all(color: borderColor, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: AppColors.current.shadow,
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -133,7 +134,7 @@ class StatCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: highlight ? modernRed.withValues(alpha: 0.9) : Colors.grey.shade600,
+                  color: highlight ? modernRed.withValues(alpha: 0.9) : AppColors.current.textMuted,
                 ),
               ),
             ],

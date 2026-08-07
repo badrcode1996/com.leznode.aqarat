@@ -4,10 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/plan_config_repository.dart';
 import '../../models/plan_config_model.dart';
+import '../../theme/app_colors.dart';
 
-const Color _primaryDarkBlue = Color(0xFF0F2C59);
-const Color _accentYellow = Color(0xFFF8B115);
-const Color _appBg = Color(0xFFF5F7FA);
+Color get _primaryDarkBlue => AppColors.current.brand;
+Color get _accentYellow => AppColors.current.accent;
+Color get _appBg => AppColors.current.pageBg;
 
 /// Super-Admin editor for the Bronze/Silver/Gold feature matrix + limits. Saves
 /// to `config/plans`; the app reads it live to gate features.
@@ -80,16 +81,16 @@ class _PlanSettingsScreenState extends ConsumerState<PlanSettingsScreen> {
     try {
       await ref.read(planConfigRepositoryProvider).save(config);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('پلانەکان پاشەکەوتکران'),
-            backgroundColor: Color(0xFF10B981)));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: const Text('پلانەکان پاشەکەوتکران'),
+            backgroundColor: AppColors.current.success));
         Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
         setState(() => _saving = false);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('هەڵە: $e'), backgroundColor: Colors.red.shade700));
+            content: Text('هەڵە: $e'), backgroundColor: AppColors.current.danger));
       }
     }
   }
@@ -107,7 +108,7 @@ class _PlanSettingsScreenState extends ConsumerState<PlanSettingsScreen> {
         centerTitle: true,
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: _primaryDarkBlue))
+          ? Center(child: CircularProgressIndicator(color: AppColors.current.textStrong))
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
@@ -153,11 +154,11 @@ class _PlanSettingsScreenState extends ConsumerState<PlanSettingsScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.current.card,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
+              color: AppColors.current.shadow,
               blurRadius: 10,
               offset: const Offset(0, 4)),
         ],
@@ -166,10 +167,10 @@ class _PlanSettingsScreenState extends ConsumerState<PlanSettingsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: _primaryDarkBlue)),
+                  color: AppColors.current.textStrong)),
           const Divider(height: 24),
           // گرێبەستی فرۆشتن ئێستا کردارێکی بنەڕەتییە (وەک کرێ) و بە پلان
           // gate ناکرێت، بۆیە توگڵی نییە لێرە.
@@ -201,8 +202,8 @@ class _PlanSettingsScreenState extends ConsumerState<PlanSettingsScreen> {
             ],
           ),
           const SizedBox(height: 4),
-          const Text('٠ = بێسنوور',
-              style: TextStyle(fontSize: 11, color: Colors.grey)),
+          Text('٠ = بێسنوور',
+              style: TextStyle(fontSize: 11, color: AppColors.current.textMuted)),
         ],
       ),
     );

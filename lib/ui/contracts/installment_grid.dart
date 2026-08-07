@@ -10,10 +10,11 @@ import '../../models/enums.dart';
 import '../../models/receipt_model.dart';
 import '../receipts/receipt_preview_screen.dart';
 import '../widgets/processing_dialog.dart';
+import '../../theme/app_colors.dart';
 
 // ڕەنگە سەرەکییەکان
-const Color primaryDarkBlue = Color(0xFF0F2C59);
-const Color accentYellow = Color(0xFFF8B115);
+Color get primaryDarkBlue => AppColors.current.brand;
+Color get accentYellow => AppColors.current.accent;
 
 /// Grid of the 12 rent installments. Tapping the status chip cycles
 /// pending → received → delivered and persists via the transactional
@@ -33,9 +34,9 @@ class InstallmentGrid extends ConsumerWidget {
 
   // زیادکردنی ئایکۆن و گۆڕینی ڕەنگەکان بۆ شێوازی مۆدێرنتر
   (String, Color, IconData) _style(PaymentStatus s) => switch (s) {
-    PaymentStatus.pending => ('چاوەڕوان', Colors.grey.shade600, Icons.schedule_rounded),
-    PaymentStatus.receivedFromTenant => ('وەرگیرا', const Color(0xFFF59E0B), Icons.inbox_rounded), // پرتەقاڵی/زەردێکی جوان
-    PaymentStatus.deliveredToOwner => ('گەیەنرا', const Color(0xFF10B981), Icons.done_all_rounded), // سەوزێکی مۆدێرن
+    PaymentStatus.pending => ('چاوەڕوان', AppColors.current.textMuted, Icons.schedule_rounded),
+    PaymentStatus.receivedFromTenant => ('وەرگیرا', AppColors.current.warning, Icons.inbox_rounded), // پرتەقاڵی/زەردێکی جوان
+    PaymentStatus.deliveredToOwner => ('گەیەنرا', AppColors.current.success, Icons.done_all_rounded), // سەوزێکی مۆدێرن
   };
 
   /// Asks the user for an optional note/code before a rent receipt is created,
@@ -136,7 +137,7 @@ class InstallmentGrid extends ConsumerWidget {
             SnackBar(
               content: Text(
                   '${isReceive ? 'پسولەی وەرگرتنی کرێ' : 'پسولەی دانەوەی کرێ'} #${saved.receiptNumber} دروستکرا'),
-              backgroundColor: const Color(0xFF10B981),
+              backgroundColor: AppColors.current.success,
             ),
           );
         }
@@ -156,7 +157,7 @@ class InstallmentGrid extends ConsumerWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('هەڵە: $e'),
-            backgroundColor: Colors.red.shade700,
+            backgroundColor: AppColors.current.danger,
           ),
         );
       }
@@ -198,7 +199,7 @@ class InstallmentGrid extends ConsumerWidget {
 
         return Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.current.card,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
             boxShadow: [
@@ -227,7 +228,7 @@ class InstallmentGrid extends ConsumerWidget {
                       children: [
                         Text(
                           'مانگی ${inst.monthNumber}',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: primaryDarkBlue),
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.current.textStrong),
                         ),
                         Icon(icon, size: 20, color: color),
                       ],
@@ -237,11 +238,11 @@ class InstallmentGrid extends ConsumerWidget {
                     // بەروار بە ئایکۆنێکی بچووکەوە
                     Row(
                       children: [
-                        Icon(Icons.calendar_today_rounded, size: 12, color: Colors.grey.shade500),
+                        Icon(Icons.calendar_today_rounded, size: 12, color: AppColors.current.textMuted),
                         const SizedBox(width: 4),
                         Text(
                           _date.format(inst.dueDate),
-                          style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+                          style: TextStyle(fontSize: 12, color: AppColors.current.textMuted, fontWeight: FontWeight.w500),
                         ),
                       ],
                     ),

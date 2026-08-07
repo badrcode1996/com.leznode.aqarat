@@ -7,10 +7,12 @@ import 'package:image_picker/image_picker.dart';
 import '../../auth/session.dart';
 import '../../data/lawyer_repository.dart';
 import '../../models/lawyer_model.dart';
+import '../../theme/app_colors.dart';
+import '../../l10n/app_strings.dart';
 
-const Color _primaryDarkBlue = Color(0xFF0F2C59);
-const Color _accentYellow = Color(0xFFF8B115);
-const Color _appBg = Color(0xFFF5F7FA);
+Color get _primaryDarkBlue => AppColors.current.brand;
+Color get _accentYellow => AppColors.current.accent;
+Color get _appBg => AppColors.current.pageBg;
 
 /// Company admin screen to manage lawyers (پارێزەران): name, photo, phone.
 /// The list feeds the sale-contract lawyer picker.
@@ -27,8 +29,8 @@ class LawyersScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: _appBg,
       appBar: AppBar(
-        title: const Text('پارێزەران',
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(S.lawyers,
+            style: const TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: _primaryDarkBlue,
         foregroundColor: Colors.white,
         centerTitle: true,
@@ -37,30 +39,30 @@ class LawyersScreen extends ConsumerWidget {
       floatingActionButton: isAdmin
           ? FloatingActionButton.extended(
               backgroundColor: _accentYellow,
-              foregroundColor: _primaryDarkBlue,
+              foregroundColor: AppColors.current.textStrong,
               icon: const Icon(Icons.add),
-              label: const Text('پارێزەری نوێ',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
+              label: Text(S.newLawyer,
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
               onPressed: () => _openForm(context),
             )
           : null,
       body: async.when(
-        loading: () => const Center(
-            child: CircularProgressIndicator(color: _primaryDarkBlue)),
-        error: (e, _) => Center(child: Text('هەڵە: $e')),
+        loading: () => Center(
+            child: CircularProgressIndicator(color: AppColors.current.textStrong)),
+        error: (e, _) => Center(child: Text(S.error(e))),
         data: (list) {
           if (list.isEmpty) {
-            return const Center(
+            return Center(
               child: Padding(
-                padding: EdgeInsets.all(32),
+                padding: const EdgeInsets.all(32),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.gavel_rounded, size: 56, color: Colors.grey),
-                    SizedBox(height: 12),
-                    Text('هیچ پارێزەرێک زیاد نەکراوە',
+                    Icon(Icons.gavel_rounded, size: 56, color: AppColors.current.textMuted),
+                    const SizedBox(height: 12),
+                    Text(S.noLawyers,
                         style: TextStyle(
-                            color: Colors.grey, fontWeight: FontWeight.bold)),
+                            color: AppColors.current.textMuted, fontWeight: FontWeight.bold)),
                   ],
                 ),
               ),
@@ -86,11 +88,11 @@ class _LawyerCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.current.card,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
+              color: AppColors.current.shadow,
               blurRadius: 10,
               offset: const Offset(0, 4)),
         ],
@@ -103,17 +105,17 @@ class _LawyerCard extends ConsumerWidget {
           backgroundImage:
               lawyer.photoUrl.isNotEmpty ? NetworkImage(lawyer.photoUrl) : null,
           child: lawyer.photoUrl.isEmpty
-              ? const Icon(Icons.gavel_rounded, color: _primaryDarkBlue)
+              ? Icon(Icons.gavel_rounded, color: AppColors.current.textStrong)
               : null,
         ),
         title: Text(lawyer.name,
-            style: const TextStyle(
-                fontWeight: FontWeight.bold, color: _primaryDarkBlue)),
-        subtitle: Text(lawyer.phone.isEmpty ? '—' : lawyer.phone),
+            style: TextStyle(
+                fontWeight: FontWeight.bold, color: AppColors.current.textStrong)),
+        subtitle: Text(lawyer.phone.isEmpty ? S.emptyValue : lawyer.phone),
         trailing: !ref.watch(currentUserProvider).isAdmin
             ? null
             : PopupMenuButton<String>(
-                icon: const Icon(Icons.more_vert_rounded, color: Colors.grey),
+                icon: Icon(Icons.more_vert_rounded, color: AppColors.current.textMuted),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
                 onSelected: (v) {
@@ -124,22 +126,22 @@ class _LawyerCard extends ConsumerWidget {
                   }
                 },
                 itemBuilder: (_) => [
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'edit',
                     child: Row(children: [
                       Icon(Icons.edit_outlined,
-                          color: _primaryDarkBlue, size: 20),
-                      SizedBox(width: 12),
-                      Text('دەستکاری'),
+                          color: AppColors.current.textStrong, size: 20),
+                      const SizedBox(width: 12),
+                      Text(S.edit),
                     ]),
                   ),
                   PopupMenuItem(
                     value: 'delete',
                     child: Row(children: [
                       Icon(Icons.delete_outline,
-                          color: Colors.red.shade700, size: 20),
+                          color: AppColors.current.danger, size: 20),
                       const SizedBox(width: 12),
-                      const Text('سڕینەوە'),
+                      Text(S.delete),
                     ]),
                   ),
                 ],
@@ -155,22 +157,22 @@ Future<void> _confirmDelete(
     context: context,
     builder: (ctx) => AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: const Text('سڕینەوەی پارێزەر',
+      title: Text(S.deleteLawyer,
           style:
-              TextStyle(color: _primaryDarkBlue, fontWeight: FontWeight.bold)),
-      content: Text('دڵنیایت لە سڕینەوەی «${lawyer.name}»؟'),
+              TextStyle(color: AppColors.current.textStrong, fontWeight: FontWeight.bold)),
+      content: Text(S.deleteLawyerConfirm(lawyer.name)),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx, false),
           child:
-              const Text('پاشگەزبوونەوە', style: TextStyle(color: Colors.grey)),
+              Text(S.cancel, style: TextStyle(color: AppColors.current.textMuted)),
         ),
         ElevatedButton(
           style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red.shade700,
+              backgroundColor: AppColors.current.danger,
               foregroundColor: Colors.white),
           onPressed: () => Navigator.pop(ctx, true),
-          child: const Text('سڕینەوە'),
+          child: Text(S.delete),
         ),
       ],
     ),
@@ -182,7 +184,7 @@ Future<void> _confirmDelete(
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text('هەڵە: $e'), backgroundColor: Colors.red.shade700),
+            content: Text(S.error(e)), backgroundColor: AppColors.current.danger),
       );
     }
   }
@@ -193,7 +195,7 @@ void _openForm(BuildContext context, {Lawyer? existing}) {
   showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: Colors.white,
+    backgroundColor: AppColors.current.card,
     shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
     builder: (_) => _LawyerForm(existing: existing),
@@ -266,7 +268,7 @@ class _LawyerFormState extends ConsumerState<_LawyerForm> {
         setState(() => _busy = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('هەڵە: $e'), backgroundColor: Colors.red.shade700),
+              content: Text(S.error(e)), backgroundColor: AppColors.current.danger),
         );
       }
     }
@@ -288,12 +290,12 @@ class _LawyerFormState extends ConsumerState<_LawyerForm> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(_isEdit ? 'دەستکاری پارێزەر' : 'پارێزەری نوێ',
+            Text(_isEdit ? S.editLawyer : S.newLawyer,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: _primaryDarkBlue)),
+                    color: AppColors.current.textStrong)),
             const SizedBox(height: 20),
             Center(
               child: GestureDetector(
@@ -309,8 +311,8 @@ class _LawyerFormState extends ConsumerState<_LawyerForm> {
                               ? NetworkImage(existingPhoto)
                               : null) as ImageProvider?,
                       child: (_photoBytes == null && existingPhoto.isEmpty)
-                          ? const Icon(Icons.add_a_photo_outlined,
-                              color: _primaryDarkBlue, size: 28)
+                          ? Icon(Icons.add_a_photo_outlined,
+                              color: AppColors.current.textStrong, size: 28)
                           : null,
                     ),
                     Positioned(
@@ -318,10 +320,10 @@ class _LawyerFormState extends ConsumerState<_LawyerForm> {
                       right: 0,
                       child: Container(
                         padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                             color: _accentYellow, shape: BoxShape.circle),
-                        child: const Icon(Icons.edit,
-                            size: 16, color: _primaryDarkBlue),
+                        child: Icon(Icons.edit,
+                            size: 16, color: AppColors.current.onAccent),
                       ),
                     ),
                   ],
@@ -331,19 +333,19 @@ class _LawyerFormState extends ConsumerState<_LawyerForm> {
             const SizedBox(height: 20),
             TextFormField(
               controller: _name,
-              decoration: const InputDecoration(
-                  labelText: 'ناوی پارێزەر',
-                  prefixIcon: Icon(Icons.person_outline)),
+              decoration: InputDecoration(
+                  labelText: S.lawyerName,
+                  prefixIcon: const Icon(Icons.person_outline)),
               validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'پێویستە' : null,
+                  (v == null || v.trim().isEmpty) ? S.requiredField : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _phone,
               keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(
-                  labelText: 'ژمارەی مۆبایل',
-                  prefixIcon: Icon(Icons.phone_iphone)),
+              decoration: InputDecoration(
+                  labelText: S.mobileNumber,
+                  prefixIcon: const Icon(Icons.phone_iphone)),
             ),
             const SizedBox(height: 24),
             ElevatedButton(
@@ -358,7 +360,7 @@ class _LawyerFormState extends ConsumerState<_LawyerForm> {
                       width: 20,
                       child: CircularProgressIndicator(
                           color: Colors.white, strokeWidth: 2))
-                  : Text(_isEdit ? 'پاشەکەوتکردن' : 'زیادکردن',
+                  : Text(_isEdit ? S.save : S.add,
                       style: const TextStyle(fontWeight: FontWeight.bold)),
             ),
           ],

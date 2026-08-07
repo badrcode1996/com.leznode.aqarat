@@ -5,6 +5,9 @@
 /// when reordering). Dropdown labels are kept separate from the wire value.
 library;
 
+import '../l10n/app_language.dart';
+import '../l10n/app_strings.dart';
+
 /// Application roles. Drives both routing and query scoping.
 enum UserRole {
   superAdmin('super_admin'), // Us — manages subscriptions across all tenants.
@@ -33,7 +36,17 @@ enum CompanyCity {
 
   const CompanyCity(this.wire, this.label);
   final String wire;
+
+  /// Kurdish name, kept for documents and the Super Admin tooling.
   final String label;
+
+  /// The name in the interface language.
+  String get uiLabel => switch (this) {
+        CompanyCity.erbil => S.cityErbil,
+        CompanyCity.sulaymaniyah => S.citySulaymaniyah,
+        CompanyCity.kirkuk => S.cityKirkuk,
+        CompanyCity.duhok => S.cityDuhok,
+      };
 
   static CompanyCity fromWire(String? value) => CompanyCity.values.firstWhere(
         (c) => c.wire == value,
@@ -49,7 +62,17 @@ enum CompanyPlan {
 
   const CompanyPlan(this.wire, this.label);
   final String wire;
+
+  /// Kurdish name, kept for documents and the Super Admin tooling.
   final String label;
+
+  /// The name in the interface language.
+  String get uiLabel => switch (this) {
+        CompanyPlan.bronze => S.planBronze,
+        CompanyPlan.silver => S.planSilver,
+        CompanyPlan.gold => S.planGold,
+        CompanyPlan.diamond => S.planDiamond,
+      };
 
   static CompanyPlan fromWire(String? value) => CompanyPlan.values.firstWhere(
         (p) => p.wire == value,
@@ -76,6 +99,16 @@ enum ReceiptType {
   bool get isPayment => this == externalPay || this == rentPay;
   bool get isRent => this == rentReceive || this == rentPay;
 
+  /// The title in the INTERFACE language. Distinct from [titleKu]/[titleAr]/
+  /// [titleEn], which are the printed voucher's headings and are chosen by the
+  /// document's language, not the app's.
+  String get uiLabel => switch (this) {
+        ReceiptType.externalReceive => S.receiptExternalReceive,
+        ReceiptType.externalPay => S.receiptExternalPay,
+        ReceiptType.rentReceive => S.receiptRentReceive,
+        ReceiptType.rentPay => S.receiptRentPay,
+      };
+
   static ReceiptType fromWire(String? value) => ReceiptType.values.firstWhere(
         (t) => t.wire == value,
         orElse: () => ReceiptType.externalReceive,
@@ -84,12 +117,30 @@ enum ReceiptType {
 
 /// Currency used on a contract.
 enum Currency {
-  iqd('IQD', 'دیناری عێراقی'),
-  usd('USD', 'دۆلاری ئەمریکی');
+  iqd('IQD', 'دیناری عێراقی', 'د.ع'),
+  usd('USD', 'دۆلاری ئەمریکی', '\$');
 
-  const Currency(this.wire, this.label);
+  const Currency(this.wire, this.label, this.symbol);
   final String wire;
+
+  /// Kurdish name. Printed on contracts and written into the Excel export, so
+  /// it must NOT follow the interface language — a document's wording is fixed
+  /// by the document, not by whoever happens to be looking at the app.
   final String label;
+
+  /// Short form for chips and cards, where the full label would wrap.
+  final String symbol;
+
+  /// The name in the interface language.
+  String get uiLabel =>
+      this == Currency.iqd ? S.currencyIqd : S.currencyUsd;
+
+  /// [symbol], but spelled for the interface language — "د.ع" reads as noise
+  /// in an English price.
+  String get uiSymbol {
+    if (this == Currency.usd) return r'$';
+    return S.language == AppLanguage.en ? 'IQD' : 'د.ع';
+  }
 
   static Currency fromWire(String? value) => Currency.values.firstWhere(
         (c) => c.wire == value,
@@ -162,9 +213,12 @@ enum DealKind {
   /// on the Demands side of the app.
   final String demandLabel;
 
-  /// [label] or [demandLabel], picked by which side of the app is showing it.
-  String labelFor(ListingKind kind) =>
-      kind == ListingKind.demand ? demandLabel : label;
+  /// [label] or [demandLabel], picked by which side of the app is showing it,
+  /// in the interface language.
+  String labelFor(ListingKind kind) {
+    if (this == DealKind.rent) return S.dealRent;
+    return kind == ListingKind.demand ? S.dealBuy : S.dealSale;
+  }
 
   static DealKind fromWire(String? value) => DealKind.values.firstWhere(
         (d) => d.wire == value,
@@ -182,9 +236,22 @@ enum PropertyType {
   structure('structure', 'هەیکەل'),
   other('other', 'هیتر');
 
-  const PropertyType(this.wire, this.label);
+  const PropertyType(this.wire, this.kuLabel);
   final String wire;
-  final String label;
+
+  /// Kurdish name, kept for documents and the Super Admin tooling.
+  final String kuLabel;
+
+  /// The name in the interface language — what every card and form shows.
+  String get label => switch (this) {
+        PropertyType.house => S.typeHouse,
+        PropertyType.villa => S.typeVilla,
+        PropertyType.shop => S.typeShop,
+        PropertyType.land => S.typeLand,
+        PropertyType.office => S.typeOffice,
+        PropertyType.structure => S.typeStructure,
+        PropertyType.other => S.typeOther,
+      };
 
   // Unknown or legacy wire values (e.g. the old 'apartment') fall back to هیتر.
   static PropertyType fromWire(String? value) => PropertyType.values.firstWhere(

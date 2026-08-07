@@ -6,6 +6,7 @@ const path = require("path");
 const {buildReceiptHtml} = require("./receipt_html");
 const {buildContractHtml} = require("./contract_html");
 const {buildExportHtml} = require("./export_html");
+const {runDueScan} = require("./due_scan");
 
 admin.initializeApp();
 
@@ -283,6 +284,7 @@ async function planAllows(db, company, key, isSuper) {
   // Mirrors PlanConfig.defaults in lib/models/plan_config_model.dart.
   const DEFAULT_ON = {
     arabic_contracts: ["gold", "diamond"],
+    overdue: ["silver", "gold", "diamond"],
   };
   return (DEFAULT_ON[key] || []).includes(plan);
 }
@@ -547,3 +549,24 @@ exports.keepPdfWarm = onSchedule("every 5 minutes", async () => {
     ping("renderContractPdf"),
   ]);
 });
+
+/**
+ * Raises the day's rent + lease-expiry alerts and pushes them. 08:00 Baghdad
+ * so the office sees them at the start of the working day rather than
+ * overnight. See due_scan.js for what it actually does.
+ */
+exports.scanDueDates = onSchedule(
+    {
+      schedule: "0 8 * * *",
+      timeZone: "Asia/Baghdad",
+      timeoutSeconds: 540,
+      memory: "512MiB",
+    },
+    async () => {
+      await runDueScan({
+        db: admin.firestore(),
+        messaging: admin.messaging(),
+        planAllows,
+      });
+    },
+);

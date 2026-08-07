@@ -178,6 +178,30 @@ service cloud.firestore {
             && inBranch(resource.data.company_id, resource.data.branch));
     }
 
+    // --- Notifications: raised ONLY by the scanDueDates schedule, which runs on
+    //     the Admin SDK and bypasses these rules entirely. Hence no create path
+    //     for members — a client that could mint notifications could fake an
+    //     alert about another branch's contract.
+    //
+    //     Visibility copies the contract's own company + branch, so a member
+    //     sees alerts for exactly the contracts they can already open.
+    //
+    //     The only member write is marking one read. hasOnly(['read_by']) is
+    //     what keeps that honest: without it, "update" would let anyone rewrite
+    //     the title/body of an alert everyone else is looking at.
+    match /notifications/{id} {
+      allow read:   if isSuperAdmin()
+        || inBranch(resource.data.company_id, resource.data.branch);
+      allow create: if isSuperAdmin();
+      allow update: if (isSuperAdmin()
+          || inBranch(resource.data.company_id, resource.data.branch))
+        && request.resource.data.diff(resource.data)
+             .affectedKeys().hasOnly(['read_by']);
+      allow delete: if isSuperAdmin()
+        || (isCompanyAdmin()
+            && inBranch(resource.data.company_id, resource.data.branch));
+    }
+
     // --- Contract templates (تێمپلەیت): one doc per company (id == company_id).
     //     The owning company reads it to render PDFs; only super admins edit.
     match /templates/{companyId} {

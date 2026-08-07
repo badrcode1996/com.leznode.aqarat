@@ -14,19 +14,20 @@ import 'contract_preview_screen.dart';
 import 'doc_lang_field.dart';
 import 'widgets/contract_docs_field.dart';
 import 'widgets/saving_dialog.dart';
+import '../../theme/app_colors.dart';
 
 // ڕەنگە سەرەکییەکان بۆ یەکپارچەیی دیزاینەکە
-const Color primaryDarkBlue = Color(0xFF0F2C59);
-const Color accentYellow = Color(0xFFF8B115);
-const Color appBackgroundColor = Color(0xFFF5F7FA);
-const Color inputFillColor = Color(0xFFF3F4F6);
+Color get primaryDarkBlue => AppColors.current.brand;
+Color get accentYellow => AppColors.current.accent;
+Color get appBackgroundColor => AppColors.current.pageBg;
+Color get inputFillColor => AppColors.current.inputFill;
 
 // فەنکشن بۆ دیزاینی فۆڕمەکان
 InputDecoration modernInputDecoration({required String label, IconData? icon}) {
   return InputDecoration(
     labelText: label,
-    labelStyle: TextStyle(color: Colors.grey.shade600, fontSize: 14),
-    prefixIcon: icon != null ? Icon(icon, color: primaryDarkBlue, size: 22) : null,
+    labelStyle: TextStyle(color: AppColors.current.textMuted, fontSize: 14),
+    prefixIcon: icon != null ? Icon(icon, color: AppColors.current.textStrong, size: 22) : null,
     filled: true,
     fillColor: inputFillColor,
     contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -36,15 +37,15 @@ InputDecoration modernInputDecoration({required String label, IconData? icon}) {
     ),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(16),
-      borderSide: BorderSide(color: Colors.grey.shade200, width: 1),
+      borderSide: BorderSide(color: AppColors.current.divider, width: 1),
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(16),
-      borderSide: const BorderSide(color: accentYellow, width: 2),
+      borderSide: BorderSide(color: accentYellow, width: 2),
     ),
     errorBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(16),
-      borderSide: BorderSide(color: Colors.red.shade300, width: 1),
+      borderSide: BorderSide(color: AppColors.current.danger, width: 1),
     ),
   );
 }
@@ -83,7 +84,15 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
   /// Language of the document produced for this contract — 'ku' or 'ar'. Only
   /// governs the PDF that opens after saving; the stored contract is language
   /// neutral, so the archive can still print either edition later.
-  String _docLang = 'ku';
+  ///
+  /// Null until the user picks one, so the default keeps tracking
+  /// [defaultDocLang] — which needs the template stream, and that resolves a
+  /// frame or two after this screen opens. Pinning it in initState would lock
+  /// in "Kurdish" before we know whether Arabic is available.
+  String? _pickedDocLang;
+
+  String get _docLang =>
+      _pickedDocLang ?? defaultDocLang(ref, isRent: false);
 
   /// Pops the progress dialog exactly once, so later navigation (preview, or
   /// popping this screen) doesn't tear down the wrong route.
@@ -192,7 +201,7 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text('بارکردنی بەڵگەکان سەرکەوتوو نەبوو: $e'),
-            backgroundColor: Colors.red.shade700));
+            backgroundColor: AppColors.current.danger));
         setState(() => _saving = false);
       }
       return;
@@ -246,7 +255,7 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
         _closeSavingDialog();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('گرێبەستی فرۆشتن نوێکرایەوە'), backgroundColor: Colors.green));
+              SnackBar(content: const Text('گرێبەستی فرۆشتن نوێکرایەوە'), backgroundColor: AppColors.current.success));
           Navigator.of(context).pop(existing.id);
         }
         return;
@@ -258,7 +267,7 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
       _closeSavingDialog();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('گرێبەستی فرۆشتن دروستکرا ($id)'), backgroundColor: Colors.green));
+          SnackBar(content: Text('گرێبەستی فرۆشتن دروستکرا ($id)'), backgroundColor: AppColors.current.success));
       // Replace the stepper with the new contract's preview, so going back
       // lands on the list instead of a filled-in form.
       if (saved != null) {
@@ -277,7 +286,7 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
       _closeSavingDialog();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('سەرکەوتوو نەبوو: $e'), backgroundColor: Colors.red.shade700));
+            SnackBar(content: Text('سەرکەوتوو نەبوو: $e'), backgroundColor: AppColors.current.danger));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -315,13 +324,10 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
         elevation: 0,
         centerTitle: true,
       ),
+      // ڕەنگی هەنگاوە چالاکەکان لە ڕووکاری ئەپەکەوە دێت — پێشتر ColorScheme.light
+      // ـی زۆرەملێ بوو، کە لە دۆخی تاریکدا ساڵنامەیەکی سپی دەردەخست.
       body: Theme(
-        // ڕێکخستنی ڕەنگی Stepper
-        data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.light(
-            primary: primaryDarkBlue, // ڕەنگی هەنگاوە چالاکەکان
-          ),
-        ),
+        data: Theme.of(context),
         child: Stepper(
           currentStep: _step,
           type: StepperType.vertical,
@@ -349,9 +355,9 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
                   Expanded(
                     child: OutlinedButton(
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: primaryDarkBlue,
+                        foregroundColor: AppColors.current.textStrong,
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        side: const BorderSide(color: primaryDarkBlue, width: 1.5),
+                        side: BorderSide(color: primaryDarkBlue, width: 1.5),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
                       onPressed: details.onStepCancel,
@@ -449,7 +455,7 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
                       DocLangField(
                         isRent: false,
                         value: _docLang,
-                        onChanged: (v) => setState(() => _docLang = v),
+                        onChanged: (v) => setState(() => _pickedDocLang = v),
                       ),
                     ],
                   ),
@@ -473,8 +479,8 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
             suffixIcon: _hasLawyerDirectory
                 ? IconButton(
                     tooltip: 'هەڵبژاردن لە لیست',
-                    icon: const Icon(Icons.people_alt_outlined,
-                        color: primaryDarkBlue),
+                    icon: Icon(Icons.people_alt_outlined,
+                        color: AppColors.current.textStrong),
                     onPressed: _pickLawyer,
                   )
                 : null,
@@ -487,39 +493,39 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
     final lawyers = ref.read(lawyersStreamProvider).value ?? const <Lawyer>[];
     final picked = await showModalBottomSheet<Lawyer>(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.current.card,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (_) => SafeArea(
         child: lawyers.isEmpty
-            ? const Padding(
-                padding: EdgeInsets.all(32),
+            ? Padding(
+                padding: const EdgeInsets.all(32),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.gavel_rounded, size: 48, color: Colors.grey),
-                    SizedBox(height: 12),
+                    Icon(Icons.gavel_rounded, size: 48, color: AppColors.current.textMuted),
+                    const SizedBox(height: 12),
                     Text('هیچ پارێزەرێک زیاد نەکراوە',
                         style: TextStyle(
-                            color: Colors.grey, fontWeight: FontWeight.bold)),
-                    SizedBox(height: 4),
+                            color: AppColors.current.textMuted, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 4),
                     Text('لە ڕێکخستن > پارێزەران دەیانخەیتە سەر',
-                        style: TextStyle(color: Colors.grey, fontSize: 12)),
+                        style: TextStyle(color: AppColors.current.textMuted, fontSize: 12)),
                   ],
                 ),
               )
             : Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.fromLTRB(20, 16, 20, 8),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                     child: Align(
                       alignment: AlignmentDirectional.centerStart,
                       child: Text('هەڵبژاردنی پارێزەر',
                           style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: primaryDarkBlue)),
+                              color: AppColors.current.textStrong)),
                     ),
                   ),
                   Flexible(
@@ -536,8 +542,8 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
                                 ? NetworkImage(l.photoUrl)
                                 : null,
                             child: l.photoUrl.isEmpty
-                                ? const Icon(Icons.gavel_rounded,
-                                    color: primaryDarkBlue, size: 20)
+                                ? Icon(Icons.gavel_rounded,
+                                    color: AppColors.current.textStrong, size: 20)
                                 : null,
                           ),
                           title: Text(l.name,
@@ -580,24 +586,12 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
               initialDate: value,
               firstDate: DateTime(2020),
               lastDate: DateTime(2100),
-              builder: (context, child) {
-                return Theme(
-                  data: Theme.of(context).copyWith(
-                    colorScheme: const ColorScheme.light(
-                      primary: primaryDarkBlue, // ڕەنگی سەرەوەی ساڵنامەکە
-                      onPrimary: Colors.white,
-                      onSurface: primaryDarkBlue,
-                    ),
-                  ),
-                  child: child!,
-                );
-              },
             );
             if (picked != null) onPick(picked);
           },
           child: InputDecorator(
             decoration: modernInputDecoration(label: label, icon: Icons.calendar_today_rounded),
-            child: Text(_date.format(value), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87)),
+            child: Text(_date.format(value), style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.current.textBody)),
           ),
         ),
       );

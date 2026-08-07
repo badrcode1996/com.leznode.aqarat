@@ -7,11 +7,13 @@ import '../../models/enums.dart';
 import '../../models/property_model.dart';
 import '../widgets/deal_filter_bar.dart';
 import '../widgets/house_cover_image.dart';
+import '../../theme/app_colors.dart';
+import '../../l10n/app_strings.dart';
 
 // ڕەنگە سەرەکییەکان بۆ یەکپارچەیی دیزاینەکە
-const Color primaryDarkBlue = Color(0xFF0F2C59);
-const Color accentYellow = Color(0xFFF8B115);
-const Color inputFillColor = Color(0xFFF3F4F6);
+Color get primaryDarkBlue => AppColors.current.brand;
+Color get accentYellow => AppColors.current.accent;
+Color get inputFillColor => AppColors.current.inputFill;
 
 /// Global B2B Market — shows public listings from ALL companies.
 ///
@@ -19,16 +21,23 @@ const Color inputFillColor = Color(0xFFF3F4F6);
 /// (no owner name/mobile). Contact is the creating agent + company phone, with
 /// a url_launcher "Click to Call" button.
 class GlobalMarketTab extends ConsumerStatefulWidget {
-  const GlobalMarketTab({super.key, this.kind = ListingKind.offer});
+  const GlobalMarketTab({super.key, this.kind = ListingKind.offer, this.deal});
 
   final ListingKind kind;
+
+  /// When set, the tab uses this deal and drops its own فرۆشتن/کرێ bar —
+  /// for embedding under a screen that already shows one, so the user isn't
+  /// looking at two identical filters stacked on top of each other.
+  final DealKind? deal;
 
   @override
   ConsumerState<GlobalMarketTab> createState() => _GlobalMarketTabState();
 }
 
 class _GlobalMarketTabState extends ConsumerState<GlobalMarketTab> {
-  DealKind _deal = DealKind.sale;
+  DealKind _own = DealKind.sale;
+
+  DealKind get _deal => widget.deal ?? _own;
 
   @override
   Widget build(BuildContext context) {
@@ -37,25 +46,26 @@ class _GlobalMarketTabState extends ConsumerState<GlobalMarketTab> {
 
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-          child: DealFilterBar(
-            selected: _deal,
-            onChanged: (d) => setState(() => _deal = d),
-            kind: widget.kind,
+        if (widget.deal == null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: DealFilterBar(
+              selected: _deal,
+              onChanged: (d) => setState(() => _own = d),
+              kind: widget.kind,
+            ),
           ),
-        ),
         Expanded(
           child: async.when(
-            loading: () => const Center(child: CircularProgressIndicator(color: primaryDarkBlue)),
-            error: (e, _) => Center(child: Text('هەڵە: $e', style: const TextStyle(color: Colors.red))),
+            loading: () => Center(child: CircularProgressIndicator(color: AppColors.current.textStrong)),
+            error: (e, _) => Center(child: Text(S.error(e), style: TextStyle(color: AppColors.current.danger))),
             data: (all) {
               final items = all.where((v) => v.deal == _deal).toList();
               if (items.isEmpty) {
                 return _emptyBox(
                   isOffer
-                      ? 'هیچ خستنەڕوویەکی ${_deal.labelFor(widget.kind)} لە بازاڕی گشتیدا نییە'
-                      : 'هیچ داواکارییەکی ${_deal.labelFor(widget.kind)} لە بازاڕی گشتیدا نییە',
+                      ? S.marketEmptyOffers(_deal.labelFor(widget.kind))
+                      : S.marketEmptyDemands(_deal.labelFor(widget.kind)),
                   Icons.public_off_rounded,
                 );
               }
@@ -78,11 +88,11 @@ class _GlobalMarketTabState extends ConsumerState<GlobalMarketTab> {
       margin: const EdgeInsets.all(24),
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 32),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.current.card,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.shade200, width: 1.5),
+        border: Border.all(color: AppColors.current.divider, width: 1.5),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(color: AppColors.current.shadow, blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
       child: Column(
@@ -91,13 +101,13 @@ class _GlobalMarketTabState extends ConsumerState<GlobalMarketTab> {
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(color: inputFillColor, shape: BoxShape.circle),
-            child: Icon(icon, size: 48, color: Colors.grey.shade400),
+            decoration: BoxDecoration(color: inputFillColor, shape: BoxShape.circle),
+            child: Icon(icon, size: 48, color: AppColors.current.textFaint),
           ),
           const SizedBox(height: 16),
           Text(
             text,
-            style: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.bold, fontSize: 16),
+            style: TextStyle(color: AppColors.current.textMuted, fontWeight: FontWeight.bold, fontSize: 16),
             textAlign: TextAlign.center,
           ),
         ],
@@ -118,26 +128,41 @@ class _MarketCard extends StatelessWidget {
     } else if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('ناتوانرێت پەیوەندی بکرێت', style: TextStyle(fontWeight: FontWeight.bold)),
-          backgroundColor: Colors.red.shade700,
+          content: Text(S.cannotCall, style: const TextStyle(fontWeight: FontWeight.bold)),
+          backgroundColor: AppColors.current.danger,
         ),
       );
     }
   }
 
+  /// Small icon + number, for the room and bathroom counts.
+  Widget _feature(IconData icon, String value) => Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: AppColors.current.textMuted),
+          const SizedBox(width: 4),
+          Text(value,
+              textDirection: TextDirection.ltr,
+              style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.current.textBody)),
+        ],
+      );
+
   @override
   Widget build(BuildContext context) {
     final isOffer = view.kind == ListingKind.offer;
-    final iconColor = isOffer ? primaryDarkBlue : accentYellow;
+    final iconColor = isOffer ? AppColors.current.textStrong : accentYellow;
     final bgColor = isOffer ? primaryDarkBlue.withValues(alpha: 0.1) : accentYellow.withValues(alpha: 0.2);
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.current.card,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppColors.current.shadow,
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -148,8 +173,8 @@ class _MarketCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // وێنەی خانوو (ئەگەر هەبێت)
-            HouseCoverImage(url: view.imageUrl),
+            // گەلەری وێنەکان (ئەگەر هەبن)
+            HouseGallery(urls: view.imageUrls),
             // بەشی سەرەوە (جۆری موڵک و ڕووبەر)
             Row(
               children: [
@@ -169,17 +194,17 @@ class _MarketCard extends StatelessWidget {
                     children: [
                       Text(
                         view.propertyType.label,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: primaryDarkBlue),
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.current.textStrong),
                       ),
                       const SizedBox(height: 2),
                       Row(
                         children: [
-                          Icon(Icons.location_on_outlined, size: 14, color: Colors.grey.shade500),
+                          Icon(Icons.location_on_outlined, size: 14, color: AppColors.current.textMuted),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
                               view.projectName,
-                              style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                              style: TextStyle(color: AppColors.current.textMuted, fontSize: 13),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -204,11 +229,11 @@ class _MarketCard extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.square_foot_rounded, size: 14, color: Colors.grey.shade700),
+                          Icon(Icons.square_foot_rounded, size: 14, color: AppColors.current.textBody),
                           const SizedBox(width: 4),
                           Text(
-                            '${view.area} م²',
-                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.grey.shade800),
+                            S.areaSqm(view.area),
+                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.current.textBody),
                           ),
                         ],
                       ),
@@ -217,6 +242,49 @@ class _MarketCard extends StatelessWidget {
                 ),
               ],
             ),
+
+            // نرخ و تایبەتمەندییەکان — ئەوەی کڕیار سەرەتا سەیری دەکات.
+            if (view.priceLabel.isNotEmpty ||
+                view.floors > 0 ||
+                view.rooms > 0 ||
+                view.bathrooms > 0) ...[
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  if (view.priceLabel.isNotEmpty)
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Icon(Icons.payments_outlined,
+                              size: 18, color: AppColors.current.success),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              view.priceLabel,
+                              style: TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.current.success),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  if (view.floors > 0) ...[
+                    _feature(Icons.layers_outlined, '${view.floors}'),
+                    const SizedBox(width: 12),
+                  ],
+                  if (view.rooms > 0) ...[
+                    _feature(Icons.bed_outlined, '${view.rooms}'),
+                    const SizedBox(width: 12),
+                  ],
+                  if (view.bathrooms > 0)
+                    _feature(Icons.bathtub_outlined, '${view.bathrooms}'),
+                ],
+              ),
+            ],
 
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 16),
@@ -229,7 +297,7 @@ class _MarketCard extends StatelessWidget {
                 CircleAvatar(
                   radius: 18,
                   backgroundColor: primaryDarkBlue.withValues(alpha: 0.05),
-                  child: const Icon(Icons.support_agent_rounded, size: 20, color: primaryDarkBlue),
+                  child: Icon(Icons.support_agent_rounded, size: 20, color: AppColors.current.textStrong),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -237,12 +305,12 @@ class _MarketCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'نوێنەر / بریکار',
-                        style: TextStyle(fontSize: 11, color: Colors.grey.shade500, fontWeight: FontWeight.w600),
+                        S.agentLabel,
+                        style: TextStyle(fontSize: 11, color: AppColors.current.textMuted, fontWeight: FontWeight.w600),
                       ),
                       Text(
                         view.agentName,
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black87),
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.current.textBody),
                       ),
                     ],
                   ),
@@ -257,7 +325,7 @@ class _MarketCard extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF10B981), // ڕەنگی سەوزی مۆدێرن بۆ Call
+                  backgroundColor: AppColors.current.success, // ڕەنگی سەوزی مۆدێرن بۆ Call
                   foregroundColor: Colors.white,
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(vertical: 14),
@@ -266,7 +334,7 @@ class _MarketCard extends StatelessWidget {
                 onPressed: () => _call(context),
                 icon: const Icon(Icons.phone_enabled_rounded, size: 20),
                 label: Text(
-                  'پەیوەندی بکە (${view.agentPhone})',
+                  S.callWithNumber(view.agentPhone),
                   style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, letterSpacing: 0.5),
                   textDirection: TextDirection.ltr, // بۆ ئەوەی ژمارەکە تێک نەچێت
                 ),

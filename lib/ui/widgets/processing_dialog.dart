@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_colors.dart';
+import '../../l10n/app_strings.dart';
 
-const Color _primaryDarkBlue = Color(0xFF0F2C59);
 
 /// Shows a non-dismissible spinner dialog with [message] while [task] runs,
 /// then closes it and returns the task's result. The dialog is also closed if
@@ -11,7 +12,9 @@ const Color _primaryDarkBlue = Color(0xFF0F2C59);
 Future<T> showProcessingWhile<T>(
   BuildContext context,
   Future<T> Function() task, {
-  String message = 'چاوەڕوانبە، پسولە دروست دەبێت...',
+  // Null means the standard wording — a translated string can't be a `const`
+  // default value.
+  String? message,
 }) async {
   final navigator = Navigator.of(context, rootNavigator: true);
   showDialog<void>(
@@ -20,21 +23,21 @@ Future<T> showProcessingWhile<T>(
     builder: (_) => PopScope(
       canPop: false,
       child: Dialog(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.current.card,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 32),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const CircularProgressIndicator(color: _primaryDarkBlue),
+              CircularProgressIndicator(color: AppColors.current.textStrong),
               const SizedBox(height: 20),
               Text(
-                message,
+                message ?? S.creatingReceipt,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w600,
-                  color: _primaryDarkBlue,
+                  color: AppColors.current.textStrong,
                 ),
               ),
             ],

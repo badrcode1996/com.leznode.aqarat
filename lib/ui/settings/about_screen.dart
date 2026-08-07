@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../theme/app_colors.dart';
+import '../../l10n/app_strings.dart';
 
-const Color _primaryDarkBlue = Color(0xFF0F2C59);
+Color get _primaryDarkBlue => AppColors.current.brand;
+// Leznode's own gold — a brand mark, not a theme colour, so it stays put.
 const Color _accentGold = Color(0xFFC9A227);
-const Color _appBackground = Color(0xFFF5F7FA);
+Color get _appBackground => AppColors.current.pageBg;
 
 /// "دەربارەی ئێمە" — the app's identity plus Leznode's contact channels.
 /// Every row here opens an external app (dialer, mail client, browser), so the
@@ -15,19 +18,20 @@ class AboutScreen extends StatelessWidget {
   static const _phone = '07502752334';
   static const _email = 'info@leznode.com';
   static const _site = 'https://leznode.com';
-  static const _city = 'هەولێر';
+  static String get _city => S.cityErbil;
 
   /// wa.me wants the number in full international form with no leading zero,
   /// so the local `0750…` becomes `964750…`.
   static String get _waPhone => '964${_phone.replaceFirst(RegExp(r'^0+'), '')}';
 
-  static const _socials = <_Social>[
-    _Social('فەیسبووک', Icons.facebook_rounded,
-        'https://www.facebook.com/leznode', Color(0xFF1877F2)),
-    _Social('ئینستاگرام', Icons.camera_alt_rounded,
-        'https://www.instagram.com/leznode', Color(0xFFE1306C)),
-    _Social('تیکتۆک', Icons.music_note_rounded,
-        'https://www.tiktok.com/@leznode', Color(0xFF010101)),
+  // A getter, not a const list: the names follow the interface language.
+  static List<_Social> get _socials => <_Social>[
+    _Social(S.facebook, Icons.facebook_rounded,
+        'https://www.facebook.com/leznode', const Color(0xFF1877F2)),
+    _Social(S.instagram, Icons.camera_alt_rounded,
+        'https://www.instagram.com/leznode', const Color(0xFFE1306C)),
+    _Social(S.tiktok, Icons.music_note_rounded,
+        'https://www.tiktok.com/@leznode', const Color(0xFF010101)),
   ];
 
   /// A device with no dialer or mail client makes `launchUrl` throw rather than
@@ -41,8 +45,8 @@ class AboutScreen extends StatelessWidget {
     }
     if (!ok && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: const Text('نەتوانرا بکرێتەوە'),
-          backgroundColor: Colors.red.shade700));
+          content: Text(S.cannotOpen),
+          backgroundColor: AppColors.current.danger));
     }
   }
 
@@ -51,8 +55,8 @@ class AboutScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: _appBackground,
       appBar: AppBar(
-        title: const Text('دەربارەی ئێمە',
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(S.aboutUs,
+            style: const TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: _primaryDarkBlue,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -66,18 +70,18 @@ class AboutScreen extends StatelessWidget {
             children: [
               _header(),
               const SizedBox(height: 24),
-              _sectionLabel('پەیوەندی'),
+              _sectionLabel(S.contactSection),
               _card([
                 _row(
                   icon: Icons.phone_rounded,
-                  label: 'تەلەفۆن',
+                  label: S.phoneLabel,
                   value: _phone,
                   onTap: () =>
                       _open(context, Uri(scheme: 'tel', path: _phone)),
                 ),
                 _row(
                   icon: Icons.chat_rounded,
-                  label: 'واتساپ',
+                  label: S.whatsapp,
                   value: _phone,
                   iconColor: const Color(0xFF25D366),
                   onTap: () =>
@@ -85,26 +89,26 @@ class AboutScreen extends StatelessWidget {
                 ),
                 _row(
                   icon: Icons.email_rounded,
-                  label: 'ئیمەیل',
+                  label: S.emailAddress,
                   value: _email,
                   onTap: () =>
                       _open(context, Uri(scheme: 'mailto', path: _email)),
                 ),
                 _row(
                   icon: Icons.language_rounded,
-                  label: 'ماڵپەڕ',
+                  label: S.website,
                   value: 'leznode.com',
                   onTap: () => _open(context, Uri.parse(_site)),
                 ),
                 _row(
                   icon: Icons.location_on_rounded,
-                  label: 'ناونیشان',
+                  label: S.addressLabel,
                   value: _city,
                   last: true,
                 ),
               ]),
               const SizedBox(height: 20),
-              _sectionLabel('سۆشیال میدیا'),
+              _sectionLabel(S.socialMedia),
               _card([
                 for (var i = 0; i < _socials.length; i++)
                   _row(
@@ -129,11 +133,11 @@ class AboutScreen extends StatelessWidget {
   Widget _header() => Container(
         padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.current.card,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
+                color: AppColors.current.shadow,
                 blurRadius: 12,
                 offset: const Offset(0, 4)),
           ],
@@ -142,15 +146,15 @@ class AboutScreen extends StatelessWidget {
           children: [
             Image.asset('assets/images/app_logo.png', height: 120),
             const SizedBox(height: 12),
-            const Text('گرێبەست',
+            Text(S.appTitle,
                 style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: _primaryDarkBlue)),
+                    color: AppColors.current.textStrong)),
             const SizedBox(height: 6),
-            Text('سیستەمی بەڕێوەبردنی موڵک و گرێبەست',
+            Text(S.appDescription,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+                style: TextStyle(color: AppColors.current.textMuted, fontSize: 13)),
             const SizedBox(height: 14),
             const _VersionBadge(),
           ],
@@ -158,21 +162,21 @@ class AboutScreen extends StatelessWidget {
       );
 
   Widget _sectionLabel(String text) => Padding(
-        padding: const EdgeInsets.only(right: 8, bottom: 8),
+        padding: const EdgeInsetsDirectional.only(end: 8, bottom: 8),
         child: Text(text,
-            style: const TextStyle(
-                color: Colors.grey,
+            style: TextStyle(
+                color: AppColors.current.textMuted,
                 fontWeight: FontWeight.bold,
                 fontSize: 13)),
       );
 
   Widget _card(List<Widget> children) => Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.current.card,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
+                color: AppColors.current.shadow,
                 blurRadius: 10,
                 offset: const Offset(0, 4)),
           ],
@@ -185,21 +189,23 @@ class AboutScreen extends StatelessWidget {
     required String label,
     required String value,
     VoidCallback? onTap,
-    Color iconColor = _primaryDarkBlue,
+    // Null means "the brand colour", resolved at build time — a theme-aware
+    // getter can't be a default value.
+    Color? iconColor,
     bool last = false,
   }) =>
       Column(
         children: [
           ListTile(
-            leading: Icon(icon, color: iconColor),
+            leading: Icon(icon, color: iconColor ?? AppColors.current.textStrong),
             title: Text(label,
                 style: const TextStyle(fontWeight: FontWeight.w600)),
             subtitle: Text(value,
-                style: const TextStyle(color: Colors.grey),
+                style: TextStyle(color: AppColors.current.textMuted),
                 textDirection: TextDirection.ltr),
             trailing: onTap == null
                 ? null
-                : const Icon(Icons.chevron_left_rounded, color: Colors.grey),
+                : Icon(Icons.chevron_left_rounded, color: AppColors.current.textMuted),
             onTap: onTap,
           ),
           if (!last) const Divider(indent: 60, height: 1),
@@ -208,8 +214,8 @@ class AboutScreen extends StatelessWidget {
 
   Widget _footer() => Column(
         children: [
-          Text('دروستکراوە لەلایەن',
-              style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+          Text(S.madeBy,
+              style: TextStyle(color: AppColors.current.textMuted, fontSize: 12)),
           const SizedBox(height: 4),
           const Text('LEZNODE',
               style: TextStyle(
@@ -218,8 +224,8 @@ class AboutScreen extends StatelessWidget {
                   letterSpacing: 2,
                   color: _accentGold)),
           const SizedBox(height: 8),
-          Text('© ${DateTime.now().year} — هەموو مافەکان پارێزراون',
-              style: TextStyle(color: Colors.grey.shade500, fontSize: 11)),
+          Text(S.allRightsReserved(DateTime.now().year),
+              style: TextStyle(color: AppColors.current.textMuted, fontSize: 11)),
         ],
       );
 }
@@ -248,7 +254,7 @@ class _VersionBadge extends StatelessWidget {
             return Text(
               info == null ? '' : 'v${info.version} (${info.buildNumber})',
               style: TextStyle(
-                  color: Colors.grey.shade700,
+                  color: AppColors.current.textBody,
                   fontSize: 12,
                   fontWeight: FontWeight.w600),
             );

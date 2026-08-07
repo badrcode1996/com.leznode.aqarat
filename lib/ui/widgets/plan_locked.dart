@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_colors.dart';
 
-const Color _primaryDarkBlue = Color(0xFF0F2C59);
-const Color _accentYellow = Color(0xFFF8B115);
+Color get _accentYellow => AppColors.current.accent;
 
 /// Friendly placeholder shown where a feature is hidden because the company's
 /// subscription plan doesn't include it. Pure UI — the real enforcement lives in
@@ -25,18 +25,18 @@ class PlanLocked extends StatelessWidget {
                 color: _accentYellow.withValues(alpha: 0.15),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.lock_outline_rounded,
+              child: Icon(Icons.lock_outline_rounded,
                   size: 48, color: _accentYellow),
             ),
             const SizedBox(height: 20),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 15,
                 height: 1.5,
                 fontWeight: FontWeight.w600,
-                color: _primaryDarkBlue,
+                color: AppColors.current.textStrong,
               ),
             ),
           ],

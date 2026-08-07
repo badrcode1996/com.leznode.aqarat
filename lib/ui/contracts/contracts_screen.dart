@@ -1,3 +1,4 @@
+import '../../theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -8,18 +9,20 @@ import '../../data/template_repository.dart';
 import '../../models/company_model.dart';
 import '../../models/contract_model.dart';
 import '../../models/contract_template_model.dart';
+import '../../l10n/app_strings.dart';
 import '../../models/enums.dart';
 import '../../services/pdf/contract_pdf_remote.dart';
 import 'contract_preview_screen.dart';
+import 'doc_lang_field.dart';
 import 'create_rent_contract_stepper.dart';
 import 'create_sale_contract_stepper.dart';
 import 'installment_grid.dart';
 import 'widgets/contract_docs_field.dart';
 
 // ڕەنگە سەرەکییەکان بۆ یەکپارچەیی دیزاینەکە
-const Color primaryDarkBlue = Color(0xFF0F2C59);
-const Color accentYellow = Color(0xFFF8B115);
-const Color appBackgroundColor = Color(0xFFF5F7FA);
+Color get primaryDarkBlue => AppColors.current.brand;
+Color get accentYellow => AppColors.current.accent;
+Color get appBackgroundColor => AppColors.current.pageBg;
 
 /// Reusable contracts body (rent / sale sub-tabs) with print/share + the rent
 /// installment grid. Rendered inside the Archive screen's "گرێبەستەکان" tab —
@@ -29,26 +32,26 @@ class ContractsArchiveBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const DefaultTabController(
+    return DefaultTabController(
       length: 2,
       child: Column(
         children: [
           Material(
-            color: Colors.white,
+            color: AppColors.current.card,
             elevation: 1,
             child: TabBar(
               indicatorColor: accentYellow,
               indicatorWeight: 3,
-              labelColor: primaryDarkBlue,
-              unselectedLabelColor: Colors.grey,
-              labelStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-              tabs: [
+              labelColor: AppColors.current.textStrong,
+              unselectedLabelColor: AppColors.current.textMuted,
+              labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              tabs: const [
                 Tab(text: 'کرێ'),
                 Tab(text: 'فرۆشتن'),
               ],
             ),
           ),
-          Expanded(
+          const Expanded(
             child: TabBarView(
               children: [
                 _ContractsList(type: ContractType.rent),
@@ -86,8 +89,8 @@ class _ContractsListState extends ConsumerState<_ContractsList> {
   Widget build(BuildContext context) {
     final async = ref.watch(contractsStreamProvider);
     return async.when(
-      loading: () => const Center(child: CircularProgressIndicator(color: primaryDarkBlue)),
-      error: (e, _) => Center(child: Text('هەڵە: $e', style: const TextStyle(color: Colors.red))),
+      loading: () => Center(child: CircularProgressIndicator(color: AppColors.current.textStrong)),
+      error: (e, _) => Center(child: Text('هەڵە: $e', style: TextStyle(color: AppColors.current.danger))),
       data: (all) {
         final ofType = all.where((c) => c.type == type).toList();
         if (ofType.isEmpty) {
@@ -128,31 +131,31 @@ class _ContractsListState extends ConsumerState<_ContractsList> {
           textInputAction: TextInputAction.search,
           decoration: InputDecoration(
             hintText: 'گەڕان بە ناو، ژمارەی مۆبایل، ژمارەی عەقار…',
-            hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
-            prefixIcon: const Icon(Icons.search_rounded, color: primaryDarkBlue),
+            hintStyle: TextStyle(color: AppColors.current.textMuted, fontSize: 14),
+            prefixIcon: Icon(Icons.search_rounded, color: AppColors.current.textStrong),
             suffixIcon: _query.isEmpty
                 ? null
                 : IconButton(
-                    icon: Icon(Icons.close_rounded, color: Colors.grey.shade600),
+                    icon: Icon(Icons.close_rounded, color: AppColors.current.textMuted),
                     onPressed: () {
                       _searchCtrl.clear();
                       setState(() => _query = '');
                     },
                   ),
             filled: true,
-            fillColor: Colors.white,
+            fillColor: AppColors.current.inputFill,
             contentPadding: const EdgeInsets.symmetric(vertical: 4),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(color: Colors.grey.shade300),
+              borderSide: BorderSide(color: AppColors.current.divider),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(color: Colors.grey.shade300),
+              borderSide: BorderSide(color: AppColors.current.divider),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: primaryDarkBlue, width: 1.5),
+              borderSide: BorderSide(color: primaryDarkBlue, width: 1.5),
             ),
           ),
         ),
@@ -164,11 +167,11 @@ class _ContractsListState extends ConsumerState<_ContractsList> {
       margin: const EdgeInsets.all(24),
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 32),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.current.card,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.shade200, width: 1.5),
+        border: Border.all(color: AppColors.current.divider, width: 1.5),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(color: AppColors.current.shadow, blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
       child: Column(
@@ -177,13 +180,13 @@ class _ContractsListState extends ConsumerState<_ContractsList> {
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(color: inputFillColor, shape: BoxShape.circle),
-            child: Icon(icon, size: 48, color: Colors.grey.shade400),
+            decoration: BoxDecoration(color: inputFillColor, shape: BoxShape.circle),
+            child: Icon(icon, size: 48, color: AppColors.current.textFaint),
           ),
           const SizedBox(height: 16),
           Text(
             text,
-            style: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.bold, fontSize: 16),
+            style: TextStyle(color: AppColors.current.textMuted, fontWeight: FontWeight.bold, fontSize: 16),
             textAlign: TextAlign.center,
           ),
         ],
@@ -192,15 +195,20 @@ class _ContractsListState extends ConsumerState<_ContractsList> {
   );
 }
 
-const Color inputFillColor = Color(0xFFF3F4F6);
+Color get inputFillColor => AppColors.current.inputFill;
 
 class _ContractCard extends ConsumerWidget {
   const _ContractCard({required this.contract});
   final Contract contract;
 
+  /// [lang] null means "whichever edition this interface opens on" — Kurdish,
+  /// or Arabic when the app itself is in Arabic and the company has Arabic
+  /// clauses. The long-press menu passes an explicit language to override it.
   void _openPreview(
       BuildContext context, Company? company, ContractTemplate? template,
-      {String lang = 'ku'}) {
+      {String? lang, bool arabicAvailable = false}) {
+    final effective =
+        lang ?? docLangFor(S.language, arabicAvailable: arabicAvailable);
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -208,7 +216,7 @@ class _ContractCard extends ConsumerWidget {
             contract: contract,
             company: company,
             template: template,
-            initialLang: lang),
+            initialLang: effective),
       ),
     );
   }
@@ -226,24 +234,24 @@ class _ContractCard extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(20, 18, 20, 6),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 6),
               child: Text('بینینی گرێبەست بە کام زمان؟',
                   style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
-                      color: primaryDarkBlue)),
+                      color: AppColors.current.textStrong)),
             ),
             ListTile(
-              leading: const Icon(Icons.description_outlined,
-                  color: primaryDarkBlue),
+              leading: Icon(Icons.description_outlined,
+                  color: AppColors.current.textStrong),
               title: const Text('کوردی',
                   style: TextStyle(fontWeight: FontWeight.bold)),
               onTap: () => Navigator.pop(ctx, 'ku'),
             ),
             ListTile(
               leading:
-                  const Icon(Icons.translate_rounded, color: primaryDarkBlue),
+                  Icon(Icons.translate_rounded, color: AppColors.current.textStrong),
               title: const Text('عەرەبی',
                   style: TextStyle(fontWeight: FontWeight.bold)),
               onTap: () => Navigator.pop(ctx, 'ar'),
@@ -265,7 +273,7 @@ class _ContractCard extends ConsumerWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('پرینت سەرکەوتوو نەبوو: $e'),
-            backgroundColor: Colors.red.shade700,
+            backgroundColor: AppColors.current.danger,
           ),
         );
       }
@@ -315,20 +323,20 @@ class _ContractCard extends ConsumerWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('سڕینەوەی گرێبەست',
+        title: Text('سڕینەوەی گرێبەست',
             style: TextStyle(
-                color: primaryDarkBlue, fontWeight: FontWeight.bold)),
+                color: AppColors.current.textStrong, fontWeight: FontWeight.bold)),
         content: Text(
             'دڵنیایت لە سڕینەوەی گرێبەست #${contract.contractNumber} (${contract.listTitle})؟ ئەم کردارە ناگەڕێتەوە.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('پاشگەزبوونەوە',
-                style: TextStyle(color: Colors.grey)),
+            child: Text('پاشگەزبوونەوە',
+                style: TextStyle(color: AppColors.current.textMuted)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red.shade700,
+                backgroundColor: AppColors.current.danger,
                 foregroundColor: Colors.white),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('سڕینەوە'),
@@ -341,9 +349,9 @@ class _ContractCard extends ConsumerWidget {
       await ref.read(contractRepositoryProvider).deleteContract(contract);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('گرێبەست سڕایەوە'),
-              backgroundColor: Color(0xFF10B981)),
+          SnackBar(
+              content: const Text('گرێبەست سڕایەوە'),
+              backgroundColor: AppColors.current.success),
         );
       }
     } catch (e) {
@@ -351,7 +359,7 @@ class _ContractCard extends ConsumerWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text('هەڵە: $e'),
-              backgroundColor: Colors.red.shade700),
+              backgroundColor: AppColors.current.danger),
         );
       }
     }
@@ -374,16 +382,16 @@ class _ContractCard extends ConsumerWidget {
     final typeLabel = isRent ? 'کرێ' : 'فرۆشتن';
 
     // ڕەنگکردنی جۆری گرێبەستەکە
-    final Color iconBgColor = isRent ? const Color(0xFF10B981).withValues(alpha: 0.15) : const Color(0xFF3B82F6).withValues(alpha: 0.15);
-    final Color iconColor = isRent ? const Color(0xFF10B981) : const Color(0xFF3B82F6);
+    final Color iconBgColor = isRent ? AppColors.current.success.withValues(alpha: 0.15) : AppColors.current.info.withValues(alpha: 0.15);
+    final Color iconColor = isRent ? AppColors.current.success : AppColors.current.info;
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.current.card,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppColors.current.shadow,
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -460,7 +468,7 @@ class _ContractCard extends ConsumerWidget {
                           Expanded(
                             child: Text(
                               contract.listTitle,
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: primaryDarkBlue),
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.current.textStrong),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -473,7 +481,7 @@ class _ContractCard extends ConsumerWidget {
                             ),
                             child: Text(
                               typeLabel,
-                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey.shade700),
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.current.textBody),
                             ),
                           ),
                         ],
@@ -481,7 +489,7 @@ class _ContractCard extends ConsumerWidget {
                       const SizedBox(height: 4),
                       Text(
                         contract.listSubtitle,
-                        style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                        style: TextStyle(fontSize: 13, color: AppColors.current.textMuted),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -501,9 +509,9 @@ class _ContractCard extends ConsumerWidget {
                         icon: Badge.count(
                           count: contract.attachmentUrls.length,
                           backgroundColor: accentYellow,
-                          textColor: primaryDarkBlue,
-                          child: const Icon(Icons.photo_library_outlined,
-                              color: primaryDarkBlue),
+                          textColor: AppColors.current.textStrong,
+                          child: Icon(Icons.photo_library_outlined,
+                              color: AppColors.current.textStrong),
                         ),
                         onPressed: () => _openDocs(context),
                       )
@@ -511,7 +519,7 @@ class _ContractCard extends ConsumerWidget {
                       IconButton(
                         tooltip: 'بەڵگەکان (بەتاڵ)',
                         icon: Icon(Icons.photo_library_outlined,
-                            color: Colors.grey.shade400),
+                            color: AppColors.current.textFaint),
                         onPressed: () => ScaffoldMessenger.of(context)
                             .showSnackBar(const SnackBar(
                           content: Text(
@@ -526,24 +534,24 @@ class _ContractCard extends ConsumerWidget {
                           : 'پێشبینین',
                       child: InkWell(
                         customBorder: const CircleBorder(),
-                        onTap: () => _openPreview(context, company, template),
+                        onTap: () => _openPreview(context, company, template, arabicAvailable: arabicAvailable),
                         onLongPress: arabicAvailable
                             ? () => _pickLangThenPreview(
                                 context, company, template)
                             : null,
-                        child: const Padding(
-                          padding: EdgeInsets.all(8),
+                        child: Padding(
+                          padding: const EdgeInsets.all(8),
                           child: Icon(Icons.visibility_outlined,
-                              color: primaryDarkBlue),
+                              color: AppColors.current.textStrong),
                         ),
                       ),
                     ),
                     PopupMenuButton<String>(
-                      icon: const Icon(Icons.more_vert_rounded, color: Colors.grey),
+                      icon: Icon(Icons.more_vert_rounded, color: AppColors.current.textMuted),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       onSelected: (v) {
                         if (v == 'preview') {
-                          _openPreview(context, company, template);
+                          _openPreview(context, company, template, arabicAvailable: arabicAvailable);
                         } else if (v == 'print') {
                           _run(context, () => ContractPdfRemote.printContract(contract.id));
                         } else if (v == 'print_ar') {
@@ -558,58 +566,58 @@ class _ContractCard extends ConsumerWidget {
                         }
                       },
                       itemBuilder: (_) => [
-                        const PopupMenuItem(
+                        PopupMenuItem(
                           value: 'preview',
                           child: Row(
                             children: [
-                              Icon(Icons.visibility_outlined, color: primaryDarkBlue, size: 20),
-                              SizedBox(width: 12),
-                              Text('پێشبینین'),
+                              Icon(Icons.visibility_outlined, color: AppColors.current.textStrong, size: 20),
+                              const SizedBox(width: 12),
+                              const Text('پێشبینین'),
                             ],
                           ),
                         ),
-                        const PopupMenuItem(
+                        PopupMenuItem(
                           value: 'print',
                           child: Row(
                             children: [
-                              Icon(Icons.print_outlined, color: primaryDarkBlue, size: 20),
-                              SizedBox(width: 12),
-                              Text('پرینت'),
+                              Icon(Icons.print_outlined, color: AppColors.current.textStrong, size: 20),
+                              const SizedBox(width: 12),
+                              const Text('پرینت'),
                             ],
                           ),
                         ),
                         // Only when the plan includes it AND this company has
                         // Arabic clauses for THIS contract type on file.
                         if (arabicAvailable)
-                          const PopupMenuItem(
+                          PopupMenuItem(
                             value: 'print_ar',
                             child: Row(
                               children: [
                                 Icon(Icons.translate_rounded,
-                                    color: primaryDarkBlue, size: 20),
-                                SizedBox(width: 12),
-                                Text('پرینتی عەرەبی'),
+                                    color: AppColors.current.textStrong, size: 20),
+                                const SizedBox(width: 12),
+                                const Text('پرینتی عەرەبی'),
                               ],
                             ),
                           ),
-                        const PopupMenuItem(
+                        PopupMenuItem(
                           value: 'share',
                           child: Row(
                             children: [
-                              Icon(Icons.share_outlined, color: primaryDarkBlue, size: 20),
-                              SizedBox(width: 12),
-                              Text('هاوبەشکردن'),
+                              Icon(Icons.share_outlined, color: AppColors.current.textStrong, size: 20),
+                              const SizedBox(width: 12),
+                              const Text('هاوبەشکردن'),
                             ],
                           ),
                         ),
                         if (isAdmin) ...[
-                          const PopupMenuItem(
+                          PopupMenuItem(
                             value: 'edit',
                             child: Row(
                               children: [
-                                Icon(Icons.edit_outlined, color: primaryDarkBlue, size: 20),
-                                SizedBox(width: 12),
-                                Text('دەستکاری'),
+                                Icon(Icons.edit_outlined, color: AppColors.current.textStrong, size: 20),
+                                const SizedBox(width: 12),
+                                const Text('دەستکاری'),
                               ],
                             ),
                           ),
@@ -617,7 +625,7 @@ class _ContractCard extends ConsumerWidget {
                             value: 'delete',
                             child: Row(
                               children: [
-                                Icon(Icons.delete_outline, color: Colors.red.shade700, size: 20),
+                                Icon(Icons.delete_outline, color: AppColors.current.danger, size: 20),
                                 const SizedBox(width: 12),
                                 const Text('سڕینەوە'),
                               ],
