@@ -336,6 +336,121 @@ class AppStrings {
     required this.paidTo,
     required this.createAndPrint,
     required this.emptyFunctionResponse,
+    // ---- Super Admin tooling ----
+    required this.adminBranchScoped,
+    required this.adminCompanyWide,
+    required this.roleAdminShort,
+    required this.role,
+    required this.access,
+    required this.accessAppWeb,
+    required this.accessAppAndWeb,
+    required this.accessWebOnly,
+    required this.switchedToAppWeb,
+    required this.switchedToWebOnly,
+    required this.branchOnlyData,
+    required this.newCompany,
+    required this.noCompanies,
+    required this.companyInfo,
+    required this.companyInfoUpdated,
+    required this.infoUpdated,
+    required this.companyNameKu,
+    required this.companyNameAr,
+    required this.companyNameEn,
+    required this.usedAsDocumentId,
+    required this.companyAddress,
+    required this.companyLogo,
+    required this.logoRequired,
+    required this.companyCity,
+    required this.city,
+    required this.phone1,
+    required this.phone2,
+    required this.publicMobile,
+    required this.branch,
+    required this.branches,
+    required this.manageBranches,
+    required this.branchesCommaLabel,
+    required this.branchesCommaHint,
+    required this.branchesUpdated,
+    required this.newUser,
+    required this.noUsers,
+    required this.editUser,
+    required this.editInfo,
+    required this.fullName,
+    required this.newPassword,
+    required this.changePassword,
+    required this.passwordChanged,
+    required this.minSixChars,
+    required this.emailValidShort,
+    required this.account1,
+    required this.account2,
+    required this.newSuperAdmin,
+    required this.superAdmins,
+    required this.demoAccount,
+    required this.demo7Days,
+    required this.demoEnabled,
+    required this.demoActivated,
+    required this.demoRemoved,
+    required this.sevenDaysFromNow,
+    required this.demoExpiredNote,
+    required this.demoExpiryNote,
+    required this.saveResetsDemo,
+    required this.features,
+    required this.companyFeatures,
+    required this.featuresUpdated,
+    required this.featuresPlanNote,
+    required this.overrideNote,
+    required this.asPlan,
+    required this.planSubscription,
+    required this.planSettings,
+    required this.plansSaved,
+    required this.maxBranches,
+    required this.maxUsers,
+    required this.zeroUnlimited,
+    required this.webOnlyBlocked,
+    required this.webOnlyNote,
+    required this.featureOverdue,
+    required this.featureGuarantees,
+    required this.featureCommission,
+    required this.featureArabicContracts,
+    required this.contractTemplate,
+    required this.exportTitle,
+    required this.exportCompanyData,
+    required this.backupData,
+    required this.tabularReport,
+    required this.excelTwoSheets,
+    required this.tapToChange,
+    required this.change,
+    required this.inactive,
+    required this.templateDesign,
+    required this.receiptDesign,
+    required this.primaryColorHex,
+    required this.receiptColorHex,
+    required this.clauseFontSize,
+    required this.fieldFontSize,
+    required this.rentClauses,
+    required this.rentClausesAr,
+    required this.saleClauses,
+    required this.saleClausesAr,
+    required this.newClause,
+    required this.rentTitleField,
+    required this.rentTitleFieldAr,
+    required this.saleTitleField,
+    required this.saleTitleFieldAr,
+    required this.arabicHeadings,
+    required this.tokensTitle,
+    required this.tokensHint,
+    required this.tokensAlsoHere,
+    required this.arabicClausesHint,
+    required this.noAutoTranslation,
+    required this.noArabicClausesYet,
+    required this.templateSaved,
+    required this.resetToDefault,
+    required this.resetToDefaultConfirm,
+    required this.resetDone,
+    required this.reset,
+    required this.no,
+    required this.invalidEnglishName,
+    required this.listSeparator,
   });
 
   final AppLanguage language;
@@ -672,6 +787,124 @@ class AppStrings {
   final String createAndPrint;
   final String emptyFunctionResponse;
 
+  final String adminBranchScoped;
+  final String adminCompanyWide;
+  final String roleAdminShort;
+  final String role;
+  final String access;
+  final String accessAppWeb;
+  final String accessAppAndWeb;
+  final String accessWebOnly;
+  final String switchedToAppWeb;
+  final String switchedToWebOnly;
+  final String branchOnlyData;
+  final String newCompany;
+  final String noCompanies;
+  final String companyInfo;
+  final String companyInfoUpdated;
+  final String infoUpdated;
+  final String companyNameKu;
+  final String companyNameAr;
+  final String companyNameEn;
+  final String usedAsDocumentId;
+  final String companyAddress;
+  final String companyLogo;
+  final String logoRequired;
+  final String companyCity;
+  final String city;
+  final String phone1;
+  final String phone2;
+  final String publicMobile;
+  final String branch;
+  final String branches;
+  final String manageBranches;
+  final String branchesCommaLabel;
+  final String branchesCommaHint;
+  final String branchesUpdated;
+  final String newUser;
+  final String noUsers;
+  final String editUser;
+  final String editInfo;
+  final String fullName;
+  final String newPassword;
+  final String changePassword;
+  final String passwordChanged;
+  final String minSixChars;
+  final String emailValidShort;
+  final String account1;
+  final String account2;
+  final String newSuperAdmin;
+  final String superAdmins;
+  final String demoAccount;
+  final String demo7Days;
+  final String demoEnabled;
+  final String demoActivated;
+  final String demoRemoved;
+  final String sevenDaysFromNow;
+  final String demoExpiredNote;
+  final String demoExpiryNote;
+  final String saveResetsDemo;
+  final String features;
+  final String companyFeatures;
+  final String featuresUpdated;
+  final String featuresPlanNote;
+  final String overrideNote;
+  final String asPlan;
+  final String planSubscription;
+  final String planSettings;
+  final String plansSaved;
+  final String maxBranches;
+  final String maxUsers;
+  final String zeroUnlimited;
+  final String webOnlyBlocked;
+  final String webOnlyNote;
+  final String featureOverdue;
+  final String featureGuarantees;
+  final String featureCommission;
+  final String featureArabicContracts;
+  final String contractTemplate;
+  final String exportTitle;
+  final String exportCompanyData;
+  final String backupData;
+  final String tabularReport;
+  final String excelTwoSheets;
+  final String tapToChange;
+  final String change;
+  final String inactive;
+  final String templateDesign;
+  final String receiptDesign;
+  final String primaryColorHex;
+  final String receiptColorHex;
+  final String clauseFontSize;
+  final String fieldFontSize;
+  final String rentClauses;
+  final String rentClausesAr;
+  final String saleClauses;
+  final String saleClausesAr;
+  final String newClause;
+  final String rentTitleField;
+  final String rentTitleFieldAr;
+  final String saleTitleField;
+  final String saleTitleFieldAr;
+  final String arabicHeadings;
+  final String tokensTitle;
+  final String tokensHint;
+  final String tokensAlsoHere;
+  final String arabicClausesHint;
+  final String noAutoTranslation;
+  final String noArabicClausesYet;
+  final String templateSaved;
+  final String resetToDefault;
+  final String resetToDefaultConfirm;
+  final String resetDone;
+  final String reset;
+  final String no;
+  final String invalidEnglishName;
+
+  /// Joins a list in running text. Arabic script uses ،, Latin uses a
+  /// plain comma followed by a space.
+  final String listSeparator;
+
   // -------------------------------------------------------------------------
   // Interpolated strings. Methods, not fields, so each language controls where
   // the value lands in the sentence.
@@ -780,6 +1013,60 @@ class AppStrings {
         AppLanguage.ar => 'التاريخ: $date',
         AppLanguage.en => 'Date: $date',
         _ => 'بەروار: $date',
+      };
+
+  String daysLeft(int n) => switch (language) {
+        AppLanguage.ar => 'بقي $n يوم.',
+        AppLanguage.en => '$n days left.',
+        _ => '$n ڕۆژ ماوە.',
+      };
+
+  String companyIdFixed(String id) => switch (language) {
+        AppLanguage.ar => 'معرّف الشركة لا يتغيّر: $id',
+        AppLanguage.en => 'The company id cannot change: $id',
+        _ => 'ناسنامەی کۆمپانیا ناگۆڕدرێت: $id',
+      };
+
+  String exportFailed(Object e) => switch (language) {
+        AppLanguage.ar => 'خطأ في التصدير: $e',
+        AppLanguage.en => 'Export failed: $e',
+        _ => 'هەڵە لە دەرهێنان: $e',
+      };
+
+  String planChangedTo(String plan) => switch (language) {
+        AppLanguage.ar => 'تم تغيير الخطة إلى $plan',
+        AppLanguage.en => 'Plan changed to $plan',
+        _ => 'پلان گۆڕدرا بۆ $plan',
+      };
+
+  String cityChangedTo(String city) => switch (language) {
+        AppLanguage.ar => 'تم تغيير المدينة إلى $city',
+        AppLanguage.en => 'City changed to $city',
+        _ => 'شار گۆڕدرا بۆ $city',
+      };
+
+  String companyIdTaken(String id) => switch (language) {
+        AppLanguage.ar => 'هذا الاسم الإنكليزي مستخدم مسبقاً: $id',
+        AppLanguage.en => 'That English name is already taken: $id',
+        _ => 'ئەم ناوە ئینگلیزییە پێشتر بەکارهاتووە: $id',
+      };
+
+  String branchLimitReached(int max) => switch (language) {
+        AppLanguage.ar => 'هذه الخطة تسمح بـ $max فرع فقط. رقِّ الخطة.',
+        AppLanguage.en => 'This plan allows only $max branches. Upgrade the plan.',
+        _ => 'ئەم پلانە تەنها $max لقی ڕێگەپێدراوە. پلانەکە بەرز بکەرەوە.',
+      };
+
+  String userLimitReached(int max) => switch (language) {
+        AppLanguage.ar => 'بلغت الخطة حدّ المستخدمين ($max). رقِّ الخطة للمزيد.',
+        AppLanguage.en => 'This plan is at its user limit ($max). Upgrade to add more.',
+        _ => 'سنووری یوزەری ئەم پلانە پڕبووە ($max). بۆ زیادکردن پلانەکە بەرز بکەرەوە.',
+      };
+
+  String templateFor(String company) => switch (language) {
+        AppLanguage.ar => 'قالب — $company',
+        AppLanguage.en => 'Template — $company',
+        _ => 'تێمپلەیت — $company',
       };
 
   String saveFailed(Object e) => switch (language) {
@@ -1029,7 +1316,30 @@ class AppStrings {
         contractDeleted, noRentContracts, noSaleContracts, searchHint, attachmentsEmpty,
         attachmentsNoneHint, previewFailedTitle, previewFailedBody, amount,
         date, purpose, receivedFrom, paidTo, createAndPrint, emptyFunctionResponse,
-      ];
+              adminBranchScoped, adminCompanyWide, roleAdminShort, role, access,
+        accessAppWeb, accessAppAndWeb, accessWebOnly, switchedToAppWeb, switchedToWebOnly,
+        branchOnlyData, newCompany, noCompanies, companyInfo, companyInfoUpdated,
+        infoUpdated, companyNameKu, companyNameAr, companyNameEn, usedAsDocumentId,
+        companyAddress, companyLogo, logoRequired, companyCity, city, phone1,
+        phone2, publicMobile, branch, branches, manageBranches, branchesCommaLabel,
+        branchesCommaHint, branchesUpdated, newUser, noUsers, editUser, editInfo,
+        fullName, newPassword, changePassword, passwordChanged, minSixChars,
+        emailValidShort, account1, account2, newSuperAdmin, superAdmins,
+        demoAccount, demo7Days, demoEnabled, demoActivated, demoRemoved,
+        sevenDaysFromNow, demoExpiredNote, demoExpiryNote, saveResetsDemo,
+        features, companyFeatures, featuresUpdated, featuresPlanNote, overrideNote,
+        asPlan, planSubscription, planSettings, plansSaved, maxBranches,
+        maxUsers, zeroUnlimited, webOnlyBlocked, webOnlyNote, featureOverdue,
+        featureGuarantees, featureCommission, featureArabicContracts, contractTemplate,
+        exportTitle, exportCompanyData, backupData, tabularReport, excelTwoSheets,
+        tapToChange, change, inactive, templateDesign, receiptDesign, primaryColorHex,
+        receiptColorHex, clauseFontSize, fieldFontSize, rentClauses, rentClausesAr,
+        saleClauses, saleClausesAr, newClause, rentTitleField, rentTitleFieldAr,
+        saleTitleField, saleTitleFieldAr, arabicHeadings, tokensTitle, tokensHint,
+        tokensAlsoHere, arabicClausesHint, noAutoTranslation, noArabicClausesYet,
+        templateSaved, resetToDefault, resetToDefaultConfirm, resetDone,
+        reset, no, invalidEnglishName,
+];
 
   /// The signed-in language. Refreshed by MaterialApp.builder — see the class
   /// doc for why this is a static rather than an InheritedWidget lookup.
@@ -1340,6 +1650,120 @@ class AppStrings {
     paidTo: 'پێدرا بە بەڕێز',
     createAndPrint: 'دروستکردن و پرینت',
     emptyFunctionResponse: 'وەڵامی فەنکشن بەتاڵە',
+    adminBranchScoped: 'ئادمینی لق',
+    adminCompanyWide: 'ئادمینی گشتی',
+    roleAdminShort: 'ئەدمین',
+    role: 'ڕۆڵ',
+    access: 'دەستگەیشتن',
+    accessAppWeb: 'دەستگەیشتن (ئەپ/وێب)',
+    accessAppAndWeb: 'ئەپ و وێب',
+    accessWebOnly: 'تەنها وێب',
+    switchedToAppWeb: 'گۆڕدرا بۆ: ئەپ و وێب',
+    switchedToWebOnly: 'گۆڕدرا بۆ: تەنها وێب',
+    branchOnlyData: 'تەنها داتای لقی خۆی دەبینێت',
+    newCompany: 'کۆمپانیای نوێ',
+    noCompanies: 'هیچ کۆمپانیایەک نییە',
+    companyInfo: 'زانیاری کۆمپانیا',
+    companyInfoUpdated: 'زانیاری کۆمپانیا نوێ کرایەوە',
+    infoUpdated: 'زانیارییەکان نوێ کرانەوە',
+    companyNameKu: 'ناوی کۆمپانیا (کوردی)',
+    companyNameAr: 'ناوی کۆمپانیا (عەرەبی)',
+    companyNameEn: 'ناوی کۆمپانیا (ئینگلیزی)',
+    usedAsDocumentId: 'وەک Document ID بەکاردێت',
+    companyAddress: 'ناونیشانی کۆمپانیا',
+    companyLogo: 'لۆگۆی کۆمپانیا',
+    logoRequired: 'لۆگۆ پێویستە — تکایە وێنەیەک هەڵبژێرە',
+    companyCity: 'شاری کۆمپانیا',
+    city: 'شار',
+    phone1: 'ژمارەی یەکەم',
+    phone2: 'ژمارەی دووەم',
+    publicMobile: 'ژمارەی مۆبایل (گشتی)',
+    branch: 'لق',
+    branches: 'لقەکان',
+    manageBranches: 'بەڕێوەبردنی لقەکان',
+    branchesCommaLabel: 'لقەکان (بە کۆما جیابکەرەوە)',
+    branchesCommaHint: 'لقەکان بە کۆما جیابکەرەوە',
+    branchesUpdated: 'لقەکان نوێکرانەوە',
+    newUser: 'بەکارهێنەری نوێ',
+    noUsers: 'هیچ بەکارهێنەرێک نییە',
+    editUser: 'دەستکاری بەکارهێنەر',
+    editInfo: 'دەستکاری زانیاری',
+    fullName: 'ناوی تەواو',
+    newPassword: 'وشەی نهێنی نوێ',
+    changePassword: 'گۆڕینی وشەی نهێنی',
+    passwordChanged: 'وشەی نهێنی گۆڕا',
+    minSixChars: 'لانیکەم ٦ پیت',
+    emailValidShort: 'ئیمەیڵی دروست',
+    account1: 'ئەکاونتی ١ — بەڕێوەبەری کۆمپانیا',
+    account2: 'ئەکاونتی ٢ — یوزەری کۆمپانیا',
+    newSuperAdmin: 'سوپەر ئەدمینی نوێ',
+    superAdmins: 'سوپەر ئەدمینەکان',
+    demoAccount: 'ئەکاونتی دیمۆ',
+    demo7Days: 'دیمۆ (٧ ڕۆژ)',
+    demoEnabled: 'دیمۆ چالاک بێت',
+    demoActivated: 'دیمۆ چالاک کرا — ٧ ڕۆژ لە ئێستاوە',
+    demoRemoved: 'دیمۆ لابرا — ئەکاونتێکی ئاسایی',
+    sevenDaysFromNow: '٧ ڕۆژ لە ئێستاوە',
+    demoExpiredNote: 'ماوەکە تەواو بووە — ئەم کۆمپانیایە ئێستا بەستراوەتەوە.',
+    demoExpiryNote: 'کاتێک ماوەکە تەواو بێت، یوزەرەکانی ئەم کۆمپانیایە ناتوانن هیچ داتایەک ببینن یان دروست بکەن — نە لە ئەپ و نە لە وێب.',
+    saveResetsDemo: 'پاشەکەوتکردن بە چالاکی، ماوەکە لە سەرەتاوە دەستپێدەکاتەوە.',
+    features: 'تایبەتمەندییەکان',
+    companyFeatures: 'تایبەتمەندییەکانی کۆمپانیا',
+    featuresUpdated: 'تایبەتمەندییەکان نوێکرانەوە',
+    featuresPlanNote: 'کۆمپانیا تەنها ئەو تایبەتمەندییانە دەبینێت کە پلانەکەی ڕێگەی پێدەدات.',
+    overrideNote: 'سەرپێچی لەسەر پلانەکە. «وەک پلان» = بنەڕەتی پلانەکە.',
+    asPlan: 'وەک پلان',
+    planSubscription: 'پلانی بەژداری',
+    planSettings: 'ڕێکخستنی پلانەکان',
+    plansSaved: 'پلانەکان پاشەکەوتکران',
+    maxBranches: 'ژمارەی لق',
+    maxUsers: 'ژمارەی یوزەر',
+    zeroUnlimited: '٠ = بێسنوور',
+    webOnlyBlocked: 'تەنها وێب (ئەپ ڕێگری لێدەکات)',
+    webOnlyNote: 'ئەگەر «تەنها وێب» هەڵبژێردرا، یوزەرەکانی ئەم کۆمپانیایە ناتوانن لە ئەپی مۆبایل بچنە ژوورەوە — تەنها لە وێب.',
+    featureOverdue: 'ئاگاداری کرێی دواکەوتوو',
+    featureGuarantees: 'کۆی دڵنیایی',
+    featureCommission: 'کۆی عمولە',
+    featureArabicContracts: 'گرێبەستی عەرەبی',
+    contractTemplate: 'تێمپلەیتی گرێبەست',
+    exportTitle: 'دەرهێنان (Export)',
+    exportCompanyData: 'دەرهێنانی داتای کۆمپانیا',
+    backupData: 'پاشەکەوتکردنی داتاکان',
+    tabularReport: 'ڕاپۆرتی خشتەیی',
+    excelTwoSheets: 'گرێبەست + پسولە لە دوو شیت',
+    tapToChange: 'بۆ گۆڕین کلیک بکە',
+    change: 'گۆڕین',
+    inactive: 'ناچالاک',
+    templateDesign: 'دیزاین',
+    receiptDesign: 'دیزاینی پسولە',
+    primaryColorHex: 'ڕەنگی سەرەکی (RRGGBB)',
+    receiptColorHex: 'ڕەنگی پسولە (RRGGBB)',
+    clauseFontSize: 'قەبارەی فۆنتی بەندەکان:',
+    fieldFontSize: 'قەبارەی فۆنتی خانەکان:',
+    rentClauses: 'بەندەکانی گرێبەستی کرێ',
+    rentClausesAr: 'بەندەکانی گرێبەستی کرێ — عەرەبی',
+    saleClauses: 'بەندەکانی گرێبەستی فرۆشتن',
+    saleClausesAr: 'بەندەکانی گرێبەستی فرۆشتن — عەرەبی',
+    newClause: 'بەندی نوێ',
+    rentTitleField: 'ناونیشانی گرێبەستی کرێ',
+    rentTitleFieldAr: 'ناونیشانی گرێبەستی کرێ (عەرەبی)',
+    saleTitleField: 'ناونیشانی گرێبەستی فرۆشتن',
+    saleTitleFieldAr: 'ناونیشانی گرێبەستی فرۆشتن (عەرەبی)',
+    arabicHeadings: 'ناونیشانەکانی عەرەبی',
+    tokensTitle: 'کۆدەکانی جێگرەوە (tokens)',
+    tokensHint: 'لەناو بەندەکاندا ئەم کۆدانە بەکاربهێنە؛ خۆکارانە بە داتای گرێبەست پڕدەبنەوە.',
+    tokensAlsoHere: 'هەمان تۆکنەکانی سەرەوە ({party1}، {total_price}، …) لێرەش کار دەکەن. ',
+    arabicClausesHint: 'ئەم بەندانە بە عەرەبی بنووسە تاوەکو کۆمپانیاکە بتوانێت گرێبەستەکە بە عەرەبی چاپ بکات. ',
+    noAutoTranslation: 'هیچ وەرگێڕانێکی خۆکار نییە — دەقێکی یاسایییە و دەبێت پارێزەر پێداچوونەوەی بۆ بکات.',
+    noArabicClausesYet: 'هێشتا هیچ بەندێکی عەرەبی نەنووسراوە — گرێبەستی عەرەبی بۆ ئەم کۆمپانیایە بەردەست نابێت.',
+    templateSaved: 'تێمپلەیت پاشەکەوتکرا',
+    resetToDefault: 'گەڕاندنەوە بۆ بنەڕەت',
+    resetToDefaultConfirm: 'هەموو دەستکارییەکان دەسڕێنەوە و تێمپلەیتی بنەڕەتی (default) دەگەڕێتەوە. دڵنیایت؟',
+    resetDone: 'گەڕایەوە بۆ بنەڕەت',
+    reset: 'گەڕاندنەوە',
+    no: 'نەخێر',
+    invalidEnglishName: 'ناوی ئینگلیزی نادروستە — تەنها پیتی ئینگلیزی بەکاربهێنە',
+    listSeparator: '، ',
   );
 
   // -------------------------------------------------------------------------
@@ -1640,6 +2064,120 @@ class AppStrings {
     paidTo: 'دُفع إلى السيد',
     createAndPrint: 'إنشاء وطباعة',
     emptyFunctionResponse: 'استجابة الدالة فارغة',
+    adminBranchScoped: 'مدير فرع',
+    adminCompanyWide: 'مدير عام للشركة',
+    roleAdminShort: 'مدير',
+    role: 'الدور',
+    access: 'الوصول',
+    accessAppWeb: 'الوصول (تطبيق/ويب)',
+    accessAppAndWeb: 'التطبيق والويب',
+    accessWebOnly: 'الويب فقط',
+    switchedToAppWeb: 'تم التغيير إلى: التطبيق والويب',
+    switchedToWebOnly: 'تم التغيير إلى: الويب فقط',
+    branchOnlyData: 'يرى بيانات فرعه فقط',
+    newCompany: 'شركة جديدة',
+    noCompanies: 'لا توجد شركات',
+    companyInfo: 'معلومات الشركة',
+    companyInfoUpdated: 'تم تحديث معلومات الشركة',
+    infoUpdated: 'تم تحديث المعلومات',
+    companyNameKu: 'اسم الشركة (كردي)',
+    companyNameAr: 'اسم الشركة (عربي)',
+    companyNameEn: 'اسم الشركة (إنكليزي)',
+    usedAsDocumentId: 'يُستخدم كـ Document ID',
+    companyAddress: 'عنوان الشركة',
+    companyLogo: 'شعار الشركة',
+    logoRequired: 'الشعار مطلوب — اختر صورة',
+    companyCity: 'مدينة الشركة',
+    city: 'المدينة',
+    phone1: 'الرقم الأول',
+    phone2: 'الرقم الثاني',
+    publicMobile: 'رقم الموبايل (العام)',
+    branch: 'الفرع',
+    branches: 'الفروع',
+    manageBranches: 'إدارة الفروع',
+    branchesCommaLabel: 'الفروع (افصلها بفاصلة)',
+    branchesCommaHint: 'افصل الفروع بفاصلة',
+    branchesUpdated: 'تم تحديث الفروع',
+    newUser: 'مستخدم جديد',
+    noUsers: 'لا يوجد مستخدمون',
+    editUser: 'تعديل المستخدم',
+    editInfo: 'تعديل المعلومات',
+    fullName: 'الاسم الكامل',
+    newPassword: 'كلمة مرور جديدة',
+    changePassword: 'تغيير كلمة المرور',
+    passwordChanged: 'تم تغيير كلمة المرور',
+    minSixChars: '٦ أحرف على الأقل',
+    emailValidShort: 'بريد صحيح',
+    account1: 'الحساب ١ — مدير الشركة',
+    account2: 'الحساب ٢ — موظف الشركة',
+    newSuperAdmin: 'مدير عام جديد',
+    superAdmins: 'المدراء العامون',
+    demoAccount: 'حساب تجريبي',
+    demo7Days: 'تجريبي (٧ أيام)',
+    demoEnabled: 'تفعيل التجربة',
+    demoActivated: 'تم تفعيل التجربة — ٧ أيام من الآن',
+    demoRemoved: 'أُلغيت التجربة — حساب عادي',
+    sevenDaysFromNow: '٧ أيام من الآن',
+    demoExpiredNote: 'انتهت المدة — هذه الشركة محجوبة الآن.',
+    demoExpiryNote: 'عند انتهاء المدة لن يتمكن مستخدمو هذه الشركة من رؤية أو إنشاء أي بيانات — لا في التطبيق ولا في الويب.',
+    saveResetsDemo: 'الحفظ مع التفعيل يعيد بدء المدة من جديد.',
+    features: 'الميزات',
+    companyFeatures: 'ميزات الشركة',
+    featuresUpdated: 'تم تحديث الميزات',
+    featuresPlanNote: 'لا ترى الشركة إلا الميزات التي يسمح بها اشتراكها.',
+    overrideNote: 'تجاوز على الاشتراك. «حسب الاشتراك» = الوضع الافتراضي.',
+    asPlan: 'حسب الاشتراك',
+    planSubscription: 'خطة الاشتراك',
+    planSettings: 'إعدادات الخطط',
+    plansSaved: 'تم حفظ الخطط',
+    maxBranches: 'عدد الفروع',
+    maxUsers: 'عدد المستخدمين',
+    zeroUnlimited: '٠ = بلا حدود',
+    webOnlyBlocked: 'الويب فقط (التطبيق يمنع الدخول)',
+    webOnlyNote: 'إذا اخترت «الويب فقط» فلن يتمكن مستخدمو هذه الشركة من الدخول عبر تطبيق الموبايل — عبر الويب فقط.',
+    featureOverdue: 'تنبيه الإيجار المتأخر',
+    featureGuarantees: 'مجموع التأمينات',
+    featureCommission: 'مجموع العمولات',
+    featureArabicContracts: 'العقود العربية',
+    contractTemplate: 'قالب العقد',
+    exportTitle: 'التصدير',
+    exportCompanyData: 'تصدير بيانات الشركة',
+    backupData: 'نسخة احتياطية للبيانات',
+    tabularReport: 'تقرير جدولي',
+    excelTwoSheets: 'العقود + الوصولات في ورقتين',
+    tapToChange: 'اضغط للتغيير',
+    change: 'تغيير',
+    inactive: 'غير مفعّل',
+    templateDesign: 'التصميم',
+    receiptDesign: 'تصميم الوصل',
+    primaryColorHex: 'اللون الأساسي (RRGGBB)',
+    receiptColorHex: 'لون الوصل (RRGGBB)',
+    clauseFontSize: 'حجم خط البنود:',
+    fieldFontSize: 'حجم خط الحقول:',
+    rentClauses: 'بنود عقد الإيجار',
+    rentClausesAr: 'بنود عقد الإيجار — عربي',
+    saleClauses: 'بنود عقد البيع',
+    saleClausesAr: 'بنود عقد البيع — عربي',
+    newClause: 'بند جديد',
+    rentTitleField: 'عنوان عقد الإيجار',
+    rentTitleFieldAr: 'عنوان عقد الإيجار (عربي)',
+    saleTitleField: 'عنوان عقد البيع',
+    saleTitleFieldAr: 'عنوان عقد البيع (عربي)',
+    arabicHeadings: 'العناوين العربية',
+    tokensTitle: 'رموز الاستبدال (tokens)',
+    tokensHint: 'استخدم هذه الرموز داخل البنود؛ تُملأ تلقائياً ببيانات العقد.',
+    tokensAlsoHere: 'نفس الرموز أعلاه ({party1}، {total_price}، …) تعمل هنا أيضاً. ',
+    arabicClausesHint: 'اكتب هذه البنود بالعربية حتى تتمكن الشركة من طباعة العقد بالعربية. ',
+    noAutoTranslation: 'لا توجد ترجمة تلقائية — النص قانوني ويجب أن يراجعه محامٍ.',
+    noArabicClausesYet: 'لم تُكتب بنود عربية بعد — لن تتوفر العقود العربية لهذه الشركة.',
+    templateSaved: 'تم حفظ القالب',
+    resetToDefault: 'استعادة الافتراضي',
+    resetToDefaultConfirm: 'ستُمحى كل التعديلات ويعود القالب الافتراضي. هل أنت متأكد؟',
+    resetDone: 'تمت الاستعادة',
+    reset: 'استعادة',
+    no: 'لا',
+    invalidEnglishName: 'الاسم الإنكليزي غير صالح — استخدم أحرفاً إنكليزية فقط',
+    listSeparator: '، ',
   );
 
   // -------------------------------------------------------------------------
@@ -1942,6 +2480,120 @@ class AppStrings {
     paidTo: 'Paid to',
     createAndPrint: 'Create and print',
     emptyFunctionResponse: 'The function returned an empty response',
+    adminBranchScoped: 'Branch admin',
+    adminCompanyWide: 'Company-wide admin',
+    roleAdminShort: 'Admin',
+    role: 'Role',
+    access: 'Access',
+    accessAppWeb: 'Access (app / web)',
+    accessAppAndWeb: 'App and web',
+    accessWebOnly: 'Web only',
+    switchedToAppWeb: 'Switched to: app and web',
+    switchedToWebOnly: 'Switched to: web only',
+    branchOnlyData: 'Sees only their own branch data',
+    newCompany: 'New company',
+    noCompanies: 'No companies',
+    companyInfo: 'Company details',
+    companyInfoUpdated: 'Company details updated',
+    infoUpdated: 'Details updated',
+    companyNameKu: 'Company name (Kurdish)',
+    companyNameAr: 'Company name (Arabic)',
+    companyNameEn: 'Company name (English)',
+    usedAsDocumentId: 'Used as the Document ID',
+    companyAddress: 'Company address',
+    companyLogo: 'Company logo',
+    logoRequired: 'A logo is required — pick an image',
+    companyCity: 'Company city',
+    city: 'City',
+    phone1: 'First number',
+    phone2: 'Second number',
+    publicMobile: 'Mobile number (public)',
+    branch: 'Branch',
+    branches: 'Branches',
+    manageBranches: 'Manage branches',
+    branchesCommaLabel: 'Branches (comma separated)',
+    branchesCommaHint: 'Separate the branches with commas',
+    branchesUpdated: 'Branches updated',
+    newUser: 'New user',
+    noUsers: 'No users',
+    editUser: 'Edit user',
+    editInfo: 'Edit details',
+    fullName: 'Full name',
+    newPassword: 'New password',
+    changePassword: 'Change password',
+    passwordChanged: 'Password changed',
+    minSixChars: 'At least 6 characters',
+    emailValidShort: 'A valid email',
+    account1: 'Account 1 — company admin',
+    account2: 'Account 2 — company user',
+    newSuperAdmin: 'New super admin',
+    superAdmins: 'Super admins',
+    demoAccount: 'Trial account',
+    demo7Days: 'Trial (7 days)',
+    demoEnabled: 'Enable the trial',
+    demoActivated: 'Trial activated — 7 days from now',
+    demoRemoved: 'Trial removed — a normal account',
+    sevenDaysFromNow: '7 days from now',
+    demoExpiredNote: 'The period has ended — this company is now locked out.',
+    demoExpiryNote: 'When the period ends, this company users can neither see nor create any data — in the app or on the web.',
+    saveResetsDemo: 'Saving while enabled restarts the period from scratch.',
+    features: 'Features',
+    companyFeatures: 'Company features',
+    featuresUpdated: 'Features updated',
+    featuresPlanNote: 'A company only sees the features its plan allows.',
+    overrideNote: 'An override on top of the plan. "As the plan" = the plan default.',
+    asPlan: 'As the plan',
+    planSubscription: 'Subscription plan',
+    planSettings: 'Plan settings',
+    plansSaved: 'Plans saved',
+    maxBranches: 'Branch count',
+    maxUsers: 'User count',
+    zeroUnlimited: '0 = unlimited',
+    webOnlyBlocked: 'Web only (the app blocks sign-in)',
+    webOnlyNote: 'With "web only" selected, this company users cannot sign in from the mobile app — only on the web.',
+    featureOverdue: 'Overdue rent alerts',
+    featureGuarantees: 'Deposit totals',
+    featureCommission: 'Commission totals',
+    featureArabicContracts: 'Arabic contracts',
+    contractTemplate: 'Contract template',
+    exportTitle: 'Export',
+    exportCompanyData: 'Export the company data',
+    backupData: 'Back up the data',
+    tabularReport: 'Tabular report',
+    excelTwoSheets: 'Contracts + receipts on two sheets',
+    tapToChange: 'Tap to change',
+    change: 'Change',
+    inactive: 'Inactive',
+    templateDesign: 'Design',
+    receiptDesign: 'Receipt design',
+    primaryColorHex: 'Primary colour (RRGGBB)',
+    receiptColorHex: 'Receipt colour (RRGGBB)',
+    clauseFontSize: 'Clause font size:',
+    fieldFontSize: 'Field font size:',
+    rentClauses: 'Rent contract clauses',
+    rentClausesAr: 'Rent contract clauses — Arabic',
+    saleClauses: 'Sale contract clauses',
+    saleClausesAr: 'Sale contract clauses — Arabic',
+    newClause: 'New clause',
+    rentTitleField: 'Rent contract heading',
+    rentTitleFieldAr: 'Rent contract heading (Arabic)',
+    saleTitleField: 'Sale contract heading',
+    saleTitleFieldAr: 'Sale contract heading (Arabic)',
+    arabicHeadings: 'Arabic headings',
+    tokensTitle: 'Placeholder tokens',
+    tokensHint: 'Use these tokens inside the clauses; they fill automatically from the contract data.',
+    tokensAlsoHere: 'The same tokens as above ({party1}, {total_price}, …) work here too. ',
+    arabicClausesHint: 'Write these clauses in Arabic so the company can print the contract in Arabic. ',
+    noAutoTranslation: 'There is no automatic translation — this is legal text and a lawyer must review it.',
+    noArabicClausesYet: 'No Arabic clauses written yet — Arabic contracts will not be available for this company.',
+    templateSaved: 'Template saved',
+    resetToDefault: 'Reset to default',
+    resetToDefaultConfirm: 'Every change is discarded and the default template returns. Are you sure?',
+    resetDone: 'Reset to default',
+    reset: 'Reset',
+    no: 'No',
+    invalidEnglishName: 'Invalid English name — use English letters only',
+    listSeparator: ', ',
   );
 }
 

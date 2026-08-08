@@ -15,6 +15,7 @@ import '../models/contract_model.dart';
 import '../models/enums.dart';
 import '../models/plan_config_model.dart';
 import '../models/receipt_model.dart';
+import '../l10n/app_strings.dart';
 
 /// Super-Admin provisioning: create companies (with logo), company admins, and
 /// agents.
@@ -91,12 +92,12 @@ class AdminRepository {
   }) async {
     final companyId = Company.slugify(companyNameEn);
     if (companyId.isEmpty) {
-      throw Exception('ناوی ئینگلیزی نادروستە — تەنها پیتی ئینگلیزی بەکاربهێنە');
+      throw Exception(S.invalidEnglishName);
     }
 
     final companyRef = _db.collection('companies').doc(companyId);
     if ((await companyRef.get()).exists) {
-      throw Exception('ئەم ناوە ئینگلیزییە پێشتر بەکارهاتووە: "$companyId"');
+      throw Exception(S.companyIdTaken(companyId));
     }
 
     // Create both Auth accounts first (so we fail before writing any docs).
@@ -199,7 +200,7 @@ class AdminRepository {
           0;
       if (count >= features.maxUsers) {
         throw Exception(
-            'سنووری یوزەری ئەم پلانە پڕبووە (${features.maxUsers}). بۆ زیادکردن پلانەکە بەرز بکەرەوە.');
+            S.userLimitReached(features.maxUsers));
       }
     }
 
@@ -226,7 +227,7 @@ class AdminRepository {
     final features = await _planFeaturesFor(companyId);
     if (!features.unlimitedBranches && cleaned.length > features.maxBranches) {
       throw Exception(
-          'ئەم پلانە تەنها ${features.maxBranches} لقی ڕێگەپێدراوە. پلانەکە بەرز بکەرەوە.');
+          S.branchLimitReached(features.maxBranches));
     }
     await _db
         .collection('companies')

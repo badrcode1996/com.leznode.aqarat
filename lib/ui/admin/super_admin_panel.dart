@@ -14,6 +14,7 @@ import '../../services/export/export_service.dart';
 import 'plan_settings_screen.dart';
 import 'template_editor_screen.dart';
 import '../../theme/app_colors.dart';
+import '../../l10n/app_strings.dart';
 
 // ڕەنگە سەرەکییەکان بۆ یەکپارچەیی دیزاینەکە
 Color get primaryDarkBlue => AppColors.current.brand;
@@ -87,10 +88,10 @@ class SuperAdminPanel extends ConsumerWidget {
     return Scaffold(
       backgroundColor: appBackgroundColor,
       appBar: modernAppBar(
-        'بەڕێوەبەری گشتی',
+        S.roleSuperAdmin,
         actions: [
           IconButton(
-            tooltip: 'ڕێکخستنی پلانەکان',
+            tooltip: S.planSettings,
             icon: Icon(Icons.tune_rounded, color: accentYellow),
             onPressed: () => Navigator.push(
               context,
@@ -98,7 +99,7 @@ class SuperAdminPanel extends ConsumerWidget {
             ),
           ),
           IconButton(
-            tooltip: 'سوپەر ئەدمینەکان',
+            tooltip: S.superAdmins,
             icon: Icon(Icons.shield_outlined, color: accentYellow),
             onPressed: () => Navigator.push(
               context,
@@ -106,7 +107,7 @@ class SuperAdminPanel extends ConsumerWidget {
             ),
           ),
           IconButton(
-            tooltip: 'دەرچوون',
+            tooltip: S.signOut,
             icon: const Icon(Icons.logout),
             onPressed: () => ref.read(authRepositoryProvider).signOut(),
           ),
@@ -116,7 +117,7 @@ class SuperAdminPanel extends ConsumerWidget {
         backgroundColor: accentYellow,
         foregroundColor: AppColors.current.textStrong,
         icon: const Icon(Icons.add_business, size: 24),
-        label: const Text('کۆمپانیای نوێ', style: TextStyle(fontWeight: FontWeight.bold)),
+        label: Text(S.newCompany, style: const TextStyle(fontWeight: FontWeight.bold)),
         onPressed: () => Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const _CreateCompanyScreen()),
@@ -124,10 +125,10 @@ class SuperAdminPanel extends ConsumerWidget {
       ),
       body: companies.when(
         loading: () => Center(child: CircularProgressIndicator(color: AppColors.current.textStrong)),
-        error: (e, _) => Center(child: Text('هەڵە: $e', style: TextStyle(color: AppColors.current.danger))),
+        error: (e, _) => Center(child: Text(S.error(e), style: TextStyle(color: AppColors.current.danger))),
         data: (list) {
           if (list.isEmpty) {
-            return _emptyState('هیچ کۆمپانیایەک نییە', Icons.business_center_outlined);
+            return _emptyState(S.noCompanies, Icons.business_center_outlined);
           }
           return ListView.separated(
             padding: const EdgeInsets.all(16),
@@ -154,7 +155,7 @@ class SuperAdminPanel extends ConsumerWidget {
                     child: Icon(Icons.business, color: AppColors.current.textStrong),
                   ),
                   title: Text(c.displayName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  subtitle: Text('${c.phone1}  ·  ${c.city.label}', style: TextStyle(color: AppColors.current.textMuted)),
+                  subtitle: Text('${c.phone1}  ·  ${c.city.uiLabel}', style: TextStyle(color: AppColors.current.textMuted)),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -164,7 +165,7 @@ class SuperAdminPanel extends ConsumerWidget {
                           color: primaryDarkBlue.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Text(c.plan.label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.current.textStrong)),
+                        child: Text(c.plan.uiLabel, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.current.textStrong)),
                       ),
                       const SizedBox(width: 4),
                       Icon(Icons.chevron_left, color: accentYellow),
@@ -194,12 +195,12 @@ class _SuperAdminsScreen extends ConsumerWidget {
     final admins = ref.watch(superAdminsProvider);
     return Scaffold(
       backgroundColor: appBackgroundColor,
-      appBar: modernAppBar('سوپەر ئەدمینەکان'),
+      appBar: modernAppBar(S.superAdmins),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: accentYellow,
         foregroundColor: AppColors.current.textStrong,
         icon: const Icon(Icons.add_moderator),
-        label: const Text('سوپەر ئەدمینی نوێ', style: TextStyle(fontWeight: FontWeight.bold)),
+        label: Text(S.newSuperAdmin, style: const TextStyle(fontWeight: FontWeight.bold)),
         onPressed: () => Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const _AddSuperAdminScreen()),
@@ -207,7 +208,7 @@ class _SuperAdminsScreen extends ConsumerWidget {
       ),
       body: admins.when(
         loading: () => Center(child: CircularProgressIndicator(color: AppColors.current.textStrong)),
-        error: (e, _) => Center(child: Text('هەڵە: $e')),
+        error: (e, _) => Center(child: Text(S.error(e))),
         data: (list) => ListView.separated(
           padding: const EdgeInsets.all(16),
           itemCount: list.length,
@@ -291,7 +292,7 @@ class _AddSuperAdminScreenState extends ConsumerState<_AddSuperAdminScreen> {
     watchAppShell(context);
     return Scaffold(
       backgroundColor: appBackgroundColor,
-      appBar: modernAppBar('سوپەر ئەدمینی نوێ'),
+      appBar: modernAppBar(S.newSuperAdmin),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Container(
@@ -316,24 +317,24 @@ class _AddSuperAdminScreenState extends ConsumerState<_AddSuperAdminScreen> {
                 const SizedBox(height: 24),
                 TextFormField(
                   controller: _name,
-                  decoration: modernInputDecoration(label: 'ناوی تەواو', icon: Icons.person_outline),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'پێویستە' : null,
+                  decoration: modernInputDecoration(label: S.fullName, icon: Icons.person_outline),
+                  validator: (v) => (v == null || v.trim().isEmpty) ? S.requiredField : null,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _email,
                   keyboardType: TextInputType.emailAddress,
                   textDirection: TextDirection.ltr,
-                  decoration: modernInputDecoration(label: 'ئیمەیڵ', icon: Icons.email_outlined),
-                  validator: (v) => (v == null || !v.contains('@')) ? 'ئیمەیڵی دروست بنووسە' : null,
+                  decoration: modernInputDecoration(label: S.email, icon: Icons.email_outlined),
+                  validator: (v) => (v == null || !v.contains('@')) ? S.emailInvalid : null,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _password,
                   obscureText: true,
                   textDirection: TextDirection.ltr,
-                  decoration: modernInputDecoration(label: 'وشەی نهێنی', icon: Icons.lock_outline),
-                  validator: (v) => (v == null || v.length < 6) ? 'لانیکەم ٦ پیت' : null,
+                  decoration: modernInputDecoration(label: S.password, icon: Icons.lock_outline),
+                  validator: (v) => (v == null || v.length < 6) ? S.minSixChars : null,
                 ),
                 if (_error != null) ...[
                   const SizedBox(height: 16),
@@ -349,7 +350,7 @@ class _AddSuperAdminScreenState extends ConsumerState<_AddSuperAdminScreen> {
                   style: modernButtonStyle(),
                   child: _busy
                       ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-                      : const Text('دروستکردن', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      : Text(S.create, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 ),
               ],
             ),
@@ -418,7 +419,7 @@ class _CreateCompanyScreenState extends ConsumerState<_CreateCompanyScreen> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     if (_logoBytes == null) {
-      setState(() => _error = 'لۆگۆ پێویستە — تکایە وێنەیەک هەڵبژێرە');
+      setState(() => _error = S.logoRequired);
       return;
     }
     setState(() {
@@ -461,7 +462,7 @@ class _CreateCompanyScreenState extends ConsumerState<_CreateCompanyScreen> {
     watchAppShell(context);
     return Scaffold(
       backgroundColor: appBackgroundColor,
-      appBar: modernAppBar('کۆمپانیای نوێ'),
+      appBar: modernAppBar(S.newCompany),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Form(
@@ -470,7 +471,7 @@ class _CreateCompanyScreenState extends ConsumerState<_CreateCompanyScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _buildFormSection(
-                title: 'زانیاری کۆمپانیا',
+                title: S.companyInfo,
                 icon: Icons.business,
                 children: [
                   Center(
@@ -490,26 +491,26 @@ class _CreateCompanyScreenState extends ConsumerState<_CreateCompanyScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Center(child: Text('لۆگۆی کۆمپانیا', style: TextStyle(fontSize: 13, color: AppColors.current.textBody))),
+                  Center(child: Text(S.companyLogo, style: TextStyle(fontSize: 13, color: AppColors.current.textBody))),
                   const SizedBox(height: 24),
-                  TextFormField(controller: _nameKu, decoration: modernInputDecoration(label: 'ناوی کۆمپانیا (کوردی)'), validator: _req),
+                  TextFormField(controller: _nameKu, decoration: modernInputDecoration(label: S.companyNameKu), validator: _req),
                   const SizedBox(height: 12),
-                  TextFormField(controller: _nameAr, decoration: modernInputDecoration(label: 'ناوی کۆمپانیا (عەرەبی)'), validator: _req),
+                  TextFormField(controller: _nameAr, decoration: modernInputDecoration(label: S.companyNameAr), validator: _req),
                   const SizedBox(height: 12),
-                  TextFormField(controller: _nameEn, textDirection: TextDirection.ltr, decoration: modernInputDecoration(label: 'ناوی کۆمپانیا (ئینگلیزی)', helper: 'وەک Document ID بەکاردێت'), validator: _req),
+                  TextFormField(controller: _nameEn, textDirection: TextDirection.ltr, decoration: modernInputDecoration(label: S.companyNameEn, helper: S.usedAsDocumentId), validator: _req),
                   const SizedBox(height: 12),
-                  TextFormField(controller: _phone1, keyboardType: TextInputType.phone, textDirection: TextDirection.ltr, decoration: modernInputDecoration(label: 'ژمارەی یەکەم', icon: Icons.phone), validator: _req),
+                  TextFormField(controller: _phone1, keyboardType: TextInputType.phone, textDirection: TextDirection.ltr, decoration: modernInputDecoration(label: S.phone1, icon: Icons.phone), validator: _req),
                   const SizedBox(height: 12),
-                  TextFormField(controller: _phone2, keyboardType: TextInputType.phone, textDirection: TextDirection.ltr, decoration: modernInputDecoration(label: 'ژمارەی دووەم', icon: Icons.phone), validator: _req),
+                  TextFormField(controller: _phone2, keyboardType: TextInputType.phone, textDirection: TextDirection.ltr, decoration: modernInputDecoration(label: S.phone2, icon: Icons.phone), validator: _req),
                   const SizedBox(height: 12),
-                  TextFormField(controller: _address, decoration: modernInputDecoration(label: 'ناونیشانی کۆمپانیا', icon: Icons.location_on_outlined), validator: _req),
+                  TextFormField(controller: _address, decoration: modernInputDecoration(label: S.companyAddress, icon: Icons.location_on_outlined), validator: _req),
                   const SizedBox(height: 16),
-                  TextFormField(controller: _branches, decoration: modernInputDecoration(label: 'لقەکان (بە کۆما جیابکەرەوە)', icon: Icons.account_tree_outlined)),
+                  TextFormField(controller: _branches, decoration: modernInputDecoration(label: S.branchesCommaLabel, icon: Icons.account_tree_outlined)),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<CompanyCity>(
                     isExpanded: true,
                     initialValue: _city,
-                    decoration: modernInputDecoration(label: 'شار', icon: Icons.location_city_outlined),
+                    decoration: modernInputDecoration(label: S.city, icon: Icons.location_city_outlined),
                     items: CompanyCity.values
                         .map((c) => DropdownMenuItem(value: c, child: Text(c.label)))
                         .toList(),
@@ -518,7 +519,7 @@ class _CreateCompanyScreenState extends ConsumerState<_CreateCompanyScreen> {
                   const SizedBox(height: 20),
                   Align(
                     alignment: AlignmentDirectional.centerStart,
-                    child: Text('پلانی بەژداری', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.current.textStrong)),
+                    child: Text(S.planSubscription, style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.current.textStrong)),
                   ),
                   const SizedBox(height: 8),
                   _PlanSelector(
@@ -528,7 +529,7 @@ class _CreateCompanyScreenState extends ConsumerState<_CreateCompanyScreen> {
                   const SizedBox(height: 20),
                   Align(
                     alignment: AlignmentDirectional.centerStart,
-                    child: Text('دەستگەیشتن', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.current.textStrong)),
+                    child: Text(S.access, style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.current.textStrong)),
                   ),
                   const SizedBox(height: 8),
                   _AccessSelector(
@@ -540,14 +541,14 @@ class _CreateCompanyScreenState extends ConsumerState<_CreateCompanyScreen> {
               const SizedBox(height: 20),
 
               _buildFormSection(
-                title: 'ئەکاونتی ١ — بەڕێوەبەری کۆمپانیا',
+                title: S.account1,
                 icon: Icons.admin_panel_settings,
                 children: _accountFields(name: _adminName, email: _adminEmail, password: _adminPassword, phone: _adminPhone),
               ),
               const SizedBox(height: 20),
 
               _buildFormSection(
-                title: 'ئەکاونتی ٢ — یوزەری کۆمپانیا',
+                title: S.account2,
                 icon: Icons.person,
                 children: _accountFields(name: _userName, email: _userEmail, password: _userPassword, phone: _userPhone),
               ),
@@ -566,7 +567,7 @@ class _CreateCompanyScreenState extends ConsumerState<_CreateCompanyScreen> {
                 style: modernButtonStyle(),
                 child: _busy
                     ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-                    : const Text('پاشەکەوتکردنی داتاکان', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    : Text(S.backupData, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ),
               const SizedBox(height: 40),
             ],
@@ -603,17 +604,17 @@ class _CreateCompanyScreenState extends ConsumerState<_CreateCompanyScreen> {
 
   List<Widget> _accountFields({required TextEditingController name, required TextEditingController email, required TextEditingController password, required TextEditingController phone}) {
     return [
-      TextFormField(controller: name, decoration: modernInputDecoration(label: 'ناوی تەواو', icon: Icons.person_outline), validator: _req),
+      TextFormField(controller: name, decoration: modernInputDecoration(label: S.fullName, icon: Icons.person_outline), validator: _req),
       const SizedBox(height: 12),
-      TextFormField(controller: phone, keyboardType: TextInputType.phone, textDirection: TextDirection.ltr, decoration: modernInputDecoration(label: 'ژمارەی مۆبایل (گشتی)', icon: Icons.phone_iphone), validator: _req),
+      TextFormField(controller: phone, keyboardType: TextInputType.phone, textDirection: TextDirection.ltr, decoration: modernInputDecoration(label: S.publicMobile, icon: Icons.phone_iphone), validator: _req),
       const SizedBox(height: 12),
-      TextFormField(controller: email, keyboardType: TextInputType.emailAddress, textDirection: TextDirection.ltr, decoration: modernInputDecoration(label: 'ئیمەیڵ', icon: Icons.email_outlined), validator: (v) => (v == null || !v.contains('@')) ? 'ئیمەیڵی دروست' : null),
+      TextFormField(controller: email, keyboardType: TextInputType.emailAddress, textDirection: TextDirection.ltr, decoration: modernInputDecoration(label: S.email, icon: Icons.email_outlined), validator: (v) => (v == null || !v.contains('@')) ? S.emailValidShort : null),
       const SizedBox(height: 12),
-      TextFormField(controller: password, obscureText: true, textDirection: TextDirection.ltr, decoration: modernInputDecoration(label: 'وشەی نهێنی', icon: Icons.lock_outline), validator: (v) => (v == null || v.length < 6) ? 'لانیکەم ٦ پیت' : null),
+      TextFormField(controller: password, obscureText: true, textDirection: TextDirection.ltr, decoration: modernInputDecoration(label: S.password, icon: Icons.lock_outline), validator: (v) => (v == null || v.length < 6) ? S.minSixChars : null),
     ];
   }
 
-  String? _req(String? v) => (v == null || v.trim().isEmpty) ? 'پێویستە' : null;
+  String? _req(String? v) => (v == null || v.trim().isEmpty) ? S.requiredField : null;
 }
 
 /// List + add users for a specific company
@@ -685,7 +686,7 @@ class _EditCompanyScreenState extends ConsumerState<_EditCompanyScreen> {
         // Resolved before the pop: afterwards this context is defunct and the
         // lookup throws instead of showing anything.
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: const Text('زانیاری کۆمپانیا نوێ کرایەوە'),
+            content: Text(S.companyInfoUpdated),
             backgroundColor: AppColors.current.success));
         Navigator.pop(context);
       }
@@ -710,7 +711,7 @@ class _EditCompanyScreenState extends ConsumerState<_EditCompanyScreen> {
 
     return Scaffold(
       backgroundColor: appBackgroundColor,
-      appBar: modernAppBar('زانیاری کۆمپانیا'),
+      appBar: modernAppBar(S.companyInfo),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Form(
@@ -751,27 +752,27 @@ class _EditCompanyScreenState extends ConsumerState<_EditCompanyScreen> {
                 ),
                 const SizedBox(height: 8),
                 Center(
-                    child: Text('بۆ گۆڕین کلیک بکە',
+                    child: Text(S.tapToChange,
                         style: TextStyle(fontSize: 13, color: AppColors.current.textBody))),
                 const SizedBox(height: 24),
                 TextFormField(
                     controller: _nameKu,
                     decoration:
-                        modernInputDecoration(label: 'ناوی کۆمپانیا (کوردی)'),
+                        modernInputDecoration(label: S.companyNameKu),
                     validator: _req),
                 const SizedBox(height: 12),
                 TextFormField(
                     controller: _nameAr,
                     decoration:
-                        modernInputDecoration(label: 'ناوی کۆمپانیا (عەرەبی)'),
+                        modernInputDecoration(label: S.companyNameAr),
                     validator: _req),
                 const SizedBox(height: 12),
                 TextFormField(
                     controller: _nameEn,
                     textDirection: TextDirection.ltr,
                     decoration: modernInputDecoration(
-                        label: 'ناوی کۆمپانیا (ئینگلیزی)',
-                        helper: 'ناسنامەی کۆمپانیا ناگۆڕدرێت: ${widget.company.id}'),
+                        label: S.companyNameEn,
+                        helper: S.companyIdFixed(widget.company.id)),
                     validator: _req),
                 const SizedBox(height: 12),
                 TextFormField(
@@ -779,7 +780,7 @@ class _EditCompanyScreenState extends ConsumerState<_EditCompanyScreen> {
                     keyboardType: TextInputType.phone,
                     textDirection: TextDirection.ltr,
                     decoration: modernInputDecoration(
-                        label: 'ژمارەی یەکەم', icon: Icons.phone),
+                        label: S.phone1, icon: Icons.phone),
                     validator: _req),
                 const SizedBox(height: 12),
                 TextFormField(
@@ -787,12 +788,12 @@ class _EditCompanyScreenState extends ConsumerState<_EditCompanyScreen> {
                     keyboardType: TextInputType.phone,
                     textDirection: TextDirection.ltr,
                     decoration: modernInputDecoration(
-                        label: 'ژمارەی دووەم', icon: Icons.phone_outlined)),
+                        label: S.phone2, icon: Icons.phone_outlined)),
                 const SizedBox(height: 12),
                 TextFormField(
                     controller: _address,
                     decoration: modernInputDecoration(
-                        label: 'ناونیشان', icon: Icons.location_on_outlined),
+                        label: S.addressLabel, icon: Icons.location_on_outlined),
                     validator: _req),
                 if (_error != null) ...[
                   const SizedBox(height: 16),
@@ -816,8 +817,8 @@ class _EditCompanyScreenState extends ConsumerState<_EditCompanyScreen> {
                           width: 24,
                           child: CircularProgressIndicator(
                               color: Colors.white, strokeWidth: 2.5))
-                      : const Text('پاشەکەوتکردن',
-                          style: TextStyle(
+                      : Text(S.save,
+                          style: const TextStyle(
                               fontSize: 18, fontWeight: FontWeight.bold)),
                 ),
               ],
@@ -828,7 +829,7 @@ class _EditCompanyScreenState extends ConsumerState<_EditCompanyScreen> {
     );
   }
 
-  String? _req(String? v) => (v == null || v.trim().isEmpty) ? 'پێویستە' : null;
+  String? _req(String? v) => (v == null || v.trim().isEmpty) ? S.requiredField : null;
 }
 
 class _CompanyUsersScreen extends ConsumerWidget {
@@ -843,7 +844,7 @@ class _CompanyUsersScreen extends ConsumerWidget {
       backgroundColor: appBackgroundColor,
       appBar: modernAppBar(company.displayName, actions: [
         IconButton(
-          tooltip: 'زانیاری کۆمپانیا',
+          tooltip: S.companyInfo,
           icon: Icon(Icons.business_outlined, color: accentYellow),
           onPressed: () => Navigator.push(
             context,
@@ -852,38 +853,38 @@ class _CompanyUsersScreen extends ConsumerWidget {
           ),
         ),
         IconButton(
-          tooltip: 'پلانی بەژداری',
+          tooltip: S.planSubscription,
           icon: Icon(Icons.workspace_premium_outlined, color: accentYellow),
           onPressed: () => _changePlan(context, ref),
         ),
         IconButton(
-          tooltip: 'دەستگەیشتن (ئەپ/وێب)',
+          tooltip: S.accessAppWeb,
           icon: Icon(Icons.devices_outlined, color: accentYellow),
           onPressed: () => _changeAccess(context, ref),
         ),
         IconButton(
-          tooltip: 'دیمۆ (٧ ڕۆژ)',
+          tooltip: S.demo7Days,
           icon: Icon(Icons.timelapse_outlined,
               color: company.demo ? AppColors.current.danger : accentYellow),
           onPressed: () => _changeDemo(context, ref),
         ),
         IconButton(
-          tooltip: 'تایبەتمەندییەکان',
+          tooltip: S.features,
           icon: Icon(Icons.toggle_on_outlined, color: accentYellow),
           onPressed: () => _editFeatures(context, ref),
         ),
         IconButton(
-          tooltip: 'شار',
+          tooltip: S.city,
           icon: Icon(Icons.location_city_outlined, color: accentYellow),
           onPressed: () => _changeCity(context, ref),
         ),
         IconButton(
-          tooltip: 'دەرهێنان (Export)',
+          tooltip: S.exportTitle,
           icon: Icon(Icons.file_download_outlined, color: accentYellow),
           onPressed: () => _chooseExport(context, ref),
         ),
         IconButton(
-          tooltip: 'تێمپلەیتی گرێبەست',
+          tooltip: S.contractTemplate,
           icon: Icon(Icons.description_outlined, color: accentYellow),
           onPressed: () => Navigator.push(
             context,
@@ -892,7 +893,7 @@ class _CompanyUsersScreen extends ConsumerWidget {
           ),
         ),
         IconButton(
-          tooltip: 'بەڕێوەبردنی لقەکان',
+          tooltip: S.manageBranches,
           icon: Icon(Icons.account_tree_outlined, color: accentYellow),
           onPressed: () => _editBranches(context, ref),
         ),
@@ -901,7 +902,7 @@ class _CompanyUsersScreen extends ConsumerWidget {
         backgroundColor: accentYellow,
         foregroundColor: AppColors.current.textStrong,
         icon: const Icon(Icons.person_add),
-        label: const Text('بەکارهێنەری نوێ', style: TextStyle(fontWeight: FontWeight.bold)),
+        label: Text(S.newUser, style: const TextStyle(fontWeight: FontWeight.bold)),
         onPressed: () => Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => _AddUserScreen(company: company)),
@@ -909,10 +910,10 @@ class _CompanyUsersScreen extends ConsumerWidget {
       ),
       body: users.when(
         loading: () => Center(child: CircularProgressIndicator(color: AppColors.current.textStrong)),
-        error: (e, _) => Center(child: Text('هەڵە: $e')),
+        error: (e, _) => Center(child: Text(S.error(e))),
         data: (list) {
           if (list.isEmpty) {
-            return _emptyState('هیچ بەکارهێنەرێک نییە', Icons.people_outline);
+            return _emptyState(S.noUsers, Icons.people_outline);
           }
           return ListView.separated(
             padding: const EdgeInsets.all(16),
@@ -944,16 +945,16 @@ class _CompanyUsersScreen extends ConsumerWidget {
                           color: isAdmin ? accentYellow.withValues(alpha: 0.1) : primaryDarkBlue.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Text(isAdmin ? 'ئەدمین' : 'کارمەند', style: TextStyle(color: isAdmin ? accentYellow : AppColors.current.textStrong, fontSize: 12, fontWeight: FontWeight.bold)),
+                        child: Text(isAdmin ? S.roleAdminShort : S.roleAgent, style: TextStyle(color: isAdmin ? accentYellow : AppColors.current.textStrong, fontSize: 12, fontWeight: FontWeight.bold)),
                       ),
                       const SizedBox(width: 4),
                       IconButton(
-                        tooltip: 'دەستکاری زانیاری',
+                        tooltip: S.editInfo,
                         icon: Icon(Icons.edit_outlined, color: AppColors.current.textMuted),
                         onPressed: () => _editUser(context, ref, u),
                       ),
                       IconButton(
-                        tooltip: 'گۆڕینی وشەی نهێنی',
+                        tooltip: S.changePassword,
                         icon: Icon(Icons.key_outlined, color: AppColors.current.textMuted),
                         onPressed: () => _changePassword(context, ref, u.uid, u.displayName),
                       ),
@@ -986,7 +987,7 @@ class _CompanyUsersScreen extends ConsumerWidget {
         builder: (ctx, setDialog) => AlertDialog(
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text('دەستکاری بەکارهێنەر',
+          title: Text(S.editUser,
               style: TextStyle(
                   color: AppColors.current.textStrong, fontWeight: FontWeight.bold)),
           content: SingleChildScrollView(
@@ -1002,7 +1003,7 @@ class _CompanyUsersScreen extends ConsumerWidget {
                 TextField(
                   controller: name,
                   decoration:
-                      modernInputDecoration(label: 'ناوی تەواو', icon: Icons.person_outline),
+                      modernInputDecoration(label: S.fullName, icon: Icons.person_outline),
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -1010,21 +1011,21 @@ class _CompanyUsersScreen extends ConsumerWidget {
                   keyboardType: TextInputType.phone,
                   textDirection: TextDirection.ltr,
                   decoration: modernInputDecoration(
-                      label: 'ژمارەی مۆبایل', icon: Icons.phone_iphone),
+                      label: S.mobileNumber, icon: Icons.phone_iphone),
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<UserRole>(
                   isExpanded: true,
                   initialValue: role,
                   decoration: modernInputDecoration(
-                      label: 'ڕۆڵ', icon: Icons.badge_outlined),
+                      label: S.role, icon: Icons.badge_outlined),
                   // superAdmin is absent on purpose: it belongs to no company,
                   // so promoting someone here would orphan them.
-                  items: const [
+                  items: [
                     DropdownMenuItem(
-                        value: UserRole.companyAdmin, child: Text('ئەدمین')),
+                        value: UserRole.companyAdmin, child: Text(S.roleAdminShort)),
                     DropdownMenuItem(
-                        value: UserRole.agent, child: Text('کارمەند')),
+                        value: UserRole.agent, child: Text(S.roleAgent)),
                   ],
                   onChanged: (v) =>
                       setDialog(() => role = v ?? UserRole.agent),
@@ -1036,7 +1037,7 @@ class _CompanyUsersScreen extends ConsumerWidget {
                     initialValue:
                         company.branches.contains(branch) ? branch : null,
                     decoration: modernInputDecoration(
-                        label: 'لق', icon: Icons.account_tree_outlined),
+                        label: S.branch, icon: Icons.account_tree_outlined),
                     items: company.branches
                         .map((b) =>
                             DropdownMenuItem(value: b, child: Text(b)))
@@ -1047,10 +1048,10 @@ class _CompanyUsersScreen extends ConsumerWidget {
                 if (role == UserRole.companyAdmin)
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text('ئادمینی لق',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                    subtitle: const Text('تەنها داتای لقی خۆی دەبینێت',
-                        style: TextStyle(fontSize: 11)),
+                    title: Text(S.adminBranchScoped,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    subtitle: Text(S.branchOnlyData,
+                        style: const TextStyle(fontSize: 11)),
                     value: branchAdmin,
                     activeThumbColor: Colors.white,
                     activeTrackColor: primaryDarkBlue,
@@ -1062,7 +1063,7 @@ class _CompanyUsersScreen extends ConsumerWidget {
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: Text('پاشگەزبوونەوە',
+                child: Text(S.cancel,
                     style: TextStyle(color: AppColors.current.textMuted))),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -1071,7 +1072,7 @@ class _CompanyUsersScreen extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(10))),
               onPressed: () => Navigator.pop(ctx, true),
               child:
-                  const Text('پاشەکەوت', style: TextStyle(color: Colors.white)),
+                  Text(S.saveShort, style: const TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -1089,13 +1090,13 @@ class _CompanyUsersScreen extends ConsumerWidget {
           );
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: const Text('زانیارییەکان نوێ کرانەوە'),
+            content: Text(S.infoUpdated),
             backgroundColor: AppColors.current.success));
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('هەڵە: $e'),
+            content: Text(S.error(e)),
             backgroundColor: AppColors.current.danger));
       }
     }
@@ -1116,7 +1117,7 @@ class _CompanyUsersScreen extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
               child: Align(
                 alignment: AlignmentDirectional.centerStart,
-                child: Text('دەرهێنانی داتای کۆمپانیا',
+                child: Text(S.exportCompanyData,
                     style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -1129,7 +1130,7 @@ class _CompanyUsersScreen extends ConsumerWidget {
                       AppColors.current.success.withValues(alpha: 0.1),
                   child: Icon(Icons.grid_on, color: AppColors.current.success)),
               title: const Text('Excel (xlsx)'),
-              subtitle: const Text('گرێبەست + پسولە لە دوو شیت'),
+              subtitle: Text(S.excelTwoSheets),
               onTap: () {
                 Navigator.pop(context);
                 _runExport(context, ref, excel: true);
@@ -1140,7 +1141,7 @@ class _CompanyUsersScreen extends ConsumerWidget {
                   backgroundColor: AppColors.current.danger.withValues(alpha: 0.12),
                   child: Icon(Icons.picture_as_pdf, color: AppColors.current.danger)),
               title: const Text('PDF'),
-              subtitle: const Text('ڕاپۆرتی خشتەیی'),
+              subtitle: Text(S.tabularReport),
               onTap: () {
                 Navigator.pop(context);
                 _runExport(context, ref, excel: false);
@@ -1180,7 +1181,7 @@ class _CompanyUsersScreen extends ConsumerWidget {
     } catch (e) {
       nav.pop();
       messenger.showSnackBar(SnackBar(
-          content: Text('هەڵە لە دەرهێنان: $e'),
+          content: Text(S.exportFailed(e)),
           backgroundColor: AppColors.current.danger));
     }
   }
@@ -1193,7 +1194,7 @@ class _CompanyUsersScreen extends ConsumerWidget {
         builder: (ctx, setDialog) => AlertDialog(
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text('پلانی بەژداری',
+          title: Text(S.planSubscription,
               style: TextStyle(
                   color: AppColors.current.textStrong, fontWeight: FontWeight.bold)),
           content: Column(
@@ -1205,7 +1206,7 @@ class _CompanyUsersScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                'کۆمپانیا تەنها ئەو تایبەتمەندییانە دەبینێت کە پلانەکەی ڕێگەی پێدەدات.',
+                S.featuresPlanNote,
                 style: TextStyle(fontSize: 12, color: AppColors.current.textMuted),
                 textAlign: TextAlign.center,
               ),
@@ -1214,7 +1215,7 @@ class _CompanyUsersScreen extends ConsumerWidget {
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: Text('پاشگەزبوونەوە',
+                child: Text(S.cancel,
                     style: TextStyle(color: AppColors.current.textMuted))),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -1223,7 +1224,7 @@ class _CompanyUsersScreen extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(10))),
               onPressed: () => Navigator.pop(ctx, selected),
               child:
-                  const Text('پاشەکەوت', style: TextStyle(color: Colors.white)),
+                  Text(S.saveShort, style: const TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -1234,29 +1235,29 @@ class _CompanyUsersScreen extends ConsumerWidget {
         await ref.read(adminRepositoryProvider).setPlan(company.id, result);
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text('پلان گۆڕدرا بۆ ${result.label}'),
+              content: Text(S.planChangedTo(result.uiLabel)),
               backgroundColor: AppColors.current.success));
         }
       } catch (e) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text('هەڵە: $e'),
+              content: Text(S.error(e)),
               backgroundColor: AppColors.current.danger));
         }
       }
     }
   }
 
-  static const _featureLabels = {
-    'sale': 'گرێبەستی فرۆشتن',
-    'overdue': 'ئاگاداری کرێی دواکەوتوو',
-    'market': 'بازاڕی گشتی',
-    'offers': 'خستنەڕووی موڵک',
-    'requests': 'داواکاری موشتەری',
-    'lawyers': 'پارێزەران',
-    'guarantees': 'کۆی دڵنیایی',
-    'commission': 'کۆی عمولە',
-    'arabic_contracts': 'گرێبەستی عەرەبی',
+  static Map<String, String> get _featureLabels => {
+    'sale': S.saleContract,
+    'overdue': S.featureOverdue,
+    'market': S.filterMarket,
+    'offers': S.listProperty,
+    'requests': S.customerRequest,
+    'lawyers': S.lawyers,
+    'guarantees': S.featureGuarantees,
+    'commission': S.featureCommission,
+    'arabic_contracts': S.featureArabicContracts,
   };
 
   Future<void> _editFeatures(BuildContext context, WidgetRef ref) async {
@@ -1272,7 +1273,7 @@ class _CompanyUsersScreen extends ConsumerWidget {
         builder: (ctx, setDialog) => AlertDialog(
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text('تایبەتمەندییەکانی کۆمپانیا',
+          title: Text(S.companyFeatures,
               style: TextStyle(
                   color: AppColors.current.textStrong, fontWeight: FontWeight.bold)),
           content: SizedBox(
@@ -1283,7 +1284,7 @@ class _CompanyUsersScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'سەرپێچی لەسەر پلانەکە. «وەک پلان» = بنەڕەتی پلانەکە.',
+                    S.overrideNote,
                     style:
                         TextStyle(fontSize: 12, color: AppColors.current.textMuted),
                   ),
@@ -1308,12 +1309,12 @@ class _CompanyUsersScreen extends ConsumerWidget {
                                 selectedBackgroundColor: primaryDarkBlue,
                                 visualDensity: VisualDensity.compact,
                               ),
-                              segments: const [
+                              segments: [
                                 ButtonSegment(
-                                    value: 0, label: Text('وەک پلان')),
-                                ButtonSegment(value: 1, label: Text('چالاک')),
+                                    value: 0, label: Text(S.asPlan)),
+                                ButtonSegment(value: 1, label: Text(S.filterActive)),
                                 ButtonSegment(
-                                    value: 2, label: Text('ناچالاک')),
+                                    value: 2, label: Text(S.inactive)),
                               ],
                               selected: {state[k]!},
                               onSelectionChanged: (s) =>
@@ -1330,7 +1331,7 @@ class _CompanyUsersScreen extends ConsumerWidget {
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: Text('پاشگەزبوونەوە',
+                child: Text(S.cancel,
                     style: TextStyle(color: AppColors.current.textMuted))),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -1339,7 +1340,7 @@ class _CompanyUsersScreen extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(10))),
               onPressed: () => Navigator.pop(ctx, true),
               child:
-                  const Text('پاشەکەوت', style: TextStyle(color: Colors.white)),
+                  Text(S.saveShort, style: const TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -1356,13 +1357,13 @@ class _CompanyUsersScreen extends ConsumerWidget {
           .setFeatureOverrides(company.id, overrides);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: const Text('تایبەتمەندییەکان نوێکرانەوە'),
+            content: Text(S.featuresUpdated),
             backgroundColor: AppColors.current.success));
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('هەڵە: $e'), backgroundColor: AppColors.current.danger));
+            content: Text(S.error(e)), backgroundColor: AppColors.current.danger));
       }
     }
   }
@@ -1375,14 +1376,14 @@ class _CompanyUsersScreen extends ConsumerWidget {
         builder: (ctx, setDialog) => AlertDialog(
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text('شاری کۆمپانیا',
+          title: Text(S.companyCity,
               style: TextStyle(
                   color: AppColors.current.textStrong, fontWeight: FontWeight.bold)),
           content: DropdownButtonFormField<CompanyCity>(
             isExpanded: true,
             initialValue: selected,
             decoration: modernInputDecoration(
-                label: 'شار', icon: Icons.location_city_outlined),
+                label: S.city, icon: Icons.location_city_outlined),
             items: CompanyCity.values
                 .map((c) =>
                     DropdownMenuItem(value: c, child: Text(c.label)))
@@ -1392,7 +1393,7 @@ class _CompanyUsersScreen extends ConsumerWidget {
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: Text('پاشگەزبوونەوە',
+                child: Text(S.cancel,
                     style: TextStyle(color: AppColors.current.textMuted))),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -1401,7 +1402,7 @@ class _CompanyUsersScreen extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(10))),
               onPressed: () => Navigator.pop(ctx, selected),
               child:
-                  const Text('پاشەکەوت', style: TextStyle(color: Colors.white)),
+                  Text(S.saveShort, style: const TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -1412,13 +1413,13 @@ class _CompanyUsersScreen extends ConsumerWidget {
         await ref.read(adminRepositoryProvider).setCity(company.id, result);
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text('شار گۆڕدرا بۆ ${result.label}'),
+              content: Text(S.cityChangedTo(result.uiLabel)),
               backgroundColor: AppColors.current.success));
         }
       } catch (e) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text('هەڵە: $e'),
+              content: Text(S.error(e)),
               backgroundColor: AppColors.current.danger));
         }
       }
@@ -1433,7 +1434,7 @@ class _CompanyUsersScreen extends ConsumerWidget {
         builder: (ctx, setDialog) => AlertDialog(
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text('دەستگەیشتن',
+          title: Text(S.access,
               style: TextStyle(
                   color: AppColors.current.textStrong, fontWeight: FontWeight.bold)),
           content: Column(
@@ -1445,7 +1446,7 @@ class _CompanyUsersScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                'ئەگەر «تەنها وێب» هەڵبژێردرا، یوزەرەکانی ئەم کۆمپانیایە ناتوانن لە ئەپی مۆبایل بچنە ژوورەوە — تەنها لە وێب.',
+                S.webOnlyNote,
                 style: TextStyle(fontSize: 12, color: AppColors.current.textMuted),
                 textAlign: TextAlign.center,
               ),
@@ -1454,7 +1455,7 @@ class _CompanyUsersScreen extends ConsumerWidget {
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: Text('پاشگەزبوونەوە',
+                child: Text(S.cancel,
                     style: TextStyle(color: AppColors.current.textMuted))),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -1463,7 +1464,7 @@ class _CompanyUsersScreen extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(10))),
               onPressed: () => Navigator.pop(ctx, webOnly),
               child:
-                  const Text('پاشەکەوت', style: TextStyle(color: Colors.white)),
+                  Text(S.saveShort, style: const TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -1475,14 +1476,14 @@ class _CompanyUsersScreen extends ConsumerWidget {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
               content: Text(result
-                  ? 'گۆڕدرا بۆ: تەنها وێب'
-                  : 'گۆڕدرا بۆ: ئەپ و وێب'),
+                  ? S.switchedToWebOnly
+                  : S.switchedToAppWeb),
               backgroundColor: AppColors.current.success));
         }
       } catch (e) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text('هەڵە: $e'),
+              content: Text(S.error(e)),
               backgroundColor: AppColors.current.danger));
         }
       }
@@ -1502,7 +1503,7 @@ class _CompanyUsersScreen extends ConsumerWidget {
         builder: (ctx, setDialog) => AlertDialog(
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text('ئەکاونتی دیمۆ',
+          title: Text(S.demoAccount,
               style: TextStyle(
                   color: AppColors.current.textStrong, fontWeight: FontWeight.bold)),
           content: Column(
@@ -1511,10 +1512,10 @@ class _CompanyUsersScreen extends ConsumerWidget {
             children: [
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('دیمۆ چالاک بێت',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: const Text('٧ ڕۆژ لە ئێستاوە',
-                    style: TextStyle(fontSize: 12)),
+                title: Text(S.demoEnabled,
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: Text(S.sevenDaysFromNow,
+                    style: const TextStyle(fontSize: 12)),
                 value: demo,
                 activeThumbColor: Colors.white,
                 activeTrackColor: AppColors.current.danger,
@@ -1524,8 +1525,8 @@ class _CompanyUsersScreen extends ConsumerWidget {
                 const Divider(height: 20),
                 Text(
                   company.demoExpired
-                      ? 'ماوەکە تەواو بووە — ئەم کۆمپانیایە ئێستا بەستراوەتەوە.'
-                      : '${company.demoDaysLeft} ڕۆژ ماوە.',
+                      ? S.demoExpiredNote
+                      : S.daysLeft(company.demoDaysLeft ?? 0),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 13,
@@ -1537,14 +1538,14 @@ class _CompanyUsersScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'پاشەکەوتکردن بە چالاکی، ماوەکە لە سەرەتاوە دەستپێدەکاتەوە.',
+                  S.saveResetsDemo,
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 11, color: AppColors.current.textMuted),
                 ),
               ],
               const SizedBox(height: 12),
               Text(
-                'کاتێک ماوەکە تەواو بێت، یوزەرەکانی ئەم کۆمپانیایە ناتوانن هیچ داتایەک ببینن یان دروست بکەن — نە لە ئەپ و نە لە وێب.',
+                S.demoExpiryNote,
                 style: TextStyle(fontSize: 12, color: AppColors.current.textMuted),
                 textAlign: TextAlign.center,
               ),
@@ -1553,7 +1554,7 @@ class _CompanyUsersScreen extends ConsumerWidget {
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: Text('پاشگەزبوونەوە',
+                child: Text(S.cancel,
                     style: TextStyle(color: AppColors.current.textMuted))),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -1562,7 +1563,7 @@ class _CompanyUsersScreen extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(10))),
               onPressed: () => Navigator.pop(ctx, demo),
               child:
-                  const Text('پاشەکەوت', style: TextStyle(color: Colors.white)),
+                  Text(S.saveShort, style: const TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -1574,14 +1575,14 @@ class _CompanyUsersScreen extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text(result
-                ? 'دیمۆ چالاک کرا — ٧ ڕۆژ لە ئێستاوە'
-                : 'دیمۆ لابرا — ئەکاونتێکی ئاسایی'),
+                ? S.demoActivated
+                : S.demoRemoved),
             backgroundColor: AppColors.current.success));
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('هەڵە: $e'),
+            content: Text(S.error(e)),
             backgroundColor: AppColors.current.danger));
       }
     }
@@ -1589,25 +1590,25 @@ class _CompanyUsersScreen extends ConsumerWidget {
 
   Future<void> _editBranches(BuildContext context, WidgetRef ref) async {
     final controller =
-        TextEditingController(text: company.branches.join('، '));
+        TextEditingController(text: company.branches.join(S.listSeparator));
     final result = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('لقەکان',
+        title: Text(S.branches,
             style: TextStyle(
                 color: AppColors.current.textStrong, fontWeight: FontWeight.bold)),
         content: TextField(
           controller: controller,
           maxLines: 3,
           decoration:
-              modernInputDecoration(label: 'لقەکان بە کۆما جیابکەرەوە'),
+              modernInputDecoration(label: S.branchesCommaHint),
         ),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: Text('پاشگەزبوونەوە',
+              child: Text(S.cancel,
                   style: TextStyle(color: AppColors.current.textMuted))),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -1615,8 +1616,8 @@ class _CompanyUsersScreen extends ConsumerWidget {
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10))),
             onPressed: () => Navigator.pop(ctx, controller.text),
-            child: const Text('پاشەکەوت',
-                style: TextStyle(color: Colors.white)),
+            child: Text(S.saveShort,
+                style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -1628,12 +1629,12 @@ class _CompanyUsersScreen extends ConsumerWidget {
             .setBranches(company.id, result.split('،').expand((p) => p.split(',')).toList());
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('لقەکان نوێکرانەوە')));
+              SnackBar(content: Text(S.branchesUpdated)));
         }
       } catch (e) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('هەڵە: $e'), backgroundColor: AppColors.current.danger));
+              SnackBar(content: Text(S.error(e)), backgroundColor: AppColors.current.danger));
         }
       }
     }
@@ -1648,7 +1649,7 @@ class _CompanyUsersScreen extends ConsumerWidget {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialog) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text('وشەی نهێنی نوێ', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.current.textStrong)),
+          title: Text(S.newPassword, style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.current.textStrong)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -1658,7 +1659,7 @@ class _CompanyUsersScreen extends ConsumerWidget {
                 controller: controller,
                 obscureText: true,
                 textDirection: TextDirection.ltr,
-                decoration: modernInputDecoration(label: 'وشەی نهێنی نوێ', icon: Icons.lock_outline),
+                decoration: modernInputDecoration(label: S.newPassword, icon: Icons.lock_outline),
               ),
               if (error != null) ...[
                 const SizedBox(height: 8),
@@ -1668,14 +1669,14 @@ class _CompanyUsersScreen extends ConsumerWidget {
           ),
           actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           actions: [
-            TextButton(onPressed: busy ? null : () => Navigator.pop(ctx), child: Text('پاشگەزبوونەوە', style: TextStyle(color: AppColors.current.textMuted))),
+            TextButton(onPressed: busy ? null : () => Navigator.pop(ctx), child: Text(S.cancel, style: TextStyle(color: AppColors.current.textMuted))),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: accentYellow, foregroundColor: AppColors.current.textStrong, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
               onPressed: busy
                   ? null
                   : () async {
                 if (controller.text.length < 6) {
-                  setDialog(() => error = 'لانیکەم ٦ پیت');
+                  setDialog(() => error = S.minSixChars);
                   return;
                 }
                 setDialog(() {
@@ -1686,7 +1687,7 @@ class _CompanyUsersScreen extends ConsumerWidget {
                   await ref.read(adminRepositoryProvider).setUserPassword(uid, controller.text);
                   if (ctx.mounted) Navigator.pop(ctx);
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: const Text('وشەی نهێنی گۆڕا'), backgroundColor: AppColors.current.success));
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.passwordChanged), backgroundColor: AppColors.current.success));
                   }
                 } catch (e) {
                   setDialog(() {
@@ -1695,7 +1696,7 @@ class _CompanyUsersScreen extends ConsumerWidget {
                   });
                 }
               },
-              child: busy ? SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.current.textStrong)) : const Text('گۆڕین', style: TextStyle(fontWeight: FontWeight.bold)),
+              child: busy ? SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.current.textStrong)) : Text(S.change, style: const TextStyle(fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -1772,7 +1773,7 @@ class _AddUserScreenState extends ConsumerState<_AddUserScreen> {
     watchAppShell(context);
     return Scaffold(
       backgroundColor: appBackgroundColor,
-      appBar: modernAppBar('بەکارهێنەری نوێ'),
+      appBar: modernAppBar(S.newUser),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Container(
@@ -1793,9 +1794,9 @@ class _AddUserScreenState extends ConsumerState<_AddUserScreen> {
                     selectedForegroundColor: Colors.white,
                     selectedBackgroundColor: primaryDarkBlue,
                   ),
-                  segments: const [
-                    ButtonSegment(value: UserRole.agent, label: Text('کارمەند'), icon: Icon(Icons.person)),
-                    ButtonSegment(value: UserRole.companyAdmin, label: Text('ئەدمین'), icon: Icon(Icons.admin_panel_settings)),
+                  segments: [
+                    ButtonSegment(value: UserRole.agent, label: Text(S.roleAgent), icon: const Icon(Icons.person)),
+                    ButtonSegment(value: UserRole.companyAdmin, label: Text(S.roleAdminShort), icon: const Icon(Icons.admin_panel_settings)),
                   ],
                   selected: {_role},
                   onSelectionChanged: (s) => setState(() => _role = s.first),
@@ -1807,15 +1808,15 @@ class _AddUserScreenState extends ConsumerState<_AddUserScreen> {
                         backgroundColor: AppColors.current.card,
                         selectedForegroundColor: Colors.white,
                         selectedBackgroundColor: accentYellow),
-                    segments: const [
+                    segments: [
                       ButtonSegment(
                           value: false,
-                          label: Text('ئادمینی گشتی'),
-                          icon: Icon(Icons.public)),
+                          label: Text(S.adminCompanyWide),
+                          icon: const Icon(Icons.public)),
                       ButtonSegment(
                           value: true,
-                          label: Text('ئادمینی لق'),
-                          icon: Icon(Icons.account_tree_outlined)),
+                          label: Text(S.adminBranchScoped),
+                          icon: const Icon(Icons.account_tree_outlined)),
                     ],
                     selected: {_branchAdmin},
                     onSelectionChanged: (s) =>
@@ -1830,7 +1831,7 @@ class _AddUserScreenState extends ConsumerState<_AddUserScreen> {
                       isExpanded: true,
                       initialValue: _branch,
                       decoration: modernInputDecoration(
-                          label: 'لق', icon: Icons.account_tree_outlined),
+                          label: S.branch, icon: Icons.account_tree_outlined),
                       items: widget.company.branches
                           .map((b) =>
                               DropdownMenuItem(value: b, child: Text(b)))
@@ -1838,13 +1839,13 @@ class _AddUserScreenState extends ConsumerState<_AddUserScreen> {
                       onChanged: (v) => setState(() => _branch = v),
                     ),
                   ),
-                TextFormField(controller: _name, decoration: modernInputDecoration(label: 'ناوی تەواو', icon: Icons.badge_outlined), validator: (v) => (v == null || v.trim().isEmpty) ? 'پێویستە' : null),
+                TextFormField(controller: _name, decoration: modernInputDecoration(label: S.fullName, icon: Icons.badge_outlined), validator: (v) => (v == null || v.trim().isEmpty) ? S.requiredField : null),
                 const SizedBox(height: 16),
-                TextFormField(controller: _phone, keyboardType: TextInputType.phone, textDirection: TextDirection.ltr, decoration: modernInputDecoration(label: 'ژمارەی مۆبایل (گشتی)', icon: Icons.phone_iphone), validator: (v) => (v == null || v.trim().isEmpty) ? 'پێویستە' : null),
+                TextFormField(controller: _phone, keyboardType: TextInputType.phone, textDirection: TextDirection.ltr, decoration: modernInputDecoration(label: S.publicMobile, icon: Icons.phone_iphone), validator: (v) => (v == null || v.trim().isEmpty) ? S.requiredField : null),
                 const SizedBox(height: 16),
-                TextFormField(controller: _email, keyboardType: TextInputType.emailAddress, textDirection: TextDirection.ltr, decoration: modernInputDecoration(label: 'ئیمەیڵ', icon: Icons.email_outlined), validator: (v) => (v == null || !v.contains('@')) ? 'ئیمەیڵی دروست' : null),
+                TextFormField(controller: _email, keyboardType: TextInputType.emailAddress, textDirection: TextDirection.ltr, decoration: modernInputDecoration(label: S.email, icon: Icons.email_outlined), validator: (v) => (v == null || !v.contains('@')) ? S.emailValidShort : null),
                 const SizedBox(height: 16),
-                TextFormField(controller: _password, obscureText: true, textDirection: TextDirection.ltr, decoration: modernInputDecoration(label: 'وشەی نهێنی', icon: Icons.lock_outline), validator: (v) => (v == null || v.length < 6) ? 'لانیکەم ٦ پیت' : null),
+                TextFormField(controller: _password, obscureText: true, textDirection: TextDirection.ltr, decoration: modernInputDecoration(label: S.password, icon: Icons.lock_outline), validator: (v) => (v == null || v.length < 6) ? S.minSixChars : null),
                 if (_error != null) ...[
                   const SizedBox(height: 16),
                   Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: AppColors.current.danger.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)), child: Text(_error!, style: TextStyle(color: AppColors.current.danger), textAlign: TextAlign.center)),
@@ -1853,7 +1854,7 @@ class _AddUserScreenState extends ConsumerState<_AddUserScreen> {
                 ElevatedButton(
                   onPressed: _busy ? null : _save,
                   style: modernButtonStyle(),
-                  child: _busy ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5)) : const Text('زیادکردن', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  child: _busy ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5)) : Text(S.add, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 ),
               ],
             ),
@@ -1884,11 +1885,11 @@ class _PlanSelector extends StatelessWidget {
         visualDensity: VisualDensity.compact,
         padding: const EdgeInsets.symmetric(horizontal: 8),
       ),
-      segments: const [
-        ButtonSegment(value: CompanyPlan.bronze, label: Text('بڕۆنز')),
-        ButtonSegment(value: CompanyPlan.silver, label: Text('سیلڤەر')),
-        ButtonSegment(value: CompanyPlan.gold, label: Text('گۆڵد')),
-        ButtonSegment(value: CompanyPlan.diamond, label: Text('دایمۆند')),
+      segments: [
+        ButtonSegment(value: CompanyPlan.bronze, label: Text(S.planBronze)),
+        ButtonSegment(value: CompanyPlan.silver, label: Text(S.planSilver)),
+        ButtonSegment(value: CompanyPlan.gold, label: Text(S.planGold)),
+        ButtonSegment(value: CompanyPlan.diamond, label: Text(S.planDiamond)),
       ],
       selected: {value},
       onSelectionChanged: (s) => onChanged(s.first),
@@ -1913,13 +1914,13 @@ class _AccessSelector extends StatelessWidget {
         selectedForegroundColor: Colors.white,
         selectedBackgroundColor: primaryDarkBlue,
       ),
-      segments: const [
+      segments: [
         ButtonSegment(
             value: false,
-            label: Text('ئەپ و وێب'),
-            icon: Icon(Icons.devices)),
+            label: Text(S.accessAppAndWeb),
+            icon: const Icon(Icons.devices)),
         ButtonSegment(
-            value: true, label: Text('تەنها وێب'), icon: Icon(Icons.public)),
+            value: true, label: Text(S.accessWebOnly), icon: const Icon(Icons.public)),
       ],
       selected: {webOnly},
       onSelectionChanged: (s) => onChanged(s.first),

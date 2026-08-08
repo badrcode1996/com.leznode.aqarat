@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/template_repository.dart';
 import '../../models/company_model.dart';
 import '../../models/contract_template_model.dart';
+import '../../l10n/app_strings.dart';
 
 Color get _primaryDarkBlue => AppColors.current.brand;
 Color get _accentYellow => AppColors.current.accent;
@@ -130,14 +131,14 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: const Text('تێمپلەیت پاشەکەوتکرا'),
+            content: Text(S.templateSaved),
             backgroundColor: AppColors.current.success));
       }
     } catch (e) {
       if (mounted) {
         setState(() => _saving = false);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('هەڵە: $e'), backgroundColor: AppColors.current.danger));
+            content: Text(S.error(e)), backgroundColor: AppColors.current.danger));
       }
     }
   }
@@ -147,21 +148,21 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('گەڕاندنەوە بۆ بنەڕەت',
+        title: Text(S.resetToDefault,
             style: TextStyle(
                 color: AppColors.current.textStrong, fontWeight: FontWeight.bold)),
-        content: const Text(
-            'هەموو دەستکارییەکان دەسڕێنەوە و تێمپلەیتی بنەڕەتی (default) دەگەڕێتەوە. دڵنیایت؟'),
+        content: Text(
+            S.resetToDefaultConfirm),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: Text('نەخێر', style: TextStyle(color: AppColors.current.textMuted))),
+              child: Text(S.no, style: TextStyle(color: AppColors.current.textMuted))),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.current.danger,
                 foregroundColor: Colors.white),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('گەڕاندنەوە'),
+            child: Text(S.reset),
           ),
         ],
       ),
@@ -172,7 +173,7 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
     setState(() => _apply(ContractTemplate.defaults()));
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: const Text('گەڕایەوە بۆ بنەڕەت'),
+          content: Text(S.resetDone),
           backgroundColor: _primaryDarkBlue));
     }
   }
@@ -183,7 +184,7 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
     return Scaffold(
       backgroundColor: _appBg,
       appBar: AppBar(
-        title: Text('تێمپلەیت — ${widget.company.displayName}',
+        title: Text(S.templateFor(widget.company.displayName),
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
         backgroundColor: _primaryDarkBlue,
         foregroundColor: Colors.white,
@@ -192,7 +193,7 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
         actions: [
           if (!_loading)
             IconButton(
-              tooltip: 'گەڕاندنەوە بۆ بنەڕەت',
+              tooltip: S.resetToDefault,
               icon: const Icon(Icons.restart_alt_rounded),
               onPressed: _reset,
             ),
@@ -210,8 +211,8 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
                       child: CircularProgressIndicator(
                           strokeWidth: 2, color: AppColors.current.textStrong))
                   : const Icon(Icons.save_rounded),
-              label: const Text('پاشەکەوتکردن',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
+              label: Text(S.save,
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
               onPressed: _saving ? null : _save,
             ),
       body: _loading
@@ -226,18 +227,18 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
                 const SizedBox(height: 16),
                 _tokenLegend(),
                 const SizedBox(height: 16),
-                _clauseSection('بەندەکانی گرێبەستی کرێ', _rent),
+                _clauseSection(S.rentClauses, _rent),
                 const SizedBox(height: 16),
-                _clauseSection('بەندەکانی گرێبەستی فرۆشتن', _sale),
+                _clauseSection(S.saleClauses, _sale),
                 const SizedBox(height: 24),
                 _arabicNotice(),
                 const SizedBox(height: 16),
                 _arabicTitles(),
                 const SizedBox(height: 16),
-                _clauseSection('بەندەکانی گرێبەستی کرێ — عەرەبی', _rentAr,
+                _clauseSection(S.rentClausesAr, _rentAr,
                     arabic: true),
                 const SizedBox(height: 16),
-                _clauseSection('بەندەکانی گرێبەستی فرۆشتن — عەرەبی', _saleAr,
+                _clauseSection(S.saleClausesAr, _saleAr,
                     arabic: true),
               ],
             ),
@@ -245,16 +246,16 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
   }
 
   // --------------------------- design ---------------------------
-  Widget _designSection() => _panel('دیزاین', [
+  Widget _designSection() => _panel(S.templateDesign, [
         TextField(
           controller: _rentTitle,
-          decoration: const InputDecoration(labelText: 'ناونیشانی گرێبەستی کرێ'),
+          decoration: InputDecoration(labelText: S.rentTitleField),
         ),
         const SizedBox(height: 12),
         TextField(
           controller: _saleTitle,
           decoration:
-              const InputDecoration(labelText: 'ناونیشانی گرێبەستی فرۆشتن'),
+              InputDecoration(labelText: S.saleTitleField),
         ),
         const SizedBox(height: 12),
         Row(
@@ -262,8 +263,8 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
             Expanded(
               child: TextField(
                 controller: _color,
-                decoration: const InputDecoration(
-                    labelText: 'ڕەنگی سەرەکی (RRGGBB)',
+                decoration: InputDecoration(
+                    labelText: S.primaryColorHex,
                     prefixText: '#',
                     hintText: '0F2C59'),
                 onChanged: (_) => setState(() {}),
@@ -284,8 +285,8 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
         const SizedBox(height: 8),
         Row(
           children: [
-            const Text('قەبارەی فۆنتی بەندەکان:',
-                style: TextStyle(fontWeight: FontWeight.w600)),
+            Text(S.clauseFontSize,
+                style: const TextStyle(fontWeight: FontWeight.w600)),
             Expanded(
               child: Slider(
                 value: _fontSize,
@@ -311,14 +312,14 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
   }
 
   // --------------------------- receipt design ---------------------------
-  Widget _receiptSection() => _panel('دیزاینی پسولە', [
+  Widget _receiptSection() => _panel(S.receiptDesign, [
         Row(
           children: [
             Expanded(
               child: TextField(
                 controller: _receiptColor,
-                decoration: const InputDecoration(
-                    labelText: 'ڕەنگی پسولە (RRGGBB)',
+                decoration: InputDecoration(
+                    labelText: S.receiptColorHex,
                     prefixText: '#',
                     hintText: '1E4D8B'),
                 onChanged: (_) => setState(() {}),
@@ -339,8 +340,8 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
         const SizedBox(height: 8),
         Row(
           children: [
-            const Text('قەبارەی فۆنتی خانەکان:',
-                style: TextStyle(fontWeight: FontWeight.w600)),
+            Text(S.fieldFontSize,
+                style: const TextStyle(fontWeight: FontWeight.w600)),
             Expanded(
               child: Slider(
                 value: _receiptFontSize,
@@ -365,14 +366,14 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
         child: ExpansionTile(
           shape: const Border(),
           leading: Icon(Icons.help_outline, color: AppColors.current.textStrong),
-          title: const Text('کۆدەکانی جێگرەوە (tokens)',
-              style: TextStyle(fontWeight: FontWeight.bold)),
+          title: Text(S.tokensTitle,
+              style: const TextStyle(fontWeight: FontWeight.bold)),
           childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
           children: [
             Align(
               alignment: Alignment.centerRight,
               child: Text(
-                  'لەناو بەندەکاندا ئەم کۆدانە بەکاربهێنە؛ خۆکارانە بە داتای گرێبەست پڕدەبنەوە.',
+                  S.tokensHint,
                   style: TextStyle(fontSize: 12, color: AppColors.current.textMuted)),
             ),
             const SizedBox(height: 8),
@@ -405,7 +406,7 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
           child: Text(
-            'هێشتا هیچ بەندێکی عەرەبی نەنووسراوە — گرێبەستی عەرەبی بۆ ئەم کۆمپانیایە بەردەست نابێت.',
+            S.noArabicClausesYet,
             style: TextStyle(fontSize: 12, color: AppColors.current.textMuted),
           ),
         ),
@@ -415,7 +416,7 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
         alignment: Alignment.centerRight,
         child: TextButton.icon(
           icon: Icon(Icons.add, color: AppColors.current.textStrong),
-          label: Text('بەندی نوێ',
+          label: Text(S.newClause,
               style: TextStyle(
                   color: AppColors.current.textStrong, fontWeight: FontWeight.bold)),
           onPressed: () =>
@@ -438,34 +439,34 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('گرێبەستی عەرەبی',
+            Text(S.featureArabicContracts,
                 style: TextStyle(
                     fontWeight: FontWeight.bold, color: AppColors.current.textStrong)),
             const SizedBox(height: 6),
-            const Text(
-              'ئەم بەندانە بە عەرەبی بنووسە تاوەکو کۆمپانیاکە بتوانێت گرێبەستەکە بە عەرەبی چاپ بکات. '
-              'هەمان تۆکنەکانی سەرەوە ({party1}، {total_price}، …) لێرەش کار دەکەن. '
-              'هیچ وەرگێڕانێکی خۆکار نییە — دەقێکی یاسایییە و دەبێت پارێزەر پێداچوونەوەی بۆ بکات.',
-              style: TextStyle(fontSize: 12, height: 1.6),
+            Text(
+              S.arabicClausesHint +
+                  S.tokensAlsoHere +
+                  S.noAutoTranslation,
+              style: const TextStyle(fontSize: 12, height: 1.6),
             ),
           ],
         ),
       );
 
-  Widget _arabicTitles() => _panel('ناونیشانەکانی عەرەبی', [
+  Widget _arabicTitles() => _panel(S.arabicHeadings, [
         TextField(
           controller: _rentTitleAr,
           textDirection: TextDirection.rtl,
-          decoration: const InputDecoration(
-              labelText: 'ناونیشانی گرێبەستی کرێ (عەرەبی)',
+          decoration: InputDecoration(
+              labelText: S.rentTitleFieldAr,
               hintText: 'عقد إيجار'),
         ),
         const SizedBox(height: 12),
         TextField(
           controller: _saleTitleAr,
           textDirection: TextDirection.rtl,
-          decoration: const InputDecoration(
-              labelText: 'ناونیشانی گرێبەستی فرۆشتن (عەرەبی)',
+          decoration: InputDecoration(
+              labelText: S.saleTitleFieldAr,
               hintText: 'عقد بيع وشراء'),
         ),
       ]);

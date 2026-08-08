@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/plan_config_repository.dart';
 import '../../models/plan_config_model.dart';
 import '../../theme/app_colors.dart';
+import '../../l10n/app_strings.dart';
 
 Color get _primaryDarkBlue => AppColors.current.brand;
 Color get _accentYellow => AppColors.current.accent;
@@ -82,7 +83,7 @@ class _PlanSettingsScreenState extends ConsumerState<PlanSettingsScreen> {
       await ref.read(planConfigRepositoryProvider).save(config);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: const Text('پلانەکان پاشەکەوتکران'),
+            content: Text(S.plansSaved),
             backgroundColor: AppColors.current.success));
         Navigator.pop(context);
       }
@@ -90,7 +91,7 @@ class _PlanSettingsScreenState extends ConsumerState<PlanSettingsScreen> {
       if (mounted) {
         setState(() => _saving = false);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('هەڵە: $e'), backgroundColor: AppColors.current.danger));
+            content: Text(S.error(e)), backgroundColor: AppColors.current.danger));
       }
     }
   }
@@ -101,8 +102,8 @@ class _PlanSettingsScreenState extends ConsumerState<PlanSettingsScreen> {
     return Scaffold(
       backgroundColor: _appBg,
       appBar: AppBar(
-        title: const Text('ڕێکخستنی پلانەکان',
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(S.planSettings,
+            style: const TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: _primaryDarkBlue,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -113,16 +114,16 @@ class _PlanSettingsScreenState extends ConsumerState<PlanSettingsScreen> {
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                _planCard('🥉 بڕۆنز', 'bronze', _bronze,
+                _planCard('🥉 ${S.planBronze}', 'bronze', _bronze,
                     (f) => setState(() => _bronze = f)),
                 const SizedBox(height: 16),
-                _planCard('🥈 سیلڤەر', 'silver', _silver,
+                _planCard('🥈 ${S.planSilver}', 'silver', _silver,
                     (f) => setState(() => _silver = f)),
                 const SizedBox(height: 16),
-                _planCard('🥇 گۆڵد', 'gold', _gold,
+                _planCard('🥇 ${S.planGold}', 'gold', _gold,
                     (f) => setState(() => _gold = f)),
                 const SizedBox(height: 16),
-                _planCard('💎 دایمۆند', 'diamond', _diamond,
+                _planCard('💎 ${S.planDiamond}', 'diamond', _diamond,
                     (f) => setState(() => _diamond = f)),
                 const SizedBox(height: 24),
                 ElevatedButton(
@@ -140,8 +141,8 @@ class _PlanSettingsScreenState extends ConsumerState<PlanSettingsScreen> {
                           width: 22,
                           child: CircularProgressIndicator(
                               color: Colors.white, strokeWidth: 2.5))
-                      : const Text('پاشەکەوتکردن',
-                          style: TextStyle(
+                      : Text(S.save,
+                          style: const TextStyle(
                               fontSize: 17, fontWeight: FontWeight.bold)),
                 ),
                 const SizedBox(height: 40),
@@ -175,35 +176,35 @@ class _PlanSettingsScreenState extends ConsumerState<PlanSettingsScreen> {
           const Divider(height: 24),
           // گرێبەستی فرۆشتن ئێستا کردارێکی بنەڕەتییە (وەک کرێ) و بە پلان
           // gate ناکرێت، بۆیە توگڵی نییە لێرە.
-          _toggle('ئاگاداری کرێی دواکەوتوو', f.overdue,
+          _toggle(S.featureOverdue, f.overdue,
               (v) => onChanged(f.copyWith(overdue: v))),
-          _toggle('بازاڕی گشتی', f.market,
+          _toggle(S.filterMarket, f.market,
               (v) => onChanged(f.copyWith(market: v))),
-          _toggle('خستنەڕووی موڵک', f.offers,
+          _toggle(S.listProperty, f.offers,
               (v) => onChanged(f.copyWith(offers: v))),
-          _toggle('داواکاری موشتەری', f.requests,
+          _toggle(S.customerRequest, f.requests,
               (v) => onChanged(f.copyWith(requests: v))),
-          _toggle('پارێزەران', f.lawyers,
+          _toggle(S.lawyers, f.lawyers,
               (v) => onChanged(f.copyWith(lawyers: v))),
-          _toggle('کۆی دڵنیایی', f.guarantees,
+          _toggle(S.featureGuarantees, f.guarantees,
               (v) => onChanged(f.copyWith(guarantees: v))),
-          _toggle('کۆی عمولە', f.commission,
+          _toggle(S.featureCommission, f.commission,
               (v) => onChanged(f.copyWith(commission: v))),
-          _toggle('گرێبەستی عەرەبی', f.arabicContracts,
+          _toggle(S.featureArabicContracts, f.arabicContracts,
               (v) => onChanged(f.copyWith(arabicContracts: v))),
-          _toggle('تەنها وێب (ئەپ ڕێگری لێدەکات)', f.webOnly,
+          _toggle(S.webOnlyBlocked, f.webOnly,
               (v) => onChanged(f.copyWith(webOnly: v))),
           const Divider(height: 24),
           Row(
             children: [
               Expanded(
-                  child: _numField('ژمارەی لق', '${key}_branches')),
+                  child: _numField(S.maxBranches, '${key}_branches')),
               const SizedBox(width: 12),
-              Expanded(child: _numField('ژمارەی یوزەر', '${key}_users')),
+              Expanded(child: _numField(S.maxUsers, '${key}_users')),
             ],
           ),
           const SizedBox(height: 4),
-          Text('٠ = بێسنوور',
+          Text(S.zeroUnlimited,
               style: TextStyle(fontSize: 11, color: AppColors.current.textMuted)),
         ],
       ),
