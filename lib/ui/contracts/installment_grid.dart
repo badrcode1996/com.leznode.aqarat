@@ -169,21 +169,17 @@ class InstallmentGrid extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     watchAppShell(context);
-    // Watch the live contract from the stream so a status change shows
-    // immediately — the passed-in `contract` is only the initial snapshot.
-    var live = contract;
+    // Watch THIS contract so a status change shows immediately — the passed-in
+    // `contract` is only the initial snapshot. One document read; this used to
+    // watch every contract in the company and then search the list for it.
+    //
     // valueOrNull, not .value: .value rethrows on the stream's error state and
-    // would crash this grid to a grey ErrorWidget; falling back to the passed-in
-    // snapshot is fine.
-    final contracts = ref.watch(contractsStreamProvider).valueOrNull;
-    if (contracts != null) {
-      for (final c in contracts) {
-        if (c.id == contract.id && c is RentContract) {
-          live = c;
-          break;
-        }
-      }
-    }
+    // would crash this grid to a grey ErrorWidget; falling back to the
+    // passed-in snapshot is fine.
+    final live = switch (ref.watch(contractProvider(contract.id)).valueOrNull) {
+      final RentContract c => c,
+      _ => contract,
+    };
     return GridView.builder(
       padding: const EdgeInsets.all(16), // تۆزێک بۆشایی زیاتر لە دەوریدا
       shrinkWrap: true,

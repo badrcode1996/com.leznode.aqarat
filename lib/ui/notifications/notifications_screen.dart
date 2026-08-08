@@ -121,15 +121,17 @@ class _NotificationCard extends ConsumerWidget {
 
   final AppNotification notification;
 
-  /// The contract this concerns, when it is still in the streamed page. Null
-  /// when it was deleted or falls outside what the user may read — the card
-  /// then simply loses its tap target instead of erroring.
+  /// The contract this concerns. Null while it loads, and when it was deleted
+  /// or falls outside what the user may read — the card then simply loses its
+  /// tap target instead of erroring.
+  ///
+  /// One document read per card. This used to watch EVERY contract in the
+  /// company and scan the list, so a notification centre with ten cards pulled
+  /// the whole book ten times over.
   RentContract? _contract(WidgetRef ref) {
-    final all = ref.watch(contractsStreamProvider).valueOrNull ?? const [];
-    for (final c in all) {
-      if (c.id == notification.contractId && c is RentContract) return c;
-    }
-    return null;
+    if (notification.contractId.isEmpty) return null;
+    final c = ref.watch(contractProvider(notification.contractId)).valueOrNull;
+    return c is RentContract ? c : null;
   }
 
   Future<void> _call(BuildContext context, String phone) async {

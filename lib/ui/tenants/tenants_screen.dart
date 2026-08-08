@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/contract_repository.dart';
 import '../../models/contract_model.dart';
+import '../../models/enums.dart';
 import '../contracts/installment_grid.dart';
+import '../widgets/paged_contract_list.dart';
 import '../../theme/app_colors.dart';
 import '../../l10n/app_strings.dart';
 
@@ -21,7 +22,6 @@ class TenantsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     watchAppShell(context);
-    final async = ref.watch(contractsStreamProvider);
     return Scaffold(
       backgroundColor: _appBg,
       appBar: AppBar(
@@ -32,23 +32,10 @@ class TenantsScreen extends ConsumerWidget {
         elevation: 0,
         centerTitle: true,
       ),
-      body: async.when(
-        loading: () =>
-            Center(child: CircularProgressIndicator(color: AppColors.current.textStrong)),
-        error: (e, _) => Center(
-            child: Text(S.error(e), style: TextStyle(color: AppColors.current.danger))),
-        data: (all) {
-          final tenants = all.whereType<RentContract>().toList();
-          if (tenants.isEmpty) {
-            return _empty();
-          }
-          return ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-            itemCount: tenants.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 10),
-            itemBuilder: (_, i) => _TenantRow(contract: tenants[i]),
-          );
-        },
+      body: PagedContractList(
+        type: ContractType.rent,
+        empty: _empty(),
+        itemBuilder: (c) => _TenantRow(contract: c as RentContract),
       ),
     );
   }

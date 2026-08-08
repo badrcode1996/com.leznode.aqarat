@@ -17,6 +17,10 @@ class CompanyStats {
     required this.totalRevenue,
     required this.collectedRevenue,
     required this.updatedAt,
+    this.collectedIqd = 0,
+    this.collectedUsd = 0,
+    this.guaranteeIqd = 0,
+    this.guaranteeUsd = 0,
   });
 
   final String companyId;
@@ -30,6 +34,18 @@ class CompanyStats {
   /// Money actually collected/handled so far (installments received).
   final num collectedRevenue;
 
+  /// The same money, split by currency — dinars and dollars cannot be added
+  /// together, and the dashboard shows them on separate lines. Splitting them
+  /// here is what lets the cashbox and deposit cards cost one read instead of
+  /// downloading every contract to sum them on the device.
+  final num collectedIqd;
+  final num collectedUsd;
+
+  /// Deposits the company is still holding, by currency. Excludes any already
+  /// returned to the tenant.
+  final num guaranteeIqd;
+  final num guaranteeUsd;
+
   final DateTime updatedAt;
 
   factory CompanyStats.fromJson(String id, Map<String, dynamic> json) =>
@@ -40,6 +56,10 @@ class CompanyStats {
         saleContractCount: json['sale_contract_count'] as int? ?? 0,
         totalRevenue: json['total_revenue'] as num? ?? 0,
         collectedRevenue: json['collected_revenue'] as num? ?? 0,
+        collectedIqd: json['collected_iqd'] as num? ?? 0,
+        collectedUsd: json['collected_usd'] as num? ?? 0,
+        guaranteeIqd: json['guarantee_iqd'] as num? ?? 0,
+        guaranteeUsd: json['guarantee_usd'] as num? ?? 0,
         updatedAt:
             (json['updated_at'] as Timestamp?)?.toDate() ?? DateTime.now(),
       );
@@ -50,6 +70,10 @@ class CompanyStats {
         'sale_contract_count': saleContractCount,
         'total_revenue': totalRevenue,
         'collected_revenue': collectedRevenue,
+        'collected_iqd': collectedIqd,
+        'collected_usd': collectedUsd,
+        'guarantee_iqd': guaranteeIqd,
+        'guarantee_usd': guaranteeUsd,
         'updated_at': Timestamp.fromDate(updatedAt),
       };
 }

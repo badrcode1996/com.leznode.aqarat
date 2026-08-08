@@ -23,7 +23,9 @@ class CommissionsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     watchAppShell(context);
-    final async = ref.watch(contractsStreamProvider);
+    // Commission resets monthly, so only this month's sale contracts are
+    // needed — not every contract the company ever wrote.
+    final async = ref.watch(monthSalesProvider);
     return Scaffold(
       backgroundColor: _appBg,
       appBar: AppBar(
@@ -38,9 +40,9 @@ class CommissionsScreen extends ConsumerWidget {
         loading: () =>
             Center(child: CircularProgressIndicator(color: AppColors.current.textStrong)),
         error: (e, _) => Center(child: Text(S.error(e))),
-        data: (all) {
+        data: (sales) {
           final pairs = <({SaleContract contract, CommissionItem item})>[];
-          for (final c in all.whereType<SaleContract>()) {
+          for (final c in sales) {
             for (final item in c.commissionItems) {
               pairs.add((contract: c, item: item));
             }

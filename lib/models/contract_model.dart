@@ -252,6 +252,10 @@ class RentContract extends Contract {
         'rental_purpose': rentalPurpose,
         'late_fee_per_day': lateFeePerDay,
         'installments': installments.map((i) => i.toJson()).toList(),
+        // Queryable mirror of the installment array — see earliestPendingDue.
+        'earliest_pending_due': earliestPendingDue == null
+            ? null
+            : Timestamp.fromDate(earliestPendingDue!),
         'notes': notes,
         'agent_name': agentName,
         'guarantee_returned': guaranteeReturned,
@@ -285,6 +289,38 @@ class RentContract extends Contract {
   int get deliveredCount => installments
       .where((i) => i.status == PaymentStatus.deliveredToOwner)
       .length;
+
+  /// Due date of the earliest installment still unpaid, or null when every
+  /// installment is settled.
+  ///
+  /// Denormalized onto the document as `earliest_pending_due` so overdue
+  /// contracts can be FOUND with a query. Firestore cannot look inside the
+  /// `installments` array, so without this the only way to know who is late is
+  /// to download every contract and loop — which is exactly what the dashboard
+  /// and the overdue screen used to do.
+  DateTime? get earliestPendingDue {
+    DateTime? earliest;
+    for (final i in installments) {
+      if (i.status != PaymentStatus.pending) continue;
+      if (earliest == null || i.dueDate.isBefore(earliest)) {
+        earliest = i.dueDate;
+      }
+    }
+    return earliest;
+  }
+
+  /// How many pending installments are already past [asOf], and what they come
+  /// to. Both are needed by the overdue screen, and the amount also feeds the
+  /// dashboard total.
+  ({int count, num amount}) overdueAsOf(DateTime asOf) {
+    var count = 0;
+    for (final i in installments) {
+      if (i.status == PaymentStatus.pending && i.dueDate.isBefore(asOf)) {
+        count++;
+      }
+    }
+    return (count: count, amount: count * rentAmount);
+  }
 
   RentContract copyWith({List<Installment>? installments}) => RentContract(
         id: id,

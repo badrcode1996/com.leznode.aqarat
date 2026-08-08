@@ -29,7 +29,8 @@ class GuaranteesScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     watchAppShell(context);
-    final async = ref.watch(contractsStreamProvider);
+    // Only contracts still holding a deposit.
+    final async = ref.watch(guaranteeContractsProvider);
     return Scaffold(
       backgroundColor: _appBg,
       appBar: AppBar(
@@ -44,11 +45,7 @@ class GuaranteesScreen extends ConsumerWidget {
         loading: () =>
             Center(child: CircularProgressIndicator(color: AppColors.current.textStrong)),
         error: (e, _) => Center(child: Text(S.error(e))),
-        data: (all) {
-          final items = all
-              .whereType<RentContract>()
-              .where((c) => c.guaranteeAmount > 0)
-              .toList();
+        data: (items) {
           if (items.isEmpty) {
             return Center(
               child: Column(

@@ -14,6 +14,7 @@ import '../../models/enums.dart';
 import '../../services/pdf/contract_pdf_remote.dart';
 import 'contract_preview_screen.dart';
 import 'doc_lang_field.dart';
+import '../widgets/paged_contract_list.dart';
 import 'create_rent_contract_stepper.dart';
 import 'create_sale_contract_stepper.dart';
 import 'installment_grid.dart';
@@ -89,37 +90,33 @@ class _ContractsListState extends ConsumerState<_ContractsList> {
   @override
   Widget build(BuildContext context) {
     watchAppShell(context);
-    final async = ref.watch(contractsStreamProvider);
-    return async.when(
-      loading: () => Center(child: CircularProgressIndicator(color: AppColors.current.textStrong)),
-      error: (e, _) => Center(child: Text(S.error(e), style: TextStyle(color: AppColors.current.danger))),
-      data: (all) {
-        final ofType = all.where((c) => c.type == type).toList();
-        if (ofType.isEmpty) {
-          return _emptyBox(
-            type == ContractType.rent ? S.noRentContracts : S.noSaleContracts,
-            type == ContractType.rent ? Icons.key_outlined : Icons.sell_outlined,
-          );
-        }
-        final contracts =
-            _query.isEmpty ? ofType : ofType.where((c) => c.matches(_query)).toList();
-        return Column(
-          children: [
-            _searchField(),
-            Expanded(
-              child: contracts.isEmpty
-                  ? _emptyBox(S.noResultsFor(_query),
-                      Icons.search_off_rounded)
-                  : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
-                      itemCount: contracts.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
-                      itemBuilder: (_, i) => _ContractCard(contract: contracts[i]),
-                    ),
-            ),
-          ],
-        );
-      },
+    return Column(
+      children: [
+        _searchField(),
+        Expanded(
+          child: PagedContractList(
+            type: type,
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
+            separator: const SizedBox(height: 12),
+            // Search narrows what has been LOADED. Firestore has no substring
+            // search, so a term that only matches an older contract will not
+            // find it until that page has been scrolled in — which is why the
+            // hint below says so once a search returns nothing.
+            filter: _query.isEmpty ? null : (c) => c.matches(_query),
+            empty: _query.isEmpty
+                ? _emptyBox(
+                    type == ContractType.rent
+                        ? S.noRentContracts
+                        : S.noSaleContracts,
+                    type == ContractType.rent
+                        ? Icons.key_outlined
+                        : Icons.sell_outlined,
+                  )
+                : _emptyBox(S.noResultsFor(_query), Icons.search_off_rounded),
+            itemBuilder: (c) => _ContractCard(contract: c),
+          ),
+        ),
+      ],
     );
   }
 

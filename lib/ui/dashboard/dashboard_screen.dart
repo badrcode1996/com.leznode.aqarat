@@ -7,7 +7,6 @@ import '../../data/contract_repository.dart';
 import '../../data/listing_repository.dart';
 import '../../data/notification_repository.dart';
 import '../../data/plan_config_repository.dart';
-import '../../models/contract_model.dart';
 import '../../models/enums.dart';
 import '../../models/property_model.dart';
 import '../listings/my_listings_screen.dart';
@@ -44,8 +43,18 @@ class DashboardScreen extends ConsumerWidget {
     // query transiently fails (e.g. a composite index still building). With
     // valueOrNull a failing query degrades to empty/zero instead.
     final company = ref.watch(currentCompanyProvider).valueOrNull;
+    // ONE document carries the cashbox and deposit totals. This screen used to
+    // download every contract the company owns and add them up on the device,
+    // on every launch — which is what made the app slower and the Firestore
+    // bill larger with every contract written.
     final stats = ref.watch(companyStatsProvider).valueOrNull;
-    final contracts = ref.watch(contractsStreamProvider).valueOrNull ?? const [];
+    // The three time-dependent figures cannot be running counters — a contract
+    // falls into arrears with no write at all — so each is its own narrow
+    // query rather than a scan of everything.
+    final overdue = ref.watch(overdueContractsProvider).valueOrNull ?? const [];
+    final monthSales = ref.watch(monthSalesProvider).valueOrNull ?? const [];
+    final contractsThisMonth =
+        ref.watch(contractsThisMonthProvider).valueOrNull ?? 0;
     final offers = ref.watch(myListingsProvider(ListingKind.offer)).valueOrNull;
     final demands = ref.watch(myListingsProvider(ListingKind.demand)).valueOrNull;
     final unread = ref.watch(unreadNotificationCountProvider);
@@ -57,58 +66,37 @@ class DashboardScreen extends ConsumerWidget {
     bool offerMatched(PropertyListing p) => demandKeys.contains(p.matchKey);
     bool demandMatched(PropertyListing p) => offerKeys.contains(p.matchKey);
 
-    // Computed live from the contracts stream.
     final now = DateTime.now();
-    final contractsThisMonth = contracts
-        .where((c) => c.createdAt.year == now.year && c.createdAt.month == now.month)
-        .length;
-    // Cashbox (received-from-tenant) and overdue (pending + past due), each
-    // split by currency so دینار and دۆلار are summed separately.
-    num collectedIqd = 0, collectedUsd = 0, overdueIqd = 0, overdueUsd = 0;
-    num guaranteeIqd = 0, guaranteeUsd = 0;
+
+    // Cashbox and deposits are running counters kept by the repository inside
+    // the same transactions that move the money, so they are already correct
+    // here — no contract has to be read to show them.
+    final collectedIqd = stats?.collectedIqd ?? 0;
+    final collectedUsd = stats?.collectedUsd ?? 0;
+    final guaranteeIqd = stats?.guaranteeIqd ?? 0;
+    final guaranteeUsd = stats?.guaranteeUsd ?? 0;
+
+    // Arrears, from the contracts the overdue query returned.
+    num overdueIqd = 0, overdueUsd = 0;
+    for (final c in overdue) {
+      final amount = c.overdueAsOf(now).amount;
+      if (c.currency == Currency.iqd) {
+        overdueIqd += amount;
+      } else {
+        overdueUsd += amount;
+      }
+    }
+
+    // Commission resets monthly — only this month's sales count, and only
+    // CONFIRMED items' actual paid amount.
     num commissionIqd = 0, commissionUsd = 0;
-    for (final c in contracts) {
-      if (c is SaleContract) {
-        // Commission resets monthly — only this month's sales count, and only
-        // CONFIRMED items' actual paid amount.
-        final thisMonth =
-            c.createdAt.year == now.year && c.createdAt.month == now.month;
-        if (thisMonth) {
-          for (final item in c.commissionItems) {
-            if (!item.confirmed) continue;
-            if (c.currency == Currency.iqd) {
-              commissionIqd += item.paid;
-            } else {
-              commissionUsd += item.paid;
-            }
-          }
-        }
-        continue;
-      }
-      if (c is! RentContract) continue;
-      final isIqd = c.currency == Currency.iqd;
-      // Guarantee/deposit total — only those still held (not returned).
-      if (!c.guaranteeReturned) {
-        if (isIqd) {
-          guaranteeIqd += c.guaranteeAmount;
+    for (final c in monthSales) {
+      for (final item in c.commissionItems) {
+        if (!item.confirmed) continue;
+        if (c.currency == Currency.iqd) {
+          commissionIqd += item.paid;
         } else {
-          guaranteeUsd += c.guaranteeAmount;
-        }
-      }
-      for (final inst in c.installments) {
-        if (inst.status == PaymentStatus.receivedFromTenant) {
-          if (isIqd) {
-            collectedIqd += c.rentAmount;
-          } else {
-            collectedUsd += c.rentAmount;
-          }
-        } else if (inst.status == PaymentStatus.pending &&
-            inst.dueDate.isBefore(now)) {
-          if (isIqd) {
-            overdueIqd += c.rentAmount;
-          } else {
-            overdueUsd += c.rentAmount;
-          }
+          commissionUsd += item.paid;
         }
       }
     }

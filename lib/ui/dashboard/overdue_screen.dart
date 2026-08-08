@@ -31,7 +31,9 @@ class OverdueScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     watchAppShell(context);
-    final async = ref.watch(contractsStreamProvider);
+    // Only the contracts actually in arrears, found through the
+    // earliest_pending_due mirror rather than by scanning every contract.
+    final async = ref.watch(overdueContractsProvider);
     return Scaffold(
       backgroundColor: _appBg,
       appBar: AppBar(
@@ -48,14 +50,15 @@ class OverdueScreen extends ConsumerWidget {
         error: (e, _) => Center(child: Text(S.error(e))),
         data: (contracts) {
           final now = DateTime.now();
+          // The query narrowed this to contracts with SOMETHING overdue; which
+          // installments are late still has to be worked out here, because
+          // Firestore cannot look inside the array.
           final items = <_Overdue>[];
           for (final c in contracts) {
-            if (c is RentContract) {
-              for (final inst in c.installments) {
-                if (inst.status == PaymentStatus.pending &&
-                    inst.dueDate.isBefore(now)) {
-                  items.add(_Overdue(c, inst));
-                }
+            for (final inst in c.installments) {
+              if (inst.status == PaymentStatus.pending &&
+                  inst.dueDate.isBefore(now)) {
+                items.add(_Overdue(c, inst));
               }
             }
           }
