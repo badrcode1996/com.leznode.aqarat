@@ -224,7 +224,11 @@ class _ContractPreviewScreenState
             separatorBuilder: (_, __) => const SizedBox(height: 24),
             itemBuilder: (_, i) => Container(
               decoration: BoxDecoration(
-                color: AppColors.current.card,
+                // Paper, not a card: the rasterised page is transparent
+                // wherever the document painted nothing, so this colour IS the
+                // page. It stays white in dark mode — an A4 sheet does not
+                // change colour with the phone's theme.
+                color: AppColors.current.paper,
                 borderRadius: BorderRadius.circular(4), // گۆشەی زۆر کەم بۆ ئەوەی وەک کاغەز بێت
                 boxShadow: [
                   BoxShadow(

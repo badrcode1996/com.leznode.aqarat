@@ -1,7 +1,10 @@
 name: aqarat
 description: B2B Multi-Tenant Real Estate Management SaaS.
 publish_to: "none"
-version: 1.1.0+5
+# The build number is one series across both stores: iOS shipped 1.1.0 (10), so
+# Android continues at 11 rather than restarting. Play rejects any bundle whose
+# code is not higher than the last one uploaded.
+version: 1.1.0+11
 
 environment:
   sdk: ">=3.4.0 <4.0.0"

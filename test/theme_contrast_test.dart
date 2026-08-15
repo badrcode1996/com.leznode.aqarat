@@ -77,6 +77,14 @@ void main() {
       readable('info on card', c.info, c.card, min: statusFloor);
       readable('violet on card', c.violet, c.card, min: statusFloor);
 
+      test('paper is white, whatever the theme', () {
+        // A rendered contract or receipt stands for a printed A4 sheet, and the
+        // rasterised PDF is transparent wherever the document drew nothing —
+        // so this colour shows THROUGH the page. Following the theme turned
+        // contracts navy in dark mode.
+        expect(c.paper, const Color(0xFFFFFFFF));
+      });
+
       test('card is distinguishable from the page behind it', () {
         expect(_contrast(c.card, c.pageBg), greaterThan(1.02),
             reason: 'cards would vanish into the background');

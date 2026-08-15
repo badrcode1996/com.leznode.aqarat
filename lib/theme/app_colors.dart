@@ -23,6 +23,7 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.onAccent,
     required this.pageBg,
     required this.card,
+    required this.paper,
     required this.inputFill,
     required this.textStrong,
     required this.textBody,
@@ -56,6 +57,15 @@ class AppColors extends ThemeExtension<AppColors> {
 
   /// Card / sheet / dialog surface.
   final Color card;
+
+  /// The sheet a rendered document sits on. WHITE in both themes — it stands
+  /// for a printed A4 page, and paper does not turn dark because the phone did.
+  ///
+  /// It matters more than it looks: rasterising a PDF leaves the areas the
+  /// document never painted TRANSPARENT, so whatever is behind shows through.
+  /// Backing a page with [card] made contracts and receipts come out navy in
+  /// dark mode.
+  final Color paper;
 
   /// Form field fill, and the neutral chip background.
   final Color inputFill;
@@ -109,6 +119,7 @@ class AppColors extends ThemeExtension<AppColors> {
     onAccent: Color(0xFF0F2C59),
     pageBg: Color(0xFFF5F7FA),
     card: Colors.white,
+    paper: Colors.white,
     inputFill: Color(0xFFF3F4F6),
     textStrong: Color(0xFF0F2C59),
     textBody: Color(0xFF374151),
@@ -132,6 +143,8 @@ class AppColors extends ThemeExtension<AppColors> {
     onAccent: Color(0xFF0F2C59),
     pageBg: Color(0xFF0D1117),
     card: Color(0xFF161B22),
+    // White even here — see the field doc.
+    paper: Colors.white,
     inputFill: Color(0xFF21262D),
     textStrong: Color(0xFFE6EDF3),
     textBody: Color(0xFFC9D1D9),
@@ -154,6 +167,7 @@ class AppColors extends ThemeExtension<AppColors> {
     Color? onAccent,
     Color? pageBg,
     Color? card,
+    Color? paper,
     Color? inputFill,
     Color? textStrong,
     Color? textBody,
@@ -174,6 +188,7 @@ class AppColors extends ThemeExtension<AppColors> {
         onAccent: onAccent ?? this.onAccent,
         pageBg: pageBg ?? this.pageBg,
         card: card ?? this.card,
+        paper: paper ?? this.paper,
         inputFill: inputFill ?? this.inputFill,
         textStrong: textStrong ?? this.textStrong,
         textBody: textBody ?? this.textBody,
@@ -198,6 +213,7 @@ class AppColors extends ThemeExtension<AppColors> {
       onAccent: Color.lerp(onAccent, other.onAccent, t)!,
       pageBg: Color.lerp(pageBg, other.pageBg, t)!,
       card: Color.lerp(card, other.card, t)!,
+      paper: Color.lerp(paper, other.paper, t)!,
       inputFill: Color.lerp(inputFill, other.inputFill, t)!,
       textStrong: Color.lerp(textStrong, other.textStrong, t)!,
       textBody: Color.lerp(textBody, other.textBody, t)!,

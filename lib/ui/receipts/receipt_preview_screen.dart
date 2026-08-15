@@ -150,7 +150,9 @@ class _ReceiptPreviewScreenState extends State<ReceiptPreviewScreen> {
             separatorBuilder: (_, __) => const SizedBox(height: 24),
             itemBuilder: (_, i) => Container(
               decoration: BoxDecoration(
-                color: AppColors.current.card,
+                // See the contract preview: this colour IS the page, because
+                // the rasterised PDF is transparent where nothing was drawn.
+                color: AppColors.current.paper,
                 borderRadius: BorderRadius.circular(4),
                 boxShadow: [
                   BoxShadow(

@@ -183,7 +183,11 @@ body{font-family:'Speda';direction:rtl;color:#111;font-size:${fs};}
 .row2 .field:first-child{flex:3;}
 .row2 .field:last-child{flex:2;}
 .sp{width:16px;}
-.field{display:flex;align-items:flex-end;margin:14px 0;gap:6px;}
+/* .copy is a flex column, so these margins do NOT collapse — the gap between
+   two rows is twice this value. 9px keeps the rows comfortably apart at 18px
+   without the sparse look 14px (28px apart) gave. The slack goes to .spacer,
+   which pushes the signatures to the bottom of the half-page either way. */
+.field{display:flex;align-items:flex-end;margin:9px 0;gap:6px;}
 .field .kuar{font-weight:bold;white-space:nowrap;}
 .field .val{flex:1;border-bottom:1px dotted #888;min-height:1.3em;
   padding:0 4px 1px;}
