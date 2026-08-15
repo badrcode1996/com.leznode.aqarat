@@ -985,9 +985,8 @@ class _CompanyUsersScreen extends ConsumerWidget {
       BuildContext context, WidgetRef ref, AppUser user) async {
     final name = TextEditingController(text: user.displayName);
     final phone = TextEditingController(text: user.phone);
-    var role = user.role;
+    var post = _Post.of(user.role, user.branchAdmin);
     var branch = user.branch;
-    var branchAdmin = user.branchAdmin;
 
     final saved = await showDialog<bool>(
       context: context,
@@ -1022,22 +1021,7 @@ class _CompanyUsersScreen extends ConsumerWidget {
                       label: S.mobileNumber, icon: Icons.phone_iphone),
                 ),
                 const SizedBox(height: 12),
-                DropdownButtonFormField<UserRole>(
-                  isExpanded: true,
-                  initialValue: role,
-                  decoration: modernInputDecoration(
-                      label: S.role, icon: Icons.badge_outlined),
-                  // superAdmin is absent on purpose: it belongs to no company,
-                  // so promoting someone here would orphan them.
-                  items: [
-                    DropdownMenuItem(
-                        value: UserRole.companyAdmin, child: Text(S.roleAdminShort)),
-                    DropdownMenuItem(
-                        value: UserRole.agent, child: Text(S.roleAgent)),
-                  ],
-                  onChanged: (v) =>
-                      setDialog(() => role = v ?? UserRole.agent),
-                ),
+                _postField(post, (v) => setDialog(() => post = v)),
                 const SizedBox(height: 12),
                 if (company.branches.isNotEmpty)
                   DropdownButtonFormField<String>(
@@ -1054,18 +1038,12 @@ class _CompanyUsersScreen extends ConsumerWidget {
                   )
                 else
                   const _NoBranchesNote(),
-                if (role == UserRole.companyAdmin)
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(S.adminBranchScoped,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                    subtitle: Text(S.branchOnlyData,
-                        style: const TextStyle(fontSize: 11)),
-                    value: branchAdmin,
-                    activeThumbColor: Colors.white,
-                    activeTrackColor: primaryDarkBlue,
-                    onChanged: (v) => setDialog(() => branchAdmin = v),
-                  ),
+                if (post == _Post.branchAdmin) ...[
+                  const SizedBox(height: 8),
+                  Text(S.branchOnlyData,
+                      style: TextStyle(
+                          fontSize: 11, color: AppColors.current.textMuted)),
+                ],
               ],
             ),
           ),
@@ -1093,9 +1071,9 @@ class _CompanyUsersScreen extends ConsumerWidget {
             user.uid,
             displayName: name.text,
             phone: phone.text,
-            role: role,
+            role: post.role,
             branch: branch,
-            branchAdmin: branchAdmin,
+            branchAdmin: post.scoped,
           );
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -1714,6 +1692,65 @@ class _CompanyUsersScreen extends ConsumerWidget {
   }
 }
 
+/// The three posts a company member can hold.
+///
+/// In storage these are two fields — `role` and `branch_admin` — but to the
+/// person filling the form they are one decision. Asking twice let someone
+/// leave a branch admin marked company-wide without noticing, and offered the
+/// branch-admin switch on an agent, where the flag means nothing at all.
+enum _Post {
+  agent(UserRole.agent, false, Icons.person),
+  branchAdmin(UserRole.companyAdmin, true, Icons.account_tree_outlined),
+  companyAdmin(UserRole.companyAdmin, false, Icons.admin_panel_settings);
+
+  const _Post(this.role, this.scoped, this.icon);
+
+  final UserRole role;
+
+  /// The stored `branch_admin` flag. Named apart from the [branchAdmin] value
+  /// above, which Dart would not let it share.
+  final bool scoped;
+  final IconData icon;
+
+  /// superAdmin has no entry on purpose: it belongs to no company, so choosing
+  /// it here would orphan the user.
+  static _Post of(UserRole role, bool branchAdmin) =>
+      role == UserRole.companyAdmin
+          ? (branchAdmin ? _Post.branchAdmin : _Post.companyAdmin)
+          : _Post.agent;
+
+  String get label => switch (this) {
+        _Post.agent => S.roleAgent,
+        _Post.branchAdmin => S.roleBranchAdmin,
+        _Post.companyAdmin => S.roleCompanyAdmin,
+      };
+}
+
+/// The post picker, shared by the add form and the edit dialog.
+///
+/// A dropdown rather than segments: "بەڕێوەبەری کۆمپانیا" set beside two more
+/// labels does not fit across a phone.
+Widget _postField(_Post value, ValueChanged<_Post> onChanged) =>
+    DropdownButtonFormField<_Post>(
+      isExpanded: true,
+      initialValue: value,
+      decoration:
+          modernInputDecoration(label: S.role, icon: Icons.badge_outlined),
+      items: _Post.values
+          .map((p) => DropdownMenuItem(
+                value: p,
+                child: Row(
+                  children: [
+                    Icon(p.icon, size: 18, color: AppColors.current.textMuted),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text(p.label, overflow: TextOverflow.ellipsis)),
+                  ],
+                ),
+              ))
+          .toList(),
+      onChanged: (v) => onChanged(v ?? _Post.agent),
+    );
+
 /// Stands in for the branch picker when the company has no branches on file.
 ///
 /// The picker used to be hidden in that case, which is indistinguishable from
@@ -1766,9 +1803,8 @@ class _AddUserScreenState extends ConsumerState<_AddUserScreen> {
   final _email = TextEditingController();
   final _password = TextEditingController();
   final _phone = TextEditingController();
-  UserRole _role = UserRole.agent;
+  _Post _post = _Post.agent;
   String? _branch;
-  bool _branchAdmin = false;
   bool _busy = false;
   String? _error;
 
@@ -1802,9 +1838,9 @@ class _AddUserScreenState extends ConsumerState<_AddUserScreen> {
         email: _email.text,
         password: _password.text,
         phone: _phone.text,
-        role: _role,
+        role: _post.role,
         branch: _branch ?? '',
-        branchAdmin: _branchAdmin,
+        branchAdmin: _post.scoped,
       );
       if (mounted) Navigator.pop(context);
     } catch (e) {
@@ -1834,41 +1870,14 @@ class _AddUserScreenState extends ConsumerState<_AddUserScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                SegmentedButton<UserRole>(
-                  style: SegmentedButton.styleFrom(
-                    backgroundColor: AppColors.current.card,
-                    selectedForegroundColor: Colors.white,
-                    selectedBackgroundColor: primaryDarkBlue,
+                _postField(_post, (v) => setState(() => _post = v)),
+                if (_post == _Post.branchAdmin)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(S.branchOnlyData,
+                        style: TextStyle(
+                            fontSize: 11, color: AppColors.current.textMuted)),
                   ),
-                  segments: [
-                    ButtonSegment(value: UserRole.agent, label: Text(S.roleAgent), icon: const Icon(Icons.person)),
-                    ButtonSegment(value: UserRole.companyAdmin, label: Text(S.roleAdminShort), icon: const Icon(Icons.admin_panel_settings)),
-                  ],
-                  selected: {_role},
-                  onSelectionChanged: (s) => setState(() => _role = s.first),
-                ),
-                if (_role == UserRole.companyAdmin) ...[
-                  const SizedBox(height: 12),
-                  SegmentedButton<bool>(
-                    style: SegmentedButton.styleFrom(
-                        backgroundColor: AppColors.current.card,
-                        selectedForegroundColor: Colors.white,
-                        selectedBackgroundColor: accentYellow),
-                    segments: [
-                      ButtonSegment(
-                          value: false,
-                          label: Text(S.adminCompanyWide),
-                          icon: const Icon(Icons.public)),
-                      ButtonSegment(
-                          value: true,
-                          label: Text(S.adminBranchScoped),
-                          icon: const Icon(Icons.account_tree_outlined)),
-                    ],
-                    selected: {_branchAdmin},
-                    onSelectionChanged: (s) =>
-                        setState(() => _branchAdmin = s.first),
-                  ),
-                ],
                 const SizedBox(height: 16),
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16),
