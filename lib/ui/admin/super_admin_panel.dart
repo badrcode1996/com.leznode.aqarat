@@ -1030,8 +1030,8 @@ class _CompanyUsersScreen extends ConsumerWidget {
                   onChanged: (v) =>
                       setDialog(() => role = v ?? UserRole.agent),
                 ),
-                if (company.branches.isNotEmpty) ...[
-                  const SizedBox(height: 12),
+                const SizedBox(height: 12),
+                if (company.branches.isNotEmpty)
                   DropdownButtonFormField<String>(
                     isExpanded: true,
                     initialValue:
@@ -1043,8 +1043,9 @@ class _CompanyUsersScreen extends ConsumerWidget {
                             DropdownMenuItem(value: b, child: Text(b)))
                         .toList(),
                     onChanged: (v) => setDialog(() => branch = v ?? ''),
-                  ),
-                ],
+                  )
+                else
+                  const _NoBranchesNote(),
                 if (role == UserRole.companyAdmin)
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
@@ -1705,6 +1706,43 @@ class _CompanyUsersScreen extends ConsumerWidget {
   }
 }
 
+/// Stands in for the branch picker when the company has no branches on file.
+///
+/// The picker used to be hidden in that case, which is indistinguishable from
+/// the app not supporting branch assignment at all — the branch list has to be
+/// filled in from the company's own menu before anyone can be put in one, and
+/// nothing said so.
+class _NoBranchesNote extends StatelessWidget {
+  const _NoBranchesNote();
+
+  @override
+  Widget build(BuildContext context) {
+    watchAppShell(context);
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.current.warning.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.current.warning.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.account_tree_outlined,
+              size: 18, color: AppColors.current.warning),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              S.noBranchesYet,
+              style: TextStyle(fontSize: 12, color: AppColors.current.textBody),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// Add an agent/admin to a company.
 class _AddUserScreen extends ConsumerStatefulWidget {
   const _AddUserScreen({required this.company});
@@ -1824,21 +1862,23 @@ class _AddUserScreenState extends ConsumerState<_AddUserScreen> {
                   ),
                 ],
                 const SizedBox(height: 16),
-                if (widget.company.branches.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: DropdownButtonFormField<String>(
-                      isExpanded: true,
-                      initialValue: _branch,
-                      decoration: modernInputDecoration(
-                          label: S.branch, icon: Icons.account_tree_outlined),
-                      items: widget.company.branches
-                          .map((b) =>
-                              DropdownMenuItem(value: b, child: Text(b)))
-                          .toList(),
-                      onChanged: (v) => setState(() => _branch = v),
-                    ),
-                  ),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: widget.company.branches.isNotEmpty
+                      ? DropdownButtonFormField<String>(
+                          isExpanded: true,
+                          initialValue: _branch,
+                          decoration: modernInputDecoration(
+                              label: S.branch,
+                              icon: Icons.account_tree_outlined),
+                          items: widget.company.branches
+                              .map((b) =>
+                                  DropdownMenuItem(value: b, child: Text(b)))
+                              .toList(),
+                          onChanged: (v) => setState(() => _branch = v),
+                        )
+                      : const _NoBranchesNote(),
+                ),
                 TextFormField(controller: _name, decoration: modernInputDecoration(label: S.fullName, icon: Icons.badge_outlined), validator: (v) => (v == null || v.trim().isEmpty) ? S.requiredField : null),
                 const SizedBox(height: 16),
                 TextFormField(controller: _phone, keyboardType: TextInputType.phone, textDirection: TextDirection.ltr, decoration: modernInputDecoration(label: S.publicMobile, icon: Icons.phone_iphone), validator: (v) => (v == null || v.trim().isEmpty) ? S.requiredField : null),

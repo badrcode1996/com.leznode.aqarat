@@ -368,6 +368,7 @@ class AppStrings {
     required this.branch,
     required this.branches,
     required this.manageBranches,
+    required this.noBranchesYet,
     required this.branchesCommaLabel,
     required this.branchesCommaHint,
     required this.branchesUpdated,
@@ -818,6 +819,10 @@ class AppStrings {
   final String branch;
   final String branches;
   final String manageBranches;
+
+  /// Shown where a branch would be picked, when the company has none on file.
+  /// The picker used to be hidden outright, which read as a missing feature.
+  final String noBranchesYet;
   final String branchesCommaLabel;
   final String branchesCommaHint;
   final String branchesUpdated;
@@ -1321,7 +1326,8 @@ class AppStrings {
         branchOnlyData, newCompany, noCompanies, companyInfo, companyInfoUpdated,
         infoUpdated, companyNameKu, companyNameAr, companyNameEn, usedAsDocumentId,
         companyAddress, companyLogo, logoRequired, companyCity, city, phone1,
-        phone2, publicMobile, branch, branches, manageBranches, branchesCommaLabel,
+        phone2, publicMobile, branch, branches, manageBranches, noBranchesYet,
+        branchesCommaLabel,
         branchesCommaHint, branchesUpdated, newUser, noUsers, editUser, editInfo,
         fullName, newPassword, changePassword, passwordChanged, minSixChars,
         emailValidShort, account1, account2, newSuperAdmin, superAdmins,
@@ -1681,6 +1687,9 @@ class AppStrings {
     branch: 'لق',
     branches: 'لقەکان',
     manageBranches: 'بەڕێوەبردنی لقەکان',
+    noBranchesYet:
+        'هیچ لقێک زیاد نەکراوە. سەرەتا لە «بەڕێوەبردنی لقەکان» لقەکان دابنێ، '
+            'ئینجا دەتوانیت کارمەند بۆ لق دیاری بکەیت.',
     branchesCommaLabel: 'لقەکان (بە کۆما جیابکەرەوە)',
     branchesCommaHint: 'لقەکان بە کۆما جیابکەرەوە',
     branchesUpdated: 'لقەکان نوێکرانەوە',
@@ -2095,6 +2104,9 @@ class AppStrings {
     branch: 'الفرع',
     branches: 'الفروع',
     manageBranches: 'إدارة الفروع',
+    noBranchesYet:
+        'لم تتم إضافة أي فرع. أضف الفروع أولاً من «إدارة الفروع»، '
+            'بعدها يمكنك تحديد فرع الموظف.',
     branchesCommaLabel: 'الفروع (افصلها بفاصلة)',
     branchesCommaHint: 'افصل الفروع بفاصلة',
     branchesUpdated: 'تم تحديث الفروع',
@@ -2511,6 +2523,9 @@ class AppStrings {
     branch: 'Branch',
     branches: 'Branches',
     manageBranches: 'Manage branches',
+    noBranchesYet:
+        'No branches yet. Add them under "Manage branches" first, then you can '
+            'assign a member to one.',
     branchesCommaLabel: 'Branches (comma separated)',
     branchesCommaHint: 'Separate the branches with commas',
     branchesUpdated: 'Branches updated',
