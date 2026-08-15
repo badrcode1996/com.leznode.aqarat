@@ -32,8 +32,6 @@ const L = {
     party2Rent: "لایەنی دووەم (کرێچی):",
     party1Sale: "لایەنی یەکەم (فرۆشیار):",
     party2Sale: "لایەنی دووەم (کڕیار):",
-    commission: "ڕێژەی عمولە:",
-    commissionEach: " — هەر لایەک ",
     propertyType: "جۆری موڵک:",
     project: "پڕۆژە / گەڕەک:",
     propertyNo: "ژمارەی موڵک:",
@@ -54,8 +52,6 @@ const L = {
     party2Rent: "الطرف الثاني (المستأجر):",
     party1Sale: "الطرف الأول (البائع):",
     party2Sale: "الطرف الثاني (المشتري):",
-    commission: "نسبة العمولة:",
-    commissionEach: " — لكل طرف ",
     propertyType: "نوع العقار:",
     project: "المشروع / الحي:",
     propertyNo: "رقم العقار:",
@@ -272,10 +268,10 @@ function buildContractHtml(o) {
     row(T.party1Sale, c.party1_name),
     row(T.party2Sale, c.party2_name),
     propLine(propPairs),
-    (c.commission_rate ?
-      row(T.commission, c.commission_rate + "%" + T.commissionEach +
-        money((Number(c.total_price) || 0) * Number(c.commission_rate) / 100) +
-        " " + (T.currency[c.dinar_dolar] || "")) : ""),
+    // The commission is NOT in this card. It is what each party owes the
+    // office, which the clauses state in their own words — printing it up here
+    // as well put the same figure on the page twice, in the box meant for what
+    // the contract is ABOUT. {commission} is still there for a clause to use.
   ].join("");
 
   // vm.clauses already has its {token}s substituted.
