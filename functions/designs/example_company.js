@@ -12,6 +12,8 @@
 //    these rules win. Enough when the structure is right and only the look
 //    differs. Base classes: .band .logo / .title / .card / .r .rl .rv /
 //    .clause / .signs .sg / .foot / .watermark / .attach
+//    Restyling .foot taller? Grow .footspace to match — it is the empty band
+//    that keeps the page's text out from under the fixed footer.
 // ---------------------------------------------------------------------------
 const css = `
 .title{font-size:26px;letter-spacing:.5px;}

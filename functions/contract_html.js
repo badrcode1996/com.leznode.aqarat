@@ -350,9 +350,20 @@ thead{display:table-header-group;}
 .sgl{font-weight:bold;}
 .sgline{border-top:1px solid #000;width:120px;margin:18px auto 4px;}
 .sgn{font-size:11px;}
+/* The footer is painted by a fixed box so it pins to the bottom of EVERY page,
+   but a fixed box takes no room in the flow — Chrome happily broke a line into
+   the band it occupies and the opaque background then sliced that line in half.
+   Clause 23 of the rent contract came out with its second line cut off.
+
+   So the space is reserved separately, by .footspace inside the table's tfoot:
+   a table-footer-group repeats on every printed page and DOES occupy flow, so
+   text stops short of the band the footer paints into. Its height must stay
+   greater than the footer's own (6px padding + ~14px of 9px text + border);
+   the surplus is the gap between the last line and the rule. */
 .foot{position:fixed;bottom:0;left:0;right:0;padding-top:6px;
   border-top:.8px solid #bbb;display:flex;justify-content:space-between;
   font-size:9px;background:#fff;}
+.footspace{height:30px;}
 /* Appendix: four photos to a plain page, 2x2. Each page is its own grid so
    the break lands between pages, never inside a row. The opaque white
    background + z-index cover the fixed watermark and footer, which would
@@ -391,6 +402,9 @@ ${watermark}
       ${sign(T.sign2, c.party2_name)}
     </div>
   </td></tr></tbody>
+  ${footerCells.length ? `<tfoot><tr><td>
+    <div class="footspace"></div>
+  </td></tr></tfoot>` : ""}
 </table>
 ${attachmentsHtml}
 ${footerCells.length ? `<div class="foot">${footerCells.map((x) =>
