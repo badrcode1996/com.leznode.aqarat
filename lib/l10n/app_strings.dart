@@ -959,116 +959,116 @@ class AppStrings {
         _ => 'دڵنیایت لە سڕینەوەی پسولە #$number؟ ئەم کردارە ناگەڕێتەوە.',
       };
 
-  String deleteContractConfirm(Object number, String title) =>
-      switch (language) {
-        AppLanguage.ar => 'هل تريد حذف العقد #$number ($title)؟ لا يمكن التراجع.',
-        AppLanguage.en => 'Delete contract #$number ($title)? This cannot be undone.',
-        _ => 'دڵنیایت لە سڕینەوەی گرێبەست #$number ($title)؟ ئەم کردارە ناگەڕێتەوە.',
-      };
-
-  String noResultsFor(String query) => switch (language) {
-        AppLanguage.ar => 'لا نتائج لـ «$query»',
-        AppLanguage.en => 'No results for "$query"',
-        _ => 'هیچ ئەنجامێک نەدۆزرایەوە بۆ «$query»',
-      };
-
-  String attachmentsCount(int n) => switch (language) {
-        AppLanguage.ar => 'المستندات ($n)',
-        AppLanguage.en => 'Attachments ($n)',
-        _ => 'بەڵگەکان ($n)',
-      };
-
-  String printFailed(Object e) => switch (language) {
-        AppLanguage.ar => 'فشلت الطباعة: $e',
-        AppLanguage.en => 'Printing failed: $e',
-        _ => 'پرینت سەرکەوتوو نەبوو: $e',
-      };
-
-  String contractTitle(Object number) => switch (language) {
-        AppLanguage.ar => 'عقد #$number',
-        AppLanguage.en => 'Contract #$number',
-        _ => 'گرێبەست #$number',
-      };
-
-  String receiptTitle(Object number) => switch (language) {
-        AppLanguage.ar => 'وصل #$number',
-        AppLanguage.en => 'Receipt #$number',
-        _ => 'پسولە #$number',
-      };
-
-  String editReceiptTitle(Object number) => switch (language) {
-        AppLanguage.ar => 'تعديل الوصل #$number',
-        AppLanguage.en => 'Edit receipt #$number',
-        _ => 'دەستکاری پسولە #$number',
-      };
-
-  /// The purpose line printed on a rent voucher: which period it covers.
-  String rentPeriodPurpose(String from, String to) => switch (language) {
-        AppLanguage.ar => 'بدل إيجار من $from إلى $to',
-        AppLanguage.en => 'Rent for $from to $to',
-        _ => 'لە بڕی کرێی $from تاکو $to',
-      };
-
-  String dateWithValue(String date) => switch (language) {
-        AppLanguage.ar => 'التاريخ: $date',
-        AppLanguage.en => 'Date: $date',
-        _ => 'بەروار: $date',
-      };
-
-  String daysLeft(int n) => switch (language) {
-        AppLanguage.ar => 'بقي $n يوم.',
-        AppLanguage.en => '$n days left.',
-        _ => '$n ڕۆژ ماوە.',
-      };
-
-  String companyIdFixed(String id) => switch (language) {
-        AppLanguage.ar => 'معرّف الشركة لا يتغيّر: $id',
-        AppLanguage.en => 'The company id cannot change: $id',
-        _ => 'ناسنامەی کۆمپانیا ناگۆڕدرێت: $id',
-      };
-
-  String exportFailed(Object e) => switch (language) {
-        AppLanguage.ar => 'خطأ في التصدير: $e',
-        AppLanguage.en => 'Export failed: $e',
-        _ => 'هەڵە لە دەرهێنان: $e',
-      };
-
-  String planChangedTo(String plan) => switch (language) {
-        AppLanguage.ar => 'تم تغيير الخطة إلى $plan',
-        AppLanguage.en => 'Plan changed to $plan',
-        _ => 'پلان گۆڕدرا بۆ $plan',
-      };
-
-  String cityChangedTo(String city) => switch (language) {
-        AppLanguage.ar => 'تم تغيير المدينة إلى $city',
-        AppLanguage.en => 'City changed to $city',
-        _ => 'شار گۆڕدرا بۆ $city',
-      };
-
-  String companyIdTaken(String id) => switch (language) {
-        AppLanguage.ar => 'هذا الاسم الإنكليزي مستخدم مسبقاً: $id',
-        AppLanguage.en => 'That English name is already taken: $id',
-        _ => 'ئەم ناوە ئینگلیزییە پێشتر بەکارهاتووە: $id',
-      };
-
-  String branchLimitReached(int max) => switch (language) {
-        AppLanguage.ar => 'هذه الخطة تسمح بـ $max فرع فقط. رقِّ الخطة.',
-        AppLanguage.en => 'This plan allows only $max branches. Upgrade the plan.',
-        _ => 'ئەم پلانە تەنها $max لقی ڕێگەپێدراوە. پلانەکە بەرز بکەرەوە.',
-      };
-
-  String userLimitReached(int max) => switch (language) {
-        AppLanguage.ar => 'بلغت الخطة حدّ المستخدمين ($max). رقِّ الخطة للمزيد.',
-        AppLanguage.en => 'This plan is at its user limit ($max). Upgrade to add more.',
-        _ => 'سنووری یوزەری ئەم پلانە پڕبووە ($max). بۆ زیادکردن پلانەکە بەرز بکەرەوە.',
-      };
-
-  String templateFor(String company) => switch (language) {
-        AppLanguage.ar => 'قالب — $company',
-        AppLanguage.en => 'Template — $company',
-        _ => 'تێمپلەیت — $company',
-      };
-
+  String deleteContractConfirm(Object number, String title) =>
+      switch (language) {
+        AppLanguage.ar => 'هل تريد حذف العقد #$number ($title)؟ لا يمكن التراجع.',
+        AppLanguage.en => 'Delete contract #$number ($title)? This cannot be undone.',
+        _ => 'دڵنیایت لە سڕینەوەی گرێبەست #$number ($title)؟ ئەم کردارە ناگەڕێتەوە.',
+      };
+
+  String noResultsFor(String query) => switch (language) {
+        AppLanguage.ar => 'لا نتائج لـ «$query»',
+        AppLanguage.en => 'No results for "$query"',
+        _ => 'هیچ ئەنجامێک نەدۆزرایەوە بۆ «$query»',
+      };
+
+  String attachmentsCount(int n) => switch (language) {
+        AppLanguage.ar => 'المستندات ($n)',
+        AppLanguage.en => 'Attachments ($n)',
+        _ => 'بەڵگەکان ($n)',
+      };
+
+  String printFailed(Object e) => switch (language) {
+        AppLanguage.ar => 'فشلت الطباعة: $e',
+        AppLanguage.en => 'Printing failed: $e',
+        _ => 'پرینت سەرکەوتوو نەبوو: $e',
+      };
+
+  String contractTitle(Object number) => switch (language) {
+        AppLanguage.ar => 'عقد #$number',
+        AppLanguage.en => 'Contract #$number',
+        _ => 'گرێبەست #$number',
+      };
+
+  String receiptTitle(Object number) => switch (language) {
+        AppLanguage.ar => 'وصل #$number',
+        AppLanguage.en => 'Receipt #$number',
+        _ => 'پسولە #$number',
+      };
+
+  String editReceiptTitle(Object number) => switch (language) {
+        AppLanguage.ar => 'تعديل الوصل #$number',
+        AppLanguage.en => 'Edit receipt #$number',
+        _ => 'دەستکاری پسولە #$number',
+      };
+
+  /// The purpose line printed on a rent voucher: which period it covers.
+  String rentPeriodPurpose(String from, String to) => switch (language) {
+        AppLanguage.ar => 'بدل إيجار من $from إلى $to',
+        AppLanguage.en => 'Rent for $from to $to',
+        _ => 'لە بڕی کرێی $from تاکو $to',
+      };
+
+  String dateWithValue(String date) => switch (language) {
+        AppLanguage.ar => 'التاريخ: $date',
+        AppLanguage.en => 'Date: $date',
+        _ => 'بەروار: $date',
+      };
+
+  String daysLeft(int n) => switch (language) {
+        AppLanguage.ar => 'بقي $n يوم.',
+        AppLanguage.en => '$n days left.',
+        _ => '$n ڕۆژ ماوە.',
+      };
+
+  String companyIdFixed(String id) => switch (language) {
+        AppLanguage.ar => 'معرّف الشركة لا يتغيّر: $id',
+        AppLanguage.en => 'The company id cannot change: $id',
+        _ => 'ناسنامەی کۆمپانیا ناگۆڕدرێت: $id',
+      };
+
+  String exportFailed(Object e) => switch (language) {
+        AppLanguage.ar => 'خطأ في التصدير: $e',
+        AppLanguage.en => 'Export failed: $e',
+        _ => 'هەڵە لە دەرهێنان: $e',
+      };
+
+  String planChangedTo(String plan) => switch (language) {
+        AppLanguage.ar => 'تم تغيير الخطة إلى $plan',
+        AppLanguage.en => 'Plan changed to $plan',
+        _ => 'پلان گۆڕدرا بۆ $plan',
+      };
+
+  String cityChangedTo(String city) => switch (language) {
+        AppLanguage.ar => 'تم تغيير المدينة إلى $city',
+        AppLanguage.en => 'City changed to $city',
+        _ => 'شار گۆڕدرا بۆ $city',
+      };
+
+  String companyIdTaken(String id) => switch (language) {
+        AppLanguage.ar => 'هذا الاسم الإنكليزي مستخدم مسبقاً: $id',
+        AppLanguage.en => 'That English name is already taken: $id',
+        _ => 'ئەم ناوە ئینگلیزییە پێشتر بەکارهاتووە: $id',
+      };
+
+  String branchLimitReached(int max) => switch (language) {
+        AppLanguage.ar => 'هذه الخطة تسمح بـ $max فرع فقط. رقِّ الخطة.',
+        AppLanguage.en => 'This plan allows only $max branches. Upgrade the plan.',
+        _ => 'ئەم پلانە تەنها $max لقی ڕێگەپێدراوە. پلانەکە بەرز بکەرەوە.',
+      };
+
+  String userLimitReached(int max) => switch (language) {
+        AppLanguage.ar => 'بلغت الخطة حدّ المستخدمين ($max). رقِّ الخطة للمزيد.',
+        AppLanguage.en => 'This plan is at its user limit ($max). Upgrade to add more.',
+        _ => 'سنووری یوزەری ئەم پلانە پڕبووە ($max). بۆ زیادکردن پلانەکە بەرز بکەرەوە.',
+      };
+
+  String templateFor(String company) => switch (language) {
+        AppLanguage.ar => 'قالب — $company',
+        AppLanguage.en => 'Template — $company',
+        _ => 'تێمپلەیت — $company',
+      };
+
   String saveFailed(Object e) => switch (language) {
         AppLanguage.ar => 'فشل الحفظ: $e',
         AppLanguage.en => 'Save failed: $e',
@@ -1582,7 +1582,7 @@ class AppStrings {
     sellerMobile: 'ژمارەی مۆبایل (فرۆشیار)',
     buyerMobile: 'ژمارەی مۆبایل (کڕیار)',
     propertyTypeHint: 'جۆری موڵک (بۆ نموونە: خانوو)',
-    propertyNumber: 'ژمارەی عەقار',
+    propertyNumber: 'ژمارەی موڵک',
     rentAmount: 'بڕی کرێ',
     rentPeriodMonths: 'ماوەی بەکرێگرتن (بە مانگ)',
     downPayment: 'بڕی پێشەکی',
@@ -1638,7 +1638,7 @@ class AppStrings {
     contractDeleted: 'گرێبەست سڕایەوە',
     noRentContracts: 'هیچ گرێبەستێکی کرێ نییە',
     noSaleContracts: 'هیچ گرێبەستێکی فرۆشتن نییە',
-    searchHint: 'گەڕان بە ناو، ژمارەی مۆبایل، ژمارەی عەقار…',
+    searchHint: 'گەڕان بە ناو، ژمارەی مۆبایل، ژمارەی موڵک…',
     attachmentsEmpty: 'بەڵگەکان (بەتاڵ)',
     attachmentsNoneHint: 'هیچ بەڵگەیەک زیاد نەکراوە — لە دەستکاریدا دەتوانیت زیادی بکەیت',
     previewFailedTitle: 'کێشە لە پێشبینینی فایلی PDF',

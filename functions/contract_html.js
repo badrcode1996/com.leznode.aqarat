@@ -36,7 +36,7 @@ const L = {
     commissionEach: " — هەر لایەک ",
     propertyType: "جۆری موڵک:",
     project: "پڕۆژە / گەڕەک:",
-    propertyNo: "ژمارەی عەقار:",
+    propertyNo: "ژمارەی موڵک:",
     area: "ڕووبەر:",
     clausesHead: "هەردوو لایەن ڕێکەوتن لەسەر ئەم خاڵانەی خوارەوە:",
     notes: "تێبینی: ",
@@ -328,7 +328,10 @@ thead{display:table-header-group;}
 .band{display:flex;align-items:center;padding-bottom:6px;}
 .band .names{flex:1;}
 .band .names div{font-weight:bold;font-size:14px;}
-.band .logo{width:56px;height:56px;object-fit:contain;margin-right:10px;}
+/* Half again as large as it was, to match the receipt's mark. The band sits in
+   the thead and so repeats on every page — every pixel here is paid for on all
+   of them, which is why it stops at 84 rather than going receipt-sized. */
+.band .logo{width:84px;height:84px;object-fit:contain;margin-right:10px;}
 .bandline{border-bottom:1.2px solid ${accent};margin-bottom:8px;}
 .title{text-align:center;font-size:22px;font-weight:bold;color:${accent};
   margin:6px 0 8px;}

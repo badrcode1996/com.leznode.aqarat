@@ -148,8 +148,8 @@ function buildReceiptHtml(o) {
     <div class="spacer"></div>
     <div class="signs">
       ${sign("کارمەندی بەرپرس / المحاسب", "Acountant", r.agent_name)}
-      ${sign("لێوەرگیراو / المستلم", "Received From", receivedBy)}
-      ${sign("پێدراو / تسلیم الی", "Delivered To", deliveredTo)}
+      ${sign("پێدەر / المستلم", "Received From", receivedBy)}
+      ${sign("وەرگر / تسلیم الی", "Delivered To", deliveredTo)}
     </div>
     ${footerCells.length ? `<div class="footer" style="background:${accent}">
       ${footerCells.map((x) => `<span>${esc(x)}</span>`)
@@ -176,9 +176,13 @@ body{font-family:'Speda';direction:rtl;color:#111;font-size:${fs};}
 .banner .b{font-weight:bold;font-size:12px;}
 .banner .en3{font-size:10px;}
 .arrow{width:16px;height:34px;clip-path:polygon(100% 0,100% 100%,0 50%);}
-.logo{width:64px;height:44px;margin-right:10px;display:flex;align-items:center;
+/* Half again as large as it was — the mark was legible but not the first thing
+   the eye landed on. object-fit:contain means a wide or a tall logo both keep
+   their proportions inside the box, so only the room given changes. The extra
+   height comes out of .spacer, which is slack anyway. */
+.logo{width:96px;height:66px;margin-right:10px;display:flex;align-items:center;
   justify-content:center;object-fit:contain;}
-.logotext{font-weight:bold;font-size:16px;color:#0F2C59;}
+.logotext{font-weight:bold;font-size:20px;color:#0F2C59;}
 .copylabel{text-align:right;font-weight:bold;color:#0F2C59;font-size:11px;
   margin:4px 4px 4px 0;}
 .row2{display:flex;align-items:flex-end;}

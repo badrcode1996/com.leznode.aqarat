@@ -130,7 +130,7 @@ class RentContract extends Contract {
 
   final String propertyType; // جۆری موڵک
   final String projectName; // پڕۆژە/گەرەک
-  final String propertyNumber; // ژمارەی عەقار
+  final String propertyNumber; // ژمارەی موڵک
   final num area; // ڕووبەر (م²)
 
   final num rentAmount; // بری کرێ (per installment period)

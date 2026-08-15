@@ -224,7 +224,7 @@ class ContractTemplate {
     '{party2}': 'لایەنی دووەم',
     '{property_type}': 'جۆری موڵک',
     '{project}': 'پڕۆژە / گەڕەک',
-    '{property_number}': 'ژمارەی عەقار',
+    '{property_number}': 'ژمارەی موڵک',
     '{area}': 'ڕووبەر',
     '{currency}': 'دراو',
     '{rent_amount}': 'بڕی کرێ',
