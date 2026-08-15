@@ -62,7 +62,10 @@ function receiptViewModel(o) {
     /** true when money leaves the company (پارەدان). */
     isPay,
     accent: "#" + (t.receipt_color || "1E4D8B"),
-    fontSize: (t.receipt_font_size || 10) + "px",
+    // +2 across the board, not a new default: the stored size was set when the
+    // voucher printed smaller than it reads on paper, so every company's
+    // setting — default or customised — is two points short of legible.
+    fontSize: ((t.receipt_font_size || 10) + 2) + "px",
     /** Voucher title in Kurdish / Arabic / English. */
     titleKu: ty[0],
     titleAr: ty[1],

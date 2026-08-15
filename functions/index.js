@@ -193,6 +193,11 @@ async function htmlToPdf(html) {
     // networkidle0 would add a flat 500ms idle wait per render.
     await page.setContent(html, {waitUntil: "load"});
     await page.evaluateHandle("document.fonts.ready");
+    // A document may need a measuring pass before it is paginated — the
+    // contract uses one to drop its signatures onto the foot of the last page.
+    // It has to run here, after the real fonts have arrived, because it
+    // depends on where the lines wrap. Documents that define no hook skip it.
+    await page.evaluate(() => window.__fitLayout && window.__fitLayout());
     return await page.pdf({format: "A4", printBackground: true});
   } finally {
     await page.close();

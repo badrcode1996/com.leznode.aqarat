@@ -345,7 +345,12 @@ thead{display:table-header-group;}
 .chead{font-weight:bold;font-size:12px;color:${accent};margin-bottom:6px;}
 .clause{text-align:justify;margin-bottom:6px;}
 .notes{margin-top:8px;}
-.signs{display:flex;gap:16px;margin-top:28px;}
+.signs{display:flex;gap:16px;margin-top:28px;break-inside:avoid;}
+/* Filled in by __fitLayout so the signatures sit on the foot of the last page
+   instead of trailing the final clause halfway up it. Zero until then, which
+   is also the fallback if the measuring pass never runs. */
+.signgap{height:0;}
+.signend{display:block;height:0;}
 .sg{flex:1;text-align:center;}
 .sgl{font-weight:bold;}
 .sgline{border-top:1px solid #000;width:120px;margin:18px auto 4px;}
@@ -396,11 +401,13 @@ ${watermark}
     <div class="chead">${esc(T.clausesHead)}</div>
     ${clausesHtml}
     ${notes}
+    <div class="signgap"></div>
     <div class="signs">
       ${sign(T.sign1, c.party1_name)}
       ${sign(T.signAgent, c.agent_name)}
       ${sign(T.sign2, c.party2_name)}
     </div>
+    <span class="signend"></span>
   </td></tr></tbody>
   ${footerCells.length ? `<tfoot><tr><td>
     <div class="footspace"></div>
@@ -409,6 +416,104 @@ ${watermark}
 ${attachmentsHtml}
 ${footerCells.length ? `<div class="foot">${footerCells.map((x) =>
     `<span>${esc(x)}</span>`).join("")}</div>` : ""}
+<script>
+/*
+ * Drops the signatures to the foot of the last page.
+ *
+ * There is no CSS for "the bottom of whichever page the document ends on" —
+ * @page has no :last, and a fixed box would repeat on every page. So the empty
+ * space is measured and poured into .signgap.
+ *
+ * The measurement is a rehearsal, not arithmetic: the content is cloned into a
+ * multi-column box the size of the page's text area. Chrome fragments columns
+ * with the same engine it fragments pages with — repeating the table's thead
+ * and tfoot per fragment exactly as it does per page — so the rehearsal
+ * reproduces the real page breaks, including widows and orphans and the slack
+ * a page keeps when the next line will not fit. Dividing the content height by
+ * the page height does not: it misses that slack, and overshoots by roughly a
+ * line per page.
+ *
+ * Called by the renderer once the real fonts are in place — measuring against
+ * fallback metrics would wrap the lines somewhere else entirely.
+ */
+window.__fitLayout = function () {
+  var table = document.querySelector("table.page");
+  var cell = document.querySelector("tbody td");
+  var gap = document.querySelector(".signgap");
+  if (!table || !cell || !gap) return null;
+
+  // The paper's text width (A4 less the side margins), so the rehearsal wraps
+  // its lines where the printed page will.
+  document.body.style.width = "178mm";
+
+  // A column has to stand for the strip of page the CLAUSES get, not the whole
+  // page: the company band and the footer's reserved band repeat on every
+  // printed page and take their cut first. Multi-column layout does not repeat
+  // a table's header groups the way pagination does, so they are measured off
+  // the live table and subtracted instead of being cloned into the rehearsal.
+  var probe = document.createElement("div");
+  probe.style.cssText = "position:absolute;visibility:hidden;height:259mm;";
+  document.body.appendChild(probe);
+  var pageH = probe.getBoundingClientRect().height;
+  probe.remove();
+
+  var box = function (sel) {
+    var el = document.querySelector(sel);
+    return el ? el.getBoundingClientRect().height : 0;
+  };
+  var colH = pageH - box("table.page thead") - box(".footspace");
+
+  var sim = document.createElement("div");
+  sim.style.cssText = "position:absolute;left:-20000px;top:0;" +
+    "visibility:hidden;width:178mm;height:" + colH + "px;" +
+    "column-width:178mm;column-gap:0;column-fill:auto;";
+  document.body.appendChild(sim);
+
+  // Lays the clauses out with the given filler and reports where they end.
+  function rehearse(px) {
+    gap.style.height = px + "px";
+    sim.textContent = "";
+    for (var n = cell.firstChild; n; n = n.nextSibling) {
+      sim.appendChild(n.cloneNode(true));
+    }
+    var s = sim.getBoundingClientRect();
+    var end = sim.querySelector(".signend").getBoundingClientRect();
+    return {
+      // Columns run right to left, the document being RTL.
+      page: Math.round((s.right - end.right) / s.width) + 1,
+      // Every column starts at the box's top, so this is the room left below
+      // the signatures on the page they landed on.
+      room: colH - (end.bottom - s.top),
+    };
+  }
+
+  var flat = rehearse(0);
+
+  // Binary search for the tallest filler the last page still swallows.
+  //
+  // Not arithmetic: the filler is not worth its own height, because it starts
+  // wherever the last clause left off and part of it goes on finishing that
+  // page. And the exact figure is a pixel too tall anyway — the signatures
+  // carry a top margin that the measured room below them does not include, so
+  // a computed fit lands a hair over and Chrome moves the whole block, margin
+  // and all, onto a page of its own. Searching sidesteps both: the fill only
+  // ever grows while the signatures stay on the page they started on, so the
+  // worst case is the layout we had before.
+  var lo = 0;
+  // The filler cannot need more than the room below the signatures plus a
+  // whole page — nothing follows them but their own end marker.
+  var hi = flat.room + colH;
+  for (var i = 0; i < 12 && hi - lo > 2; i++) {
+    var mid = (lo + hi) / 2;
+    if (rehearse(mid).page === flat.page) lo = mid; else hi = mid;
+  }
+  var applied = Math.floor(lo);
+  gap.style.height = applied + "px";
+  sim.remove();
+  return {pages: flat.page, room: Math.round(flat.room),
+    applied: Math.round(applied)};
+};
+</script>
 </body></html>`;
 }
 
