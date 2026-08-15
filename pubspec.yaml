@@ -5,8 +5,8 @@ publish_to: "none"
 # Android continues from there rather than restarting. Play burns a code the
 # moment a bundle is uploaded to ANY track — internal, closed, production — and
 # never lets it be reused, so every upload needs a fresh number even when the
-# code has not changed. 11 went to a testing track; this is the next one.
-version: 1.1.0+12
+# code has not changed.
+version: 1.2.0+13
 
 environment:
   sdk: ">=3.4.0 <4.0.0"
