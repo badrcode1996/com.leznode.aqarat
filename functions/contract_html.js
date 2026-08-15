@@ -328,10 +328,13 @@ thead{display:table-header-group;}
 .band{display:flex;align-items:center;padding-bottom:6px;}
 .band .names{flex:1;}
 .band .names div{font-weight:bold;font-size:14px;}
-/* Half again as large as it was, to match the receipt's mark. The band sits in
-   the thead and so repeats on every page — every pixel here is paid for on all
-   of them, which is why it stops at 84 rather than going receipt-sized. */
-.band .logo{width:84px;height:84px;object-fit:contain;margin-right:10px;}
+/* A wide box, not a square one. object-fit:contain fits the mark INSIDE this
+   box, so a square box throttles a wide logo to a third of the height it could
+   have had — the width runs out first. At 62x26mm a wide mark comes out full
+   size and a square one is no smaller than it was.
+   The band lives in the thead and repeats on every page, so the height here is
+   paid for on all of them; it is the height, not the width, that costs. */
+.band .logo{width:235px;height:97px;object-fit:contain;margin-right:10px;}
 .bandline{border-bottom:1.2px solid ${accent};margin-bottom:8px;}
 .title{text-align:center;font-size:22px;font-weight:bold;color:${accent};
   margin:6px 0 8px;}
