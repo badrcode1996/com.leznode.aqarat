@@ -2,9 +2,11 @@ name: aqarat
 description: B2B Multi-Tenant Real Estate Management SaaS.
 publish_to: "none"
 # The build number is one series across both stores: iOS shipped 1.1.0 (10), so
-# Android continues at 11 rather than restarting. Play rejects any bundle whose
-# code is not higher than the last one uploaded.
-version: 1.1.0+11
+# Android continues from there rather than restarting. Play burns a code the
+# moment a bundle is uploaded to ANY track — internal, closed, production — and
+# never lets it be reused, so every upload needs a fresh number even when the
+# code has not changed. 11 went to a testing track; this is the next one.
+version: 1.1.0+12
 
 environment:
   sdk: ">=3.4.0 <4.0.0"
