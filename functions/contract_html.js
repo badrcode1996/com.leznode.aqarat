@@ -349,7 +349,11 @@ thead{display:table-header-group;}
 .ri .pp{white-space:nowrap;}
 .ri .sep{color:#aaa;}
 .chead{font-weight:bold;font-size:12px;color:${accent};margin-bottom:6px;}
-.clause{text-align:justify;margin-bottom:6px;}
+/* pre-line, so a clause that was written with a line break in it keeps one.
+   HTML folds a newline into a space by default, which silently ran the payment
+   schedule back onto the sentence that introduces it. Runs of spaces still
+   collapse, so ordinary clauses are unaffected. */
+.clause{text-align:justify;margin-bottom:6px;white-space:pre-line;}
 .notes{margin-top:8px;}
 .signs{display:flex;gap:16px;margin-top:28px;break-inside:avoid;}
 /* Filled in by __fitLayout so the signatures sit on the foot of the last page
