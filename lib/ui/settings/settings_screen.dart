@@ -33,8 +33,12 @@ class SettingsScreen extends ConsumerWidget {
     final features = ref.watch(currentPlanFeaturesProvider);
     final company = ref.watch(currentCompanyProvider).value;
 
+    // A branch admin holds the same UserRole as a company-wide one; only
+    // `branch_admin` separates them. Calling both "company admin" told someone
+    // who can see one branch that they run the whole company.
     final roleLabel = switch (user.role) {
-      UserRole.companyAdmin => S.roleCompanyAdmin,
+      UserRole.companyAdmin =>
+        user.isBranchAdmin ? S.roleBranchAdmin : S.roleCompanyAdmin,
       UserRole.agent => S.roleAgent,
       UserRole.superAdmin => S.roleSuperAdmin,
     };

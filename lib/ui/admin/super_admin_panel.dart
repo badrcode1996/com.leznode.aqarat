@@ -945,7 +945,15 @@ class _CompanyUsersScreen extends ConsumerWidget {
                           color: isAdmin ? accentYellow.withValues(alpha: 0.1) : primaryDarkBlue.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Text(isAdmin ? S.roleAdminShort : S.roleAgent, style: TextStyle(color: isAdmin ? accentYellow : AppColors.current.textStrong, fontSize: 12, fontWeight: FontWeight.bold)),
+                        // A branch admin carries the same role as a
+                        // company-wide one, so the chip has to say which.
+                        child: Text(
+                            isAdmin
+                                ? (u.branchAdmin
+                                    ? S.roleBranchAdmin
+                                    : S.roleAdminShort)
+                                : S.roleAgent,
+                            style: TextStyle(color: isAdmin ? accentYellow : AppColors.current.textStrong, fontSize: 12, fontWeight: FontWeight.bold)),
                       ),
                       const SizedBox(width: 4),
                       IconButton(

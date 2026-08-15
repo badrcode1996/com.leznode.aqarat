@@ -369,6 +369,7 @@ class AppStrings {
     required this.branches,
     required this.manageBranches,
     required this.noBranchesYet,
+    required this.roleBranchAdmin,
     required this.branchesCommaLabel,
     required this.branchesCommaHint,
     required this.branchesUpdated,
@@ -823,6 +824,11 @@ class AppStrings {
   /// Shown where a branch would be picked, when the company has none on file.
   /// The picker used to be hidden outright, which read as a missing feature.
   final String noBranchesYet;
+
+  /// A company admin whose reach stops at their own branch. Separate from
+  /// [roleCompanyAdmin] because the two are the same UserRole, told apart only
+  /// by `branch_admin` — labelling both "company admin" overstates one of them.
+  final String roleBranchAdmin;
   final String branchesCommaLabel;
   final String branchesCommaHint;
   final String branchesUpdated;
@@ -1327,7 +1333,7 @@ class AppStrings {
         infoUpdated, companyNameKu, companyNameAr, companyNameEn, usedAsDocumentId,
         companyAddress, companyLogo, logoRequired, companyCity, city, phone1,
         phone2, publicMobile, branch, branches, manageBranches, noBranchesYet,
-        branchesCommaLabel,
+        roleBranchAdmin, branchesCommaLabel,
         branchesCommaHint, branchesUpdated, newUser, noUsers, editUser, editInfo,
         fullName, newPassword, changePassword, passwordChanged, minSixChars,
         emailValidShort, account1, account2, newSuperAdmin, superAdmins,
@@ -1690,6 +1696,7 @@ class AppStrings {
     noBranchesYet:
         'هیچ لقێک زیاد نەکراوە. سەرەتا لە «بەڕێوەبردنی لقەکان» لقەکان دابنێ، '
             'ئینجا دەتوانیت کارمەند بۆ لق دیاری بکەیت.',
+    roleBranchAdmin: 'بەڕێوەبەری لق',
     branchesCommaLabel: 'لقەکان (بە کۆما جیابکەرەوە)',
     branchesCommaHint: 'لقەکان بە کۆما جیابکەرەوە',
     branchesUpdated: 'لقەکان نوێکرانەوە',
@@ -2107,6 +2114,7 @@ class AppStrings {
     noBranchesYet:
         'لم تتم إضافة أي فرع. أضف الفروع أولاً من «إدارة الفروع»، '
             'بعدها يمكنك تحديد فرع الموظف.',
+    roleBranchAdmin: 'مدير الفرع',
     branchesCommaLabel: 'الفروع (افصلها بفاصلة)',
     branchesCommaHint: 'افصل الفروع بفاصلة',
     branchesUpdated: 'تم تحديث الفروع',
@@ -2526,6 +2534,7 @@ class AppStrings {
     noBranchesYet:
         'No branches yet. Add them under "Manage branches" first, then you can '
             'assign a member to one.',
+    roleBranchAdmin: 'Branch admin',
     branchesCommaLabel: 'Branches (comma separated)',
     branchesCommaHint: 'Separate the branches with commas',
     branchesUpdated: 'Branches updated',
