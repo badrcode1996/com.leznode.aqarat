@@ -21,6 +21,59 @@ class ContractRepository {
   DocumentReference<Map<String, dynamic>> get _statsDoc =>
       _db.collection('company_stats').doc(_user.companyId);
 
+  /// The same counters, mirrored per branch.
+  ///
+  /// The dashboard is the one screen that reads counters instead of running a
+  /// scoped query, so it was the one screen where branch isolation did not
+  /// hold: a branch admin with no contracts of their own was shown the whole
+  /// company's total. Every write below moves the company doc and this mirror
+  /// together, in the same transaction, so the two can never disagree.
+  ///
+  /// Keyed by the branch that owns the CONTRACT, never by the current user's:
+  /// a company-wide admin editing another branch's contract has to move that
+  /// branch's numbers, not their own.
+  DocumentReference<Map<String, dynamic>> _branchStatsDoc(String branch) =>
+      _statsDoc.collection('branches').doc(branchKey(branch));
+
+  /// A document id for a branch name. Ids may not be empty or contain a slash,
+  /// and branch names are typed by hand. The encoding only has to be stable —
+  /// the same helper writes the doc and reads it back — so two names that
+  /// differ only by a slash would share a document, which is a trade the
+  /// alternative (a lookup table) does not pay for.
+  static String branchKey(String branch) {
+    final trimmed = branch.trim();
+    if (trimmed.isEmpty) return '_none';
+    return trimmed.replaceAll('/', '_');
+  }
+
+  /// Moves a set of counters on the company doc and on [branch]'s mirror.
+  ///
+  /// merge:true on both: neither document is created up front — a company that
+  /// has never written a contract has no stats doc, and a branch gets its
+  /// mirror the first time something happens in it.
+  void _bumpStats(
+      Transaction txn, String branch, Map<String, dynamic> updates) {
+    txn.set(
+      _statsDoc,
+      {
+        'company_id': _user.companyId,
+        ...updates,
+        'updated_at': FieldValue.serverTimestamp(),
+      },
+      SetOptions(merge: true),
+    );
+    txn.set(
+      _branchStatsDoc(branch),
+      {
+        'company_id': _user.companyId,
+        'branch': branch,
+        ...updates,
+        'updated_at': FieldValue.serverTimestamp(),
+      },
+      SetOptions(merge: true),
+    );
+  }
+
   /// Builds the base query honoring multi-tenant + branch isolation.
   ///
   /// IMPORTANT: the `company_id ==` and `branch ==` clauses must match the
@@ -178,23 +231,16 @@ class ContractRepository {
         ..['branch'] = _user.branch; // denormalize creator's branch
       txn.set(newRef, data);
 
-      final updates = <String, dynamic>{
-        'company_id': _user.companyId,
+      // The contract number above comes from the COMPANY counter, and stays
+      // that way — numbering is per company, not per branch.
+      _bumpStats(txn, _user.branch, {
         'contract_count': FieldValue.increment(1),
         ..._increments(_statsAmounts(contract, 1)),
-        'updated_at': FieldValue.serverTimestamp(),
         if (contract.type == ContractType.rent)
           'rent_contract_count': FieldValue.increment(1)
         else
           'sale_contract_count': FieldValue.increment(1),
-      };
-
-      // doc may not exist yet for a brand-new company → set with merge.
-      if (statsSnap.exists) {
-        txn.update(_statsDoc, updates);
-      } else {
-        txn.set(_statsDoc, updates, SetOptions(merge: true));
-      }
+      });
     });
 
     return newRef.id;
@@ -311,15 +357,11 @@ class ContractRepository {
       // per-currency ones included — correct even when the edit changed the
       // currency, which a plain difference would get wrong.
       final stored = Contract.fromJson(snap.id, newData);
-      txn.set(
-        _statsDoc,
-        {
-          'company_id': _user.companyId,
-          ..._increments(_sumAmounts(
-              _statsAmounts(old, -1), _statsAmounts(stored, 1))),
-          'updated_at': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
+      _bumpStats(
+        txn,
+        data['branch'] as String? ?? '',
+        _increments(
+            _sumAmounts(_statsAmounts(old, -1), _statsAmounts(stored, 1))),
       );
     });
   }
@@ -340,20 +382,14 @@ class ContractRepository {
       final stored = Contract.fromJson(snap.id, data);
 
       txn.delete(ref);
-      txn.set(
-        _statsDoc,
-        {
-          'company_id': _user.companyId,
-          'contract_count': FieldValue.increment(-1),
-          ..._increments(_statsAmounts(stored, -1)),
-          if (stored.type == ContractType.rent)
-            'rent_contract_count': FieldValue.increment(-1)
-          else
-            'sale_contract_count': FieldValue.increment(-1),
-          'updated_at': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      );
+      _bumpStats(txn, data['branch'] as String? ?? '', {
+        'contract_count': FieldValue.increment(-1),
+        ..._increments(_statsAmounts(stored, -1)),
+        if (stored.type == ContractType.rent)
+          'rent_contract_count': FieldValue.increment(-1)
+        else
+          'sale_contract_count': FieldValue.increment(-1),
+      });
     });
   }
 
@@ -369,40 +405,37 @@ class ContractRepository {
   Future<void> recalculateStats() async {
     final snap =
         await _contracts.where('company_id', isEqualTo: _user.companyId).get();
-    final contracts =
-        snap.docs.map((d) => Contract.fromJson(d.id, d.data())).toList();
 
-    final totals = <String, num>{};
-    void add(Map<String, num> amounts) {
-      amounts.forEach((k, v) => totals[k] = (totals[k] ?? 0) + v);
-    }
-
-    var rent = 0;
-    var sale = 0;
-    for (final c in contracts) {
-      add(_statsAmounts(c, 1));
-      if (c.type == ContractType.rent) {
-        rent++;
-      } else {
-        sale++;
+    // Totals for the company, and the same again for each branch that owns a
+    // contract. Rebuilding the mirrors here is also how a company that was
+    // running before they existed gets them at all.
+    final totals = _Tally();
+    final perBranch = <String, _Tally>{};
+    for (final doc in snap.docs) {
+      final c = Contract.fromJson(doc.id, doc.data());
+      final branch = doc.data()['branch'] as String? ?? '';
+      for (final t in [totals, perBranch.putIfAbsent(branch, _Tally.new)]) {
+        t.add(_statsAmounts(c, 1));
+        t.count(c.type);
       }
     }
 
-    await _statsDoc.set({
-      'company_id': _user.companyId,
-      'contract_count': contracts.length,
-      'rent_contract_count': rent,
-      'sale_contract_count': sale,
-      // Absent keys must still be written as 0, or a counter that has drifted
-      // to a positive value would survive the repair untouched.
-      'total_revenue': totals['total_revenue'] ?? 0,
-      'collected_revenue': totals['collected_revenue'] ?? 0,
-      'collected_iqd': totals['collected_iqd'] ?? 0,
-      'collected_usd': totals['collected_usd'] ?? 0,
-      'guarantee_iqd': totals['guarantee_iqd'] ?? 0,
-      'guarantee_usd': totals['guarantee_usd'] ?? 0,
-      'updated_at': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    await _statsDoc.set(totals.toJson(_user.companyId), SetOptions(merge: true));
+
+    // A branch emptied since the last repair keeps a document full of numbers
+    // that no contract backs any more, so every existing mirror is rewritten —
+    // the ones with nothing left in them to zero.
+    final existing = await _statsDoc.collection('branches').get();
+    for (final doc in existing.docs) {
+      final branch = doc.data()['branch'] as String? ?? '';
+      if (!perBranch.containsKey(branch)) perBranch[branch] = _Tally();
+    }
+    for (final entry in perBranch.entries) {
+      await _branchStatsDoc(entry.key).set(
+        {...entry.value.toJson(_user.companyId), 'branch': entry.key},
+        SetOptions(merge: true),
+      );
+    }
 
     // Backfill the fields the overdue and deposit queries filter on.
     //
@@ -462,15 +495,9 @@ class ContractRepository {
 
       // Returning it releases the amount; un-returning takes it back.
       final delta = returned ? -c.guaranteeAmount : c.guaranteeAmount;
-      txn.set(
-        _statsDoc,
-        {
-          'company_id': _user.companyId,
-          'guarantee_${_cur(c)}': FieldValue.increment(delta),
-          'updated_at': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      );
+      _bumpStats(txn, data['branch'] as String? ?? '', {
+        'guarantee_${_cur(c)}': FieldValue.increment(delta),
+      });
     });
   }
 
@@ -572,16 +599,10 @@ class ContractRepository {
       if (wasReceived && !nowReceived) delta = -contract.rentAmount;
 
       if (delta != 0) {
-        txn.set(
-          _statsDoc,
-          {
-            'company_id': _user.companyId,
-            'collected_revenue': FieldValue.increment(delta),
-            'collected_${_cur(contract)}': FieldValue.increment(delta),
-            'updated_at': FieldValue.serverTimestamp(),
-          },
-          SetOptions(merge: true),
-        );
+        _bumpStats(txn, data['branch'] as String? ?? '', {
+          'collected_revenue': FieldValue.increment(delta),
+          'collected_${_cur(contract)}': FieldValue.increment(delta),
+        });
       }
     });
   }
@@ -726,19 +747,71 @@ class PagedContractsNotifier extends StateNotifier<PagedContracts> {
   }
 }
 
+/// Counters accumulated over a set of contracts, for [ContractRepository
+/// .recalculateStats]. One of these stands for the company and one for each
+/// branch, so the same arithmetic produces both and they cannot disagree.
+class _Tally {
+  final Map<String, num> _amounts = {};
+  int _contracts = 0;
+  int _rent = 0;
+  int _sale = 0;
+
+  void add(Map<String, num> amounts) {
+    amounts.forEach((k, v) => _amounts[k] = (_amounts[k] ?? 0) + v);
+  }
+
+  void count(ContractType type) {
+    _contracts++;
+    if (type == ContractType.rent) {
+      _rent++;
+    } else {
+      _sale++;
+    }
+  }
+
+  /// Every key is written even when it tallied to nothing: a repair that left
+  /// absent keys alone would leave a counter that had drifted upward exactly
+  /// where it was.
+  Map<String, dynamic> toJson(String companyId) => {
+        'company_id': companyId,
+        'contract_count': _contracts,
+        'rent_contract_count': _rent,
+        'sale_contract_count': _sale,
+        'total_revenue': _amounts['total_revenue'] ?? 0,
+        'collected_revenue': _amounts['collected_revenue'] ?? 0,
+        'collected_iqd': _amounts['collected_iqd'] ?? 0,
+        'collected_usd': _amounts['collected_usd'] ?? 0,
+        'guarantee_iqd': _amounts['guarantee_iqd'] ?? 0,
+        'guarantee_usd': _amounts['guarantee_usd'] ?? 0,
+        'updated_at': FieldValue.serverTimestamp(),
+      };
+}
+
 final pagedContractsProvider = StateNotifierProvider.family<
     PagedContractsNotifier, PagedContracts, ContractType?>((ref, type) {
   return PagedContractsNotifier(ref.watch(contractRepositoryProvider), type);
 });
 
-/// The current company's pre-aggregated stats doc (one read, kept live).
+/// The pre-aggregated stats the dashboard reads (one document, kept live).
+///
+/// Company-wide for an admin who sees the whole company, and the branch mirror
+/// for everyone else — every other query behind the app is already scoped that
+/// way, and these counters were the last thing still showing a branch admin
+/// figures from branches they cannot open.
 final companyStatsProvider = StreamProvider<CompanyStats?>((ref) {
   final db = ref.watch(firestoreProvider);
   final user = ref.watch(currentUserProvider);
   if (user.companyId.isEmpty) return Stream.value(null);
-  return db
-      .collection('company_stats')
-      .doc(user.companyId)
-      .snapshots()
-      .map((s) => s.exists ? CompanyStats.fromJson(s.id, s.data()!) : null);
+  final company = db.collection('company_stats').doc(user.companyId);
+  final doc = user.isCompanyWide
+      ? company
+      : company
+          .collection('branches')
+          .doc(ContractRepository.branchKey(user.branch));
+  // A branch with no mirror yet reads as zero rather than null, so a dashboard
+  // shows a branch that has done nothing as empty instead of falling back to
+  // the company's numbers.
+  return doc.snapshots().map((s) => s.exists
+      ? CompanyStats.fromJson(user.companyId, s.data()!)
+      : (user.isCompanyWide ? null : CompanyStats.empty(user.companyId)));
 });

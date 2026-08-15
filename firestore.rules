@@ -143,6 +143,15 @@ service cloud.firestore {
     // --- Aggregated stats: one doc per company (doc id == company_id).
     match /company_stats/{companyId} {
       allow read, write: if isSuperAdmin() || activeMember(companyId);
+
+      // The same counters mirrored per branch, which is what a branch-scoped
+      // user's dashboard reads. Rules do not cascade into a subcollection, so
+      // this has to be spelled out. Any member of the company may write one:
+      // a company-wide admin editing another branch's contract has to move
+      // that branch's numbers in the same transaction.
+      match /branches/{branch} {
+        allow read, write: if isSuperAdmin() || activeMember(companyId);
+      }
     }
 
     // --- Contracts: company- AND branch-scoped. A member only ever touches

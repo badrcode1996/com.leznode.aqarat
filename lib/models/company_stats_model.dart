@@ -8,6 +8,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 /// contract to compute dashboards (expensive — one read per contract), we keep
 /// running counters here and mutate them inside transactions whenever a
 /// contract changes. The Company Admin dashboard then costs exactly ONE read.
+///
+/// The same shape is mirrored per branch under `company_stats/{id}/branches`,
+/// which is what a branch-scoped user's dashboard reads instead — see
+/// ContractRepository.
 class CompanyStats {
   const CompanyStats({
     required this.companyId,
@@ -47,6 +51,19 @@ class CompanyStats {
   final num guaranteeUsd;
 
   final DateTime updatedAt;
+
+  /// All zeros. Stands for a branch that has not had a contract written in it
+  /// yet, so its dashboard reads empty instead of falling back to figures from
+  /// the rest of the company.
+  factory CompanyStats.empty(String companyId) => CompanyStats(
+        companyId: companyId,
+        contractCount: 0,
+        rentContractCount: 0,
+        saleContractCount: 0,
+        totalRevenue: 0,
+        collectedRevenue: 0,
+        updatedAt: DateTime.fromMillisecondsSinceEpoch(0),
+      );
 
   factory CompanyStats.fromJson(String id, Map<String, dynamic> json) =>
       CompanyStats(

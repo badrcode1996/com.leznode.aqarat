@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:aqarat/data/contract_repository.dart';
+import 'package:aqarat/models/company_stats_model.dart';
 import 'package:aqarat/models/contract_model.dart';
 import 'package:aqarat/models/enums.dart';
 
@@ -185,6 +186,44 @@ void main() {
 
       expect(net['guarantee_iqd'], -500, reason: 'the dinar total must drop');
       expect(net['guarantee_usd'], 500, reason: 'the dollar total must rise');
+    });
+  });
+
+  group('branch mirror', () {
+    // The counters are mirrored per branch under a document named for the
+    // branch. Firestore ids may not be empty or contain a slash, and branch
+    // names are typed by hand — a key that changed between the write and the
+    // read would leave a branch reading someone else's numbers, or none.
+    test('a branch name becomes a usable document id', () {
+      expect(ContractRepository.branchKey('هەولێر'), 'هەولێر');
+      expect(ContractRepository.branchKey('  سلێمانی  '), 'سلێمانی');
+    });
+
+    test('the ids Firestore rejects are encoded', () {
+      expect(ContractRepository.branchKey(''), '_none',
+          reason: 'a company with no branches still needs one document');
+      expect(ContractRepository.branchKey('   '), '_none');
+      expect(ContractRepository.branchKey('a/b'), 'a_b',
+          reason: 'a slash would start a subcollection path');
+    });
+
+    test('the key is stable, so a write and a read agree', () {
+      for (final name in ['هەولێر', '', 'a/b', ' دهۆک ']) {
+        expect(ContractRepository.branchKey(name),
+            ContractRepository.branchKey(ContractRepository.branchKey(name)),
+            reason: 're-encoding an already-encoded key must not move it');
+      }
+    });
+
+    test('a branch with no contracts yet reads as zero, not as the company',
+        () {
+      final empty = CompanyStats.empty('acme');
+      expect(empty.contractCount, 0);
+      expect(empty.collectedIqd, 0);
+      expect(empty.collectedUsd, 0);
+      expect(empty.guaranteeIqd, 0);
+      expect(empty.guaranteeUsd, 0);
+      expect(empty.totalRevenue, 0);
     });
   });
 }
