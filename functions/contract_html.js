@@ -133,6 +133,16 @@ function tokensFor(c, company, lang) {
   });
 }
 
+/**
+ * Arabic-Indic digits. Used for the clause numbering, which sits at the head of
+ * a line of Kurdish or Arabic and read as borrowed from another alphabet in
+ * Latin figures. Money and dates are deliberately NOT put through this: they
+ * are figures people check against a bank slip, and Latin digits with thousands
+ * separators are what those are written in.
+ */
+const arabicNum = (n) =>
+  String(n).replace(/[0-9]/g, (d) => "٠١٢٣٤٥٦٧٨٩"[Number(d)]);
+
 const applyTokens = (s, tokens) =>
   String(s).replace(/\{(\w+)\}/g, (m, k) => (k in tokens ? tokens[k] : m));
 
@@ -214,7 +224,7 @@ function contractViewModel(o) {
     fontRegB64: o.fontRegB64,
     fontBoldB64: o.fontBoldB64,
     // Helpers, so a design doesn't re-implement them.
-    esc, money, fmtDate, applyTokens,
+    esc, money, fmtDate, applyTokens, arabicNum,
   };
 }
 
@@ -276,7 +286,8 @@ function buildContractHtml(o) {
 
   // vm.clauses already has its {token}s substituted.
   const clausesHtml = vm.clauses
-      .map((cl, i) => `<div class="clause">${i + 1}- ${esc(cl)}</div>`)
+      .map((cl, i) =>
+        `<div class="clause">${arabicNum(i + 1)}- ${esc(cl)}</div>`)
       .join("");
 
   const notes = (c.notes && c.notes.trim()) ?
