@@ -317,11 +317,25 @@ function buildContractHtml(o) {
 @font-face{font-family:'DocFont';src:url(data:font/ttf;base64,${o.fontRegB64}) format('truetype');font-weight:normal;}
 @font-face{font-family:'DocFont';src:url(data:font/ttf;base64,${o.fontBoldB64}) format('truetype');font-weight:bold;}
 *{box-sizing:border-box;margin:0;padding:0;}
-@page{size:A4;margin:14mm 16mm 24mm;}
-body{font-family:'DocFont';direction:rtl;color:#111;font-size:${fs};line-height:1.6;}
+/* The bottom margin used to be 24mm — ten more than the top — which put the
+   footer a finger's width above the text and left a band of bare paper under
+   it. Nothing needed the room: the footer is a fixed box that sits at the
+   bottom of the CONTENT area, so the extra margin was below it, not around it.
+   At 12/10 a sale contract's twelve clauses fit on one sheet instead of
+   spilling a signature block onto a second. */
+@page{size:A4;margin:12mm 16mm 10mm;}
+/* A4 less those top and bottom margins — the height of one page of content.
+   Two other places need the same figure (the appendix grid, and the rehearsal
+   __fitLayout runs), and both had it written out again; they read it from here
+   now, so changing the margins above cannot leave one of them behind. */
+:root{--page-h:275mm;}
+/* 1.4 rather than 1.6. At the 16px clauses print in, the difference is about
+   three quarters of a line per clause, which over a contract is most of a
+   page — and 1.4 is still comfortable for justified Kurdish. */
+body{font-family:'DocFont';direction:rtl;color:#111;font-size:${fs};line-height:1.4;}
 table.page{width:100%;border-collapse:collapse;}
 thead{display:table-header-group;}
-.band{display:flex;align-items:center;padding-bottom:6px;}
+.band{display:flex;align-items:center;padding-bottom:4px;}
 .band .names{flex:1;}
 .band .names div{font-weight:bold;font-size:14px;}
 /* A wide box, not a square one. object-fit:contain fits the mark INSIDE this
@@ -331,27 +345,27 @@ thead{display:table-header-group;}
    The band lives in the thead and repeats on every page, so the height here is
    paid for on all of them; it is the height, not the width, that costs. */
 .band .logo{width:235px;height:97px;object-fit:contain;margin-right:10px;}
-.bandline{border-bottom:1.2px solid ${accent};margin-bottom:8px;}
-.title{text-align:center;font-size:22px;font-weight:bold;color:${accent};
-  margin:6px 0 8px;}
-.card{border:1px solid ${accent};border-radius:6px;padding:8px 10px;margin-bottom:10px;}
+.bandline{border-bottom:1.2px solid ${accent};margin-bottom:6px;}
+.title{text-align:center;font-size:20px;font-weight:bold;color:${accent};
+  margin:2px 0 6px;}
+.card{border:1px solid ${accent};border-radius:6px;padding:6px 10px;margin-bottom:8px;}
 .card .ct{font-weight:bold;font-size:13px;color:${accent};margin-bottom:6px;}
-.r{display:flex;align-items:baseline;margin:3px 0;}
+.r{display:flex;align-items:baseline;margin:2px 0;}
 .r .rl{font-weight:bold;white-space:nowrap;margin-left:6px;}
 .r .rv{flex:1;}
 /* The property line: normal inline flow so pairs wrap only between each
    other, never mid-pair. */
-.ri{display:block;line-height:1.8;}
+.ri{display:block;line-height:1.6;}
 .ri .pp{white-space:nowrap;}
 .ri .sep{color:#aaa;}
-.chead{font-weight:bold;font-size:12px;color:${accent};margin-bottom:6px;}
+.chead{font-weight:bold;font-size:12px;color:${accent};margin-bottom:4px;}
 /* pre-line, so a clause that was written with a line break in it keeps one.
    HTML folds a newline into a space by default, which silently ran the payment
    schedule back onto the sentence that introduces it. Runs of spaces still
    collapse, so ordinary clauses are unaffected. */
-.clause{text-align:justify;margin-bottom:6px;white-space:pre-line;}
+.clause{text-align:justify;margin-bottom:3px;white-space:pre-line;}
 .notes{margin-top:8px;}
-.signs{display:flex;gap:16px;margin-top:28px;break-inside:avoid;}
+.signs{display:flex;gap:16px;margin-top:14px;break-inside:avoid;}
 /* Filled in by __fitLayout so the signatures sit on the foot of the last page
    instead of trailing the final clause halfway up it. Zero until then, which
    is also the fallback if the measuring pass never runs. */
@@ -374,14 +388,14 @@ thead{display:table-header-group;}
 .foot{position:fixed;bottom:0;left:0;right:0;padding-top:6px;
   border-top:.8px solid #bbb;display:flex;justify-content:space-between;
   font-size:9px;background:#fff;}
-.footspace{height:30px;}
+.footspace{height:24px;}
 /* Appendix: four photos to a plain page, 2x2. Each page is its own grid so
    the break lands between pages, never inside a row. The opaque white
    background + z-index cover the fixed watermark and footer, which would
    otherwise repeat onto these pages — the appendix is meant to be bare
    paper, with no company design on it. */
 .attachpage{page-break-before:always;display:grid;
-  grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:8mm;height:259mm;
+  grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:8mm;height:var(--page-h);
   position:relative;z-index:5;background:#fff;}
 /* Trailing page with 1-2 photos: one column so each fills the page. */
 .attachpage.sparse{grid-template-columns:1fr;}
@@ -458,7 +472,9 @@ window.__fitLayout = function () {
   // a table's header groups the way pagination does, so they are measured off
   // the live table and subtracted instead of being cloned into the rehearsal.
   var probe = document.createElement("div");
-  probe.style.cssText = "position:absolute;visibility:hidden;height:259mm;";
+  // --page-h, so this cannot fall out of step with the @page margins.
+  probe.style.cssText = "position:absolute;visibility:hidden;" +
+    "height:var(--page-h);";
   document.body.appendChild(probe);
   var pageH = probe.getBoundingClientRect().height;
   probe.remove();

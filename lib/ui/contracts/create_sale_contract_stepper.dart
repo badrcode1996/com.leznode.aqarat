@@ -130,6 +130,11 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
   DateTime _deliveryDate = DateTime.now();
   final _docs = ContractDocsController();
 
+  /// Free text printed under the last clause. A sale contract has always had
+  /// the field on the model and the renderer has always printed it — only the
+  /// form was missing, so there was no way to put anything in it.
+  String _notes = '';
+
   static final _date = DateFormat('yyyy/MM/dd');
 
   bool get _isEdit => widget.existing != null;
@@ -158,6 +163,45 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
     _deliveryDate = e.deliveryDate;
     _docs.urls.addAll(e.attachmentUrls);
     _docs.printDocs = e.printAttachments;
+    _notes = e.notes;
+  }
+
+  /// Same editor the rent stepper uses, so notes are written the same way on
+  /// both contracts.
+  Future<void> _editNotes() async {
+    final controller = TextEditingController(text: _notes);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(S.notes,
+            style: TextStyle(
+                color: AppColors.current.textStrong,
+                fontWeight: FontWeight.bold)),
+        content: TextField(
+          controller: controller,
+          maxLines: 5,
+          minLines: 5,
+          maxLength: 500,
+          decoration: modernInputDecoration(label: S.notesHint),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(S.cancel,
+                  style: TextStyle(color: AppColors.current.textMuted))),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+                backgroundColor: primaryDarkBlue,
+                shape:
+                    RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+            onPressed: () => Navigator.pop(ctx, controller.text),
+            child: Text(S.saveShort, style: const TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    if (result != null) setState(() => _notes = result);
   }
 
   /// Renders a num without a trailing ".0" so editing fields stay clean.
@@ -243,7 +287,7 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
       commissionItems: items,
       lawyer: _lawyer.text.trim(),
       deliveryDate: _deliveryDate,
-      notes: existing?.notes ?? '',
+      notes: _notes.trim(),
       agentName: existing?.agentName ?? user.displayName,
       attachmentUrls: attachmentUrls,
       printAttachments: _docs.printDocs,
@@ -450,6 +494,48 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
                       _lawyerField(),
 
                       _datePicker(S.deliveryDate, _deliveryDate, (d) => setState(() => _deliveryDate = d)),
+
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.current.card,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppColors.current.divider),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.note_alt_outlined,
+                                    color: AppColors.current.textStrong),
+                                const SizedBox(width: 8),
+                                Text(S.notesSection,
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.current.textBody)),
+                                const Spacer(),
+                                TextButton(
+                                  onPressed: _editNotes,
+                                  style: TextButton.styleFrom(
+                                      foregroundColor:
+                                          AppColors.current.textStrong),
+                                  child: Text(_notes.isEmpty ? S.add : S.edit),
+                                ),
+                              ],
+                            ),
+                            if (_notes.isNotEmpty) ...[
+                              const Divider(),
+                              Text(_notes,
+                                  style: TextStyle(
+                                      color: AppColors.current.textBody,
+                                      fontSize: 13)),
+                            ],
+                          ],
+                        ),
+                      ),
 
                       const SizedBox(height: 12),
                       ContractDocsField(controller: _docs),
