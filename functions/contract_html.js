@@ -67,15 +67,44 @@ const L = {
 /** Falls back to Kurdish for any value that is not exactly "ar". */
 const langOf = (v) => (v === "ar" ? "ar" : "ku");
 
-const esc = (s) =>
+/**
+ * Rewrites 0-9 as ٠-٩. Only the ten digits change, so a thousands comma, a date
+ * separator and a percent sign all survive: 1,500 becomes ١,٥٠٠ and 2026/08/16
+ * becomes ٢٠٢٦/٠٨/١٦.
+ *
+ * Idempotent — Arabic-Indic digits are not in the range it matches — so text
+ * that already carries them, like the ٪١ written into a clause by hand, is left
+ * exactly as it is.
+ */
+const arabicNum = (n) =>
+  String(n).replace(/[0-9]/g, (d) => "٠١٢٣٤٥٦٧٨٩"[Number(d)]);
+
+const escHtml = (s) =>
   String(s == null ? "" : s)
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;");
 
-// esc() is for text nodes; a value going into an attribute must also have its
-// quotes escaped or it can close the attribute and inject markup.
-const escAttr = (s) => esc(s).replace(/"/g, "&quot;");
+/**
+ * Text destined for the page: escaped, and with its figures in Arabic-Indic
+ * digits. Amounts are typed into the app as 500 and print as ٥٠٠ — the document
+ * is set in Kurdish or Arabic and reads in those digits throughout.
+ *
+ * Converting here rather than at each call site is what makes it exhaustive:
+ * every piece of text on the document already passes through this, so dates,
+ * amounts, the contract number, the area and the tokens substituted into
+ * clauses are all covered at once.
+ */
+const esc = (s) => arabicNum(escHtml(s));
+
+/**
+ * For a value going into an attribute: quotes escaped too, or it can close the
+ * attribute and inject markup.
+ *
+ * Deliberately NOT digit-converted — this is what carries the logo's base64
+ * data: URI, and rewriting the digits inside one would destroy the image.
+ */
+const escAttr = (s) => escHtml(s).replace(/"/g, "&quot;");
 
 const money = (n) => Number(n || 0).toLocaleString("en-US");
 
@@ -132,16 +161,6 @@ function tokensFor(c, company, lang) {
     lawyer: c.lawyer || "",
   });
 }
-
-/**
- * Arabic-Indic digits. Used for the clause numbering, which sits at the head of
- * a line of Kurdish or Arabic and read as borrowed from another alphabet in
- * Latin figures. Money and dates are deliberately NOT put through this: they
- * are figures people check against a bank slip, and Latin digits with thousands
- * separators are what those are written in.
- */
-const arabicNum = (n) =>
-  String(n).replace(/[0-9]/g, (d) => "٠١٢٣٤٥٦٧٨٩"[Number(d)]);
 
 const applyTokens = (s, tokens) =>
   String(s).replace(/\{(\w+)\}/g, (m, k) => (k in tokens ? tokens[k] : m));

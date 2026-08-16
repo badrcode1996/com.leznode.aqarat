@@ -16,13 +16,34 @@ const TYPE = {
   rent_pay: ["پسولەی دانەوەی کرێ", "وصل صرف الإيجار", "RENT PAYMENT", true],
 };
 
-const escAttr = (s) => esc(s).replace(/"/g, "&quot;");
+/**
+ * Rewrites 0-9 as ٠-٩, and nothing else — a thousands comma and a date's
+ * slashes survive, so 750,000 becomes ٧٥٠,٠٠٠ and 2026/08/16 becomes
+ * ٢٠٢٦/٠٨/١٦. Idempotent, since Arabic-Indic digits are outside the range.
+ */
+const arabicNum = (n) =>
+  String(n).replace(/[0-9]/g, (d) => "٠١٢٣٤٥٦٧٨٩"[Number(d)]);
 
-const esc = (s) =>
+const escHtml = (s) =>
   String(s == null ? "" : s)
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;");
+
+/**
+ * For an attribute value. NOT digit-converted: this carries the logo's base64
+ * data: URI, and rewriting the digits inside one would destroy the image.
+ */
+const escAttr = (s) => escHtml(s).replace(/"/g, "&quot;");
+
+/**
+ * Text destined for the voucher: escaped, and with its figures in Arabic-Indic
+ * digits. An amount is typed in as 750000 and prints as ٧٥٠,٠٠٠.
+ *
+ * Converting here rather than at each call site is what makes it exhaustive —
+ * every piece of text on the voucher already passes through this.
+ */
+const esc = (s) => arabicNum(escHtml(s));
 
 const money = (n) =>
   Number(n || 0).toLocaleString("en-US");
