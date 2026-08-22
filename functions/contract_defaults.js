@@ -76,11 +76,21 @@ const SALE_CLAUSES_AR = [
   "على الطرف الثاني دفع ما نسبته ١٪ من سعر العقار الموصوف أعلاه إلى {company} مقابل شراء هذا العقار.",
 ];
 
+/**
+ * Headings a template may still carry from before a rename. A stored title
+ * always wins over the default, so a company that had ever saved its template
+ * kept the old wording forever — these are treated as unset instead. Mirrored
+ * in `lib/models/contract_template_model.dart` (legacyTitles), which the app's
+ * own preview reads — both must list the same strings. Drop an entry once
+ * every template has been re-saved.
+ */
+const LEGACY_TITLES = ["گرێبەستی کڕین و فرۆشتن", "عقد بيع وشراء"];
+
 const DEFAULTS = {
   rent_title: "گرێبەستی کرێ",
-  sale_title: "گرێبەستی کڕین و فرۆشتن",
+  sale_title: "گرێبەستی فرۆشتن",
   rent_title_ar: "عقد إيجار",
-  sale_title_ar: "عقد بيع وشراء",
+  sale_title_ar: "عقد بيع",
   rent_clauses_ar: RENT_CLAUSES_AR,
   sale_clauses_ar: SALE_CLAUSES_AR,
   primary_color: "0F2C59",
@@ -100,4 +110,4 @@ const DEFAULTS = {
   "لەسەر لایەنی دووەم پێویستە بڕی ٪١ لە نرخی ئەم موڵکەی سەرەوە بدات بە {company} لە بەرامبەر کڕینی ئەم موڵکە."
 ],
 };
-module.exports = { DEFAULTS };
+module.exports = { DEFAULTS, LEGACY_TITLES };

@@ -99,6 +99,14 @@ class ContractTemplate {
       return (v is String && v.trim().isNotEmpty) ? v : fallback;
     }
 
+    /// [str], but a heading a rename has retired counts as unset — see
+    /// [legacyTitles]. A stored title otherwise wins over the default, which
+    /// left every company that had ever saved its template on the old wording.
+    String title(String key, String fallback) {
+      final v = str(key, fallback);
+      return legacyTitles.contains(v.trim()) ? fallback : v;
+    }
+
     return ContractTemplate(
       // Migration shim: templates saved while clauses were split per property
       // kind still carry `rent_clauses_house` as their newest edit, with a
@@ -106,8 +114,8 @@ class ContractTemplate {
       // list, then the defaults. Drop once every template has been re-saved.
       rentClauses: list('rent_clauses_house', list('rent_clauses', d.rentClauses)),
       saleClauses: list('sale_clauses', d.saleClauses),
-      rentTitle: str('rent_title', d.rentTitle),
-      saleTitle: str('sale_title', d.saleTitle),
+      rentTitle: title('rent_title', d.rentTitle),
+      saleTitle: title('sale_title', d.saleTitle),
       primaryColorHex: str('primary_color', d.primaryColorHex),
       clauseFontSize: (json['clause_font_size'] as num?)?.toDouble() ??
           d.clauseFontSize,
@@ -116,8 +124,8 @@ class ContractTemplate {
           d.receiptFontSize,
       rentClausesAr: list('rent_clauses_ar', d.rentClausesAr),
       saleClausesAr: list('sale_clauses_ar', d.saleClausesAr),
-      rentTitleAr: str('rent_title_ar', d.rentTitleAr),
-      saleTitleAr: str('sale_title_ar', d.saleTitleAr),
+      rentTitleAr: title('rent_title_ar', d.rentTitleAr),
+      saleTitleAr: title('sale_title_ar', d.saleTitleAr),
     );
   }
 
@@ -243,15 +251,39 @@ class ContractTemplate {
     '{delivery_date}': 'ڕێکەوتی تەسلیم',
     '{withdrawal}': 'بڕی پاشگەزبوونەوە',
     '{lawyer}': 'پارێزەر',
+    // Each money token has a `_words` twin that spells the amount out, so a
+    // signed figure cannot be altered afterwards. KURDISH ONLY: an Arabic
+    // clause that uses one prints the token itself, because Arabic numerals
+    // inflect and a wrong ending on a filed document is worse than none —
+    // see functions/number_words.js. The currency is NOT included; place
+    // {currency} beside it: «{total_price} {currency} ({total_price_words})».
+    '{rent_amount_words}': 'بڕی کرێ بە نووسین',
+    '{down_payment_words}': 'پێشەکی بە نووسین',
+    '{guarantee_words}': 'بڕی دڵنیایی بە نووسین',
+    '{late_fee_words}': 'غەرامەی دواکەوتن بە نووسین',
+    '{total_price_words}': 'نرخی فرۆشتن بە نووسین',
+    '{withdrawal_words}': 'بڕی پاشگەزبوونەوە بە نووسین',
   };
 
   // ---------------------------------------------------------------------------
   // Built-in default template
   // ---------------------------------------------------------------------------
 
+  /// Headings a template may still carry from before a rename.
+  ///
+  /// A stored title always wins over the default, so a company that had ever
+  /// saved its template kept the old wording forever. These are read as unset
+  /// instead. Mirrored in `functions/contract_defaults.js` (LEGACY_TITLES),
+  /// which the PDF renderer reads — both must list the same strings. Drop an
+  /// entry once every template has been re-saved.
+  static const List<String> legacyTitles = [
+    'گرێبەستی کڕین و فرۆشتن',
+    'عقد بيع وشراء',
+  ];
+
   static ContractTemplate defaults() => const ContractTemplate(
         rentTitle: 'گرێبەستی کرێ',
-        saleTitle: 'گرێبەستی کڕین و فرۆشتن',
+        saleTitle: 'گرێبەستی فرۆشتن',
         primaryColorHex: '0F2C59',
         clauseFontSize: 16,
         receiptColorHex: '1E4D8B',
@@ -259,7 +291,7 @@ class ContractTemplate {
         rentClauses: _defaultRentClauses,
         saleClauses: _defaultSaleClauses,
         rentTitleAr: 'عقد إيجار',
-        saleTitleAr: 'عقد بيع وشراء',
+        saleTitleAr: 'عقد بيع',
         rentClausesAr: _defaultRentClausesAr,
         saleClausesAr: _defaultSaleClausesAr,
       );

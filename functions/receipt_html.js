@@ -8,6 +8,7 @@
  */
 
 const {resolveDesign} = require("./designs");
+const {moneyWords} = require("./number_words");
 
 const TYPE = {
   external_receive: ["پسولەی پارە وەرگرتن", "وصل قبض", "RECEIPT VOUCHER", false],
@@ -98,6 +99,12 @@ function receiptViewModel(o) {
     deliveredTo: isPay ? r.person_name : r.agent_name,
     dateText: fmtDate(r.date),
     amountText: money(r.amount) + " " + (r.currency_label || ""),
+    /**
+     * The same amount spelled out, so the figure cannot be altered once the
+     * voucher is signed. Kurdish only — see number_words.js — and empty when
+     * the amount is unusable, which the layout treats as "print no such line".
+     */
+    amountWords: moneyWords(r.amount, r.currency),
     logoUri: c.logo_data_uri || "",
     footerCells: [c.phone1, c.phone2, c.address].filter(Boolean),
     fontRegB64: o.fontRegB64,
@@ -117,7 +124,7 @@ function buildReceiptHtml(o) {
     return design.receiptHtml(vm, o);
   }
 
-  const {accent, isPay, receivedBy, deliveredTo, footerCells} = vm;
+  const {accent, isPay, receivedBy, deliveredTo, footerCells, amountWords} = vm;
   const fs = vm.fontSize;
   const personKuAr = vm.personLabelKuAr;
   const ty = [vm.titleKu, vm.titleAr, vm.titleEn];
@@ -164,6 +171,7 @@ function buildReceiptHtml(o) {
     ${field(personKuAr, r.person_name)}
     ${field("بڕی پارە / مبلغ وقدره",
       money(r.amount) + " " + (r.currency_label || ""))}
+    ${amountWords ? field("بە نووسین / كتابةً", amountWords) : ""}
     ${field("لەبڕی / وذلك لقاء", r.payment_purpose)}
     ${field("تێبینی / ملاحظة", r.note, {red: true})}
     <div class="spacer"></div>

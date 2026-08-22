@@ -368,6 +368,9 @@ exports.renderReceiptPdf = onCall(
         person_name: r.person_name || "",
         amount: r.amount || 0,
         currency_label: CURRENCY_LABEL[r.dinar_dolar] || "",
+        // The code as well as the label: spelling an amount out has to name
+        // the subunit (فلس / سەنت), which the label cannot give.
+        currency: r.dinar_dolar || "",
         payment_purpose: r.payment_purpose || "",
         note: r.note || "",
         agent_name: r.agent_name || "",

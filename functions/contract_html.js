@@ -7,7 +7,8 @@
  * the per-company template (or the built-in defaults) with {token}s filled in.
  */
 
-const {DEFAULTS} = require("./contract_defaults");
+const {DEFAULTS, LEGACY_TITLES} = require("./contract_defaults");
+const {moneyWords} = require("./number_words");
 const {resolveDesign} = require("./designs");
 
 /**
@@ -124,6 +125,27 @@ function tokensFor(c, company, lang) {
   const cn = (langOf(lang) === "ar" ? company.nameAr || company.nameKu :
     company.nameKu) || t.company;
   const cur = t.currency[c.dinar_dolar] || "";
+
+  // An amount spelled out, for the `{…_words}` twin of each money token.
+  //
+  // KURDISH ONLY — see number_words.js. On an Arabic contract the key is left
+  // undefined on purpose, so applyTokens leaves `{total_price_words}` standing
+  // in the text: a clause that reaches for it shows the mistake to whoever
+  // wrote it, rather than quietly printing Kurdish on an Arabic document or
+  // swallowing the amount into a blank.
+  const words = (n) =>
+    langOf(lang) === "ar" ? undefined : moneyWords(n, c.dinar_dolar);
+
+  // Only the keys that came back with a value, so `undefined` above really
+  // does leave the token unknown rather than defining it as empty.
+  const spelled = (pairs) => {
+    const out = {};
+    for (const [key, value] of Object.entries(pairs)) {
+      if (value) out[key + "_words"] = value;
+    }
+    return out;
+  };
+
   const common = {
     company: cn,
     contract_number: String(c.contract_number || ""),
@@ -148,7 +170,12 @@ function tokensFor(c, company, lang) {
       purpose: c.rental_purpose || "",
       grace_period: c.grace_period || "",
       late_fee: money(c.late_fee_per_day),
-    });
+    }, spelled({
+      rent_amount: words(c.rent_amount),
+      down_payment: words(c.down_payment),
+      guarantee: words(c.guarantee_amount),
+      late_fee: words(c.late_fee_per_day),
+    }));
   }
   return Object.assign(common, {
     total_price: money(c.total_price),
@@ -159,7 +186,12 @@ function tokensFor(c, company, lang) {
     withdrawal: money(c.withdrawal_amount),
     commission: String(c.commission_rate || 0) + "%",
     lawyer: c.lawyer || "",
-  });
+  }, spelled({
+    total_price: words(c.total_price),
+    down_payment: words(c.down_payment),
+    late_fee: words(c.late_fee_per_day),
+    withdrawal: words(c.withdrawal_amount),
+  }));
 }
 
 const applyTokens = (s, tokens) =>
@@ -198,10 +230,15 @@ function contractViewModel(o) {
       pick(t.rent_clauses_house, t.rent_clauses, DEFAULTS.rent_clauses) :
       pick(t.sale_clauses, DEFAULTS.sale_clauses));
 
+  // A stored heading wins over the default, EXCEPT when it is one a rename
+  // has retired — see LEGACY_TITLES.
+  const heading = (stored) =>
+    (stored && !LEGACY_TITLES.includes(stored.trim())) ? stored : "";
+
   const kuTitle = isRent ?
-    (t.rent_title || DEFAULTS.rent_title) :
-    (t.sale_title || DEFAULTS.sale_title);
-  const arTitle = (isRent ? t.rent_title_ar : t.sale_title_ar) ||
+    (heading(t.rent_title) || DEFAULTS.rent_title) :
+    (heading(t.sale_title) || DEFAULTS.sale_title);
+  const arTitle = heading(isRent ? t.rent_title_ar : t.sale_title_ar) ||
     (isRent ? DEFAULTS.rent_title_ar : DEFAULTS.sale_title_ar);
 
   return {
