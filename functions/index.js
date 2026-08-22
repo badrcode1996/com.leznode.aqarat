@@ -597,17 +597,32 @@ exports.keepPdfWarm = onSchedule(
         `${process.env.GCLOUD_PROJECT}.cloudfunctions.net`;
       // The ping carries no Firebase identity — a schedule has no user to sign
       // in as — so it presents the shared secret instead. See mayWarm().
-      const ping = (name) =>
-        fetch(`${base}/${name}`, {
+      //
+      // The response is checked rather than ignored. fetch rejects only on a
+      // network error, so a rejected warm-up answers 403 and resolves happily:
+      // without this, a WARMUP_KEY that does not match would stop the warming
+      // silently and show up only as slow first prints, months later.
+      const ping = async (name) => {
+        const res = await fetch(`${base}/${name}`, {
           method: "POST",
           headers: {"Content-Type": "application/json"},
           body: JSON.stringify(
               {data: {warmup: true, key: WARMUP_KEY.value()}}),
         });
-      await Promise.allSettled([
-        ping("renderReceiptPdf"),
-        ping("renderContractPdf"),
+        if (!res.ok) {
+          console.error(
+              `keepPdfWarm: ${name} refused the warm-up (${res.status}). ` +
+              "If this is 403, WARMUP_KEY does not match what the render " +
+              "functions were deployed with — re-set it and redeploy.");
+        }
+        return res.ok;
+      };
+
+      const [receipt, contract] = await Promise.all([
+        ping("renderReceiptPdf").catch(() => false),
+        ping("renderContractPdf").catch(() => false),
       ]);
+      if (receipt && contract) console.log("keepPdfWarm: both renderers warm.");
     });
 
 /**
