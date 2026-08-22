@@ -78,7 +78,8 @@ dev_dependencies:
   build_runner: ^2.4.13
   riverpod_generator: ^2.4.3
 
-  # App branding: launcher icon + native splash generated from app_logo.png.
+  # App branding: launcher icon from app_icon.png (the G mark), native splash
+  # from app_logo.png (the full lockup) — see the config sections below.
   flutter_launcher_icons: ^0.14.1
   # flutter_native_splash: ^2.4.1
   # ↑ لادرا: پشتگیری SPMـی ناتەواوە و buildی iOS دەشکێنێت (public headers "include").
@@ -98,18 +99,22 @@ flutter:
         - asset: assets/fonts/SPEDA-Bold.ttf
           weight: 700
 
-# App launcher icon (Android + iOS) generated from the brand logo.
-# Run: flutter pub run flutter_launcher_icons
+# App launcher icon (Android + iOS + web), generated from the G mark ALONE —
+# app_icon.png, not the app_logo.png lockup the app shows on its own screens.
+# A launcher icon is drawn at ~48dp: at that size the GREBAST wordmark is a
+# smudge and the mark it sits under is a quarter of the tile. The mark on its
+# own fills the tile and stays recognisable.
+# Run: dart run flutter_launcher_icons
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/images/app_logo.png"
+  image_path: "assets/images/app_icon.png"
   min_sdk_android: 21
   remove_alpha_ios: true
   background_color_ios: "#FFFFFF"
   web:
     generate: true
-    image_path: "assets/images/app_logo.png"
+    image_path: "assets/images/app_icon.png"
     background_color: "#FFFFFF"
     theme_color: "#0F2C59"
 
