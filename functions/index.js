@@ -1,6 +1,8 @@
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
+const {defineSecret} = require("firebase-functions/params");
 const admin = require("firebase-admin");
+const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 const {buildReceiptHtml} = require("./receipt_html");
@@ -184,6 +186,42 @@ if ((process.env.K_SERVICE || "").toLowerCase().startsWith("render")) {
   getBrowser().catch(() => {});
 }
 
+/**
+ * Shared secret that lets the keepPdfWarm schedule warm the render functions.
+ *
+ * The warm-up branch of a render function has to run BEFORE the caller is
+ * identified — it is what keeps Chromium alive between renders, and the
+ * schedule that drives it pings over plain HTTP with no Firebase identity to
+ * present. That left two 1GiB, concurrency-1 functions startable by anyone who
+ * knew the URL, which is a bill rather than a breach but is still a stranger
+ * spending our money.
+ *
+ * Set once per project:  firebase functions:secrets:set WARMUP_KEY
+ */
+const WARMUP_KEY = defineSecret("WARMUP_KEY");
+
+/**
+ * May this caller warm the browser?
+ *
+ * Signed-in users may: the app pings on screen-open so the PDF is ready by the
+ * time the user asks for it, and anyone with an account is already entitled to
+ * a render. Everyone else needs the secret.
+ *
+ * @param {object} request the callable request
+ * @return {boolean} true when the warm-up may proceed
+ */
+function mayWarm(request) {
+  if (request.auth) return true;
+  const given = request.data && request.data.key;
+  const want = WARMUP_KEY.value();
+  if (typeof given !== "string" || !want) return false;
+  // Equal length first: timingSafeEqual throws on a mismatch, and the length
+  // of a secret is not what we are hiding.
+  const a = Buffer.from(given);
+  const b = Buffer.from(want);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
 /** Renders an HTML string to a PDF Buffer using headless Chromium. */
 async function htmlToPdf(html) {
   const browser = await getBrowser();
@@ -306,11 +344,17 @@ function assertCompanyActive(c, isSuper) {
 exports.renderReceiptPdf = onCall(
     // concurrency 1: each Chromium render gets the instance's full memory.
     // (Add minInstances: 1 to also remove cold starts — it raises the bill.)
-    {memory: "1GiB", timeoutSeconds: 120, concurrency: 1},
+    {memory: "1GiB", timeoutSeconds: 120, concurrency: 1,
+      secrets: [WARMUP_KEY]},
     async (request) => {
       // Warm-up ping (app screen-open or the keepPdfWarm schedule): just make
-      // sure Chromium is running and return — touches no data, so no auth.
+      // sure Chromium is running and return. It touches no data, so it runs
+      // ahead of the identity checks below — but not ahead of mayWarm(), or
+      // a stranger could start this 1GiB instance at will.
       if (request.data && request.data.warmup === true) {
+        if (!mayWarm(request)) {
+          throw new HttpsError("permission-denied", "Warm-up not allowed.");
+        }
         await getBrowser();
         return {warm: true};
       }
@@ -396,10 +440,14 @@ const toDate = (v) => (v && v.toDate ? v.toDate() : v);
  * contract's id, verifies the caller's company, and returns base64 PDF.
  */
 exports.renderContractPdf = onCall(
-    {memory: "1GiB", timeoutSeconds: 120, concurrency: 1},
+    {memory: "1GiB", timeoutSeconds: 120, concurrency: 1,
+      secrets: [WARMUP_KEY]},
     async (request) => {
       // Warm-up ping — see renderReceiptPdf.
       if (request.data && request.data.warmup === true) {
+        if (!mayWarm(request)) {
+          throw new HttpsError("permission-denied", "Warm-up not allowed.");
+        }
         await getBrowser();
         return {warm: true};
       }
@@ -543,20 +591,24 @@ exports.renderExportPdf = onCall(
  * so their instances (and Chromium) stay alive — avoids the 10-20s cold
  * start on the first print after an idle period. Costs pennies a month.
  */
-exports.keepPdfWarm = onSchedule("every 5 minutes", async () => {
-  const base =
-    `https://us-central1-${process.env.GCLOUD_PROJECT}.cloudfunctions.net`;
-  const ping = (name) =>
-    fetch(`${base}/${name}`, {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({data: {warmup: true}}),
+exports.keepPdfWarm = onSchedule(
+    {schedule: "every 5 minutes", secrets: [WARMUP_KEY]}, async () => {
+      const base = "https://us-central1-" +
+        `${process.env.GCLOUD_PROJECT}.cloudfunctions.net`;
+      // The ping carries no Firebase identity — a schedule has no user to sign
+      // in as — so it presents the shared secret instead. See mayWarm().
+      const ping = (name) =>
+        fetch(`${base}/${name}`, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify(
+              {data: {warmup: true, key: WARMUP_KEY.value()}}),
+        });
+      await Promise.allSettled([
+        ping("renderReceiptPdf"),
+        ping("renderContractPdf"),
+      ]);
     });
-  await Promise.allSettled([
-    ping("renderReceiptPdf"),
-    ping("renderContractPdf"),
-  ]);
-});
 
 /**
  * Raises the day's rent + lease-expiry alerts and pushes them. 08:00 Baghdad
