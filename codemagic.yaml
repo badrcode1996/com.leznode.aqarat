@@ -10,6 +10,10 @@
 #   D) Codemagic → Environment variables → گرووپی "firebase_credentials":
 #      GOOGLE_SERVICE_INFO_PLIST = ناوەڕۆکی GoogleService-Info.plist بە base64
 #      (Secure بیکە).
+#      IOS_MAPS_API_KEY = کلیلی «iOS Maps key» لە Google Cloud (Secure بیکە).
+#      ئەمە پێویستە چونکە ios/Flutter/Maps.xcconfig لە گیت‌دا نییە بە ئەنقەست —
+#      وەک key.properties ـی ئەندرۆید. بەبێ ئەم گۆڕاوە بڵدەکە دەشکێت، نەک
+#      بە بێدەنگی IPA ـێکی ماپ-خۆڵەمێشی بنێرێتە TestFlight.
 #   E) ئەگەر push بەکاردێت: APNs Auth Key لە Apple Developer دروست بکە و لە
 #      Firebase → Cloud Messaging دایبنێ. (ئەپ هێشتا firebase_messaging ـی نییە —
 #      بۆ وەرگرتنی ڕاستەقینەی push دەبێت دواتر زیادی بکەیت.)
@@ -48,6 +52,22 @@ workflows:
           </dict>
           </plist>
           PLIST
+      - name: Set up Maps.xcconfig (Google Maps key)
+        script: |
+          # ios/Flutter/Maps.xcconfig is git-ignored, so the checkout does not
+          # carry it — see docs/maps-setup.md. Written here from the secure
+          # variable instead.
+          #
+          # Missing key = hard failure, deliberately. The build would otherwise
+          # succeed and ship an IPA whose map is a grey rectangle, and that
+          # costs another App Store review to fix.
+          if [ -z "$IOS_MAPS_API_KEY" ]; then
+            echo "IOS_MAPS_API_KEY is not set. Add it to the"
+            echo "firebase_credentials variable group in Codemagic (Secure)."
+            exit 1
+          fi
+          printf 'MAPS_API_KEY = %s\n' "$IOS_MAPS_API_KEY" \
+            > "$CM_BUILD_DIR/ios/Flutter/Maps.xcconfig"
       - name: Flutter pub get
         script: |
           flutter pub get
