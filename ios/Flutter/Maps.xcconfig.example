@@ -1,0 +1,10 @@
+// Google Maps key for the iOS build.
+//
+// COPY THIS FILE to Maps.xcconfig in the same folder and put the real key in.
+// Maps.xcconfig itself is git-ignored — the key must not be committed, unlike
+// the web one, which is public by nature. See docs/maps-setup.md.
+//
+// An absent Maps.xcconfig is fine: Debug/Release include it optionally, the
+// build still succeeds, and the map comes up grey while everything else works.
+
+MAPS_API_KEY = PUT_THE_IOS_MAPS_KEY_HERE

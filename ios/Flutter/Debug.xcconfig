@@ -1,1 +1,5 @@
 #include "Generated.xcconfig"
+// Google Maps key — see Maps.xcconfig.example. The `?` makes the include
+// OPTIONAL: a checkout without the file still builds, with a grey map, rather
+// than failing on a missing file that is deliberately not committed.
+#include? "Maps.xcconfig"

@@ -52,3 +52,8 @@ app.*.map.json
 
 # Firebase CLI local deploy cache
 .firebase/
+
+# Google Maps key for the iOS build. Android's lives in key.properties, which
+# is ignored above with the signing credentials; the web one IS committed,
+# being public by nature. See docs/maps-setup.md.
+ios/Flutter/Maps.xcconfig

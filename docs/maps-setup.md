@@ -55,15 +55,17 @@ mapsApiKey=AIza...
 
 `build.gradle.kts` feeds it to `AndroidManifest.xml` as `MAPS_API_KEY`.
 
-**iOS** — create `ios/Flutter/Maps.xcconfig`:
+**iOS** — copy `ios/Flutter/Maps.xcconfig.example` to `Maps.xcconfig` beside it
+and put the real key in:
 
 ```
 MAPS_API_KEY = AIza...
 ```
 
-and add `#include "Maps.xcconfig"` to both `Debug.xcconfig` and
-`Release.xcconfig` in the same folder. `Info.plist` reads `$(MAPS_API_KEY)` and
-`AppDelegate.swift` hands it to `GMSServices`. Keep the file out of git.
+Nothing else to wire: `Debug.xcconfig` and `Release.xcconfig` already
+`#include?` it (optionally, so a checkout without the file still builds),
+`Info.plist` reads `$(MAPS_API_KEY)`, and `AppDelegate.swift` hands it to
+`GMSServices`. `Maps.xcconfig` is git-ignored.
 
 **Web** — replace `YOUR_WEB_MAPS_API_KEY` in `web/index.html`. This one IS
 committed, and that is fine: a referrer-restricted web key is public by design.
