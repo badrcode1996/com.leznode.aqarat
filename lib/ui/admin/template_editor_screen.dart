@@ -143,6 +143,40 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
     }
   }
 
+  /// Refills the Kurdish clause boxes from the built-in defaults, and nothing
+  /// else — the design, the titles, the Arabic clauses and the per-kind rent
+  /// clauses all stay as the company has them.
+  ///
+  /// This exists because [_reset] deletes the whole stored template: it is the
+  /// right tool for starting over, and far too blunt for the ordinary case of
+  /// wanting a wording improvement that shipped with the app. Nothing is
+  /// written here either — the boxes are filled and Save commits them, so the
+  /// new text can be read against the old before it becomes the contract.
+  void _reloadKurdishClauses() {
+    setState(() {
+      _fill(_rent, ContractTemplate.defaults().rentClauses);
+      _fill(_sale, ContractTemplate.defaults().saleClauses);
+    });
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(S.reloadKurdishClausesDone),
+        backgroundColor: _primaryDarkBlue));
+  }
+
+  /// Resizes [boxes] to hold [texts], reusing the controllers already there so
+  /// a box the user is typing in keeps its selection.
+  void _fill(List<TextEditingController> boxes, List<String> texts) {
+    for (var i = boxes.length; i > texts.length; i--) {
+      boxes.removeLast().dispose();
+    }
+    for (var i = 0; i < texts.length; i++) {
+      if (i < boxes.length) {
+        boxes[i].text = texts[i];
+      } else {
+        boxes.add(TextEditingController(text: texts[i]));
+      }
+    }
+  }
+
   Future<void> _reset() async {
     final ok = await showDialog<bool>(
       context: context,
@@ -191,11 +225,26 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
         centerTitle: true,
         elevation: 0,
         actions: [
+          // One menu rather than two icons: the two actions look alike and are
+          // not alike at all — one refills two boxes and waits for Save, the
+          // other deletes the stored template outright. Spelling them out is
+          // what keeps the destructive one from being tapped by mistake.
           if (!_loading)
-            IconButton(
+            PopupMenuButton<void Function()>(
               tooltip: S.resetToDefault,
               icon: const Icon(Icons.restart_alt_rounded),
-              onPressed: _reset,
+              onSelected: (action) => action(),
+              itemBuilder: (_) => [
+                PopupMenuItem(
+                  value: _reloadKurdishClauses,
+                  child: Text(S.reloadKurdishClauses),
+                ),
+                PopupMenuItem(
+                  value: _reset,
+                  child: Text(S.resetToDefault,
+                      style: TextStyle(color: AppColors.current.danger)),
+                ),
+              ],
             ),
         ],
       ),

@@ -448,6 +448,8 @@ class AppStrings {
     required this.templateSaved,
     required this.resetToDefault,
     required this.resetToDefaultConfirm,
+    required this.reloadKurdishClauses,
+    required this.reloadKurdishClausesDone,
     required this.resetDone,
     required this.reset,
     required this.no,
@@ -907,6 +909,12 @@ class AppStrings {
   final String templateSaved;
   final String resetToDefault;
   final String resetToDefaultConfirm;
+
+  /// Refills ONLY the Kurdish clause boxes from the built-in defaults. Unlike
+  /// [resetToDefault] it touches nothing else and saves nothing — the editor is
+  /// left dirty so the change can be read before Save commits it.
+  final String reloadKurdishClauses;
+  final String reloadKurdishClausesDone;
   final String resetDone;
   final String reset;
   final String no;
@@ -1350,6 +1358,7 @@ class AppStrings {
         saleTitleField, saleTitleFieldAr, arabicHeadings, tokensTitle, tokensHint,
         tokensAlsoHere, arabicClausesHint, noAutoTranslation, noArabicClausesYet,
         templateSaved, resetToDefault, resetToDefaultConfirm, resetDone,
+        reloadKurdishClauses, reloadKurdishClausesDone,
         reset, no, invalidEnglishName,
 ];
 
@@ -1775,6 +1784,8 @@ class AppStrings {
     templateSaved: 'تێمپلەیت پاشەکەوتکرا',
     resetToDefault: 'گەڕاندنەوە بۆ بنەڕەت',
     resetToDefaultConfirm: 'هەموو دەستکارییەکان دەسڕێنەوە و تێمپلەیتی بنەڕەتی (default) دەگەڕێتەوە. دڵنیایت؟',
+    reloadKurdishClauses: 'بەندە کوردییەکان لە بنەڕەتەوە بار بکە',
+    reloadKurdishClausesDone: 'بەندە کوردییەکان بارکران — بۆ جێگیرکردنیان «هەڵگرتن» دابگرە',
     resetDone: 'گەڕایەوە بۆ بنەڕەت',
     reset: 'گەڕاندنەوە',
     no: 'نەخێر',
@@ -2193,6 +2204,8 @@ class AppStrings {
     templateSaved: 'تم حفظ القالب',
     resetToDefault: 'استعادة الافتراضي',
     resetToDefaultConfirm: 'ستُمحى كل التعديلات ويعود القالب الافتراضي. هل أنت متأكد؟',
+    reloadKurdishClauses: 'تحميل البنود الكردية الافتراضية',
+    reloadKurdishClausesDone: 'حُمّلت البنود الكردية — اضغط «حفظ» لتثبيتها',
     resetDone: 'تمت الاستعادة',
     reset: 'استعادة',
     no: 'لا',
@@ -2613,6 +2626,8 @@ class AppStrings {
     templateSaved: 'Template saved',
     resetToDefault: 'Reset to default',
     resetToDefaultConfirm: 'Every change is discarded and the default template returns. Are you sure?',
+    reloadKurdishClauses: 'Load the default Kurdish clauses',
+    reloadKurdishClausesDone: 'Kurdish clauses loaded — press Save to keep them',
     resetDone: 'Reset to default',
     reset: 'Reset',
     no: 'No',
