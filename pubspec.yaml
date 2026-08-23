@@ -6,7 +6,7 @@ publish_to: "none"
 # moment a bundle is uploaded to ANY track — internal, closed, production — and
 # never lets it be reused, so every upload needs a fresh number even when the
 # code has not changed.
-version: 1.2.2+16
+version: 1.2.3+17
 
 environment:
   sdk: ">=3.4.0 <4.0.0"
