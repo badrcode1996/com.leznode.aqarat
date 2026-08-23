@@ -22,9 +22,10 @@ const TEENS = ["دە", "یازدە", "دوازدە", "سێزدە", "چواردە
 const TENS = ["", "", "بیست", "سی", "چل",
   "پەنجا", "شەست", "حەفتا", "هەشتا", "نەوەد"];
 
-// Written joined, which is the spelling used on documents: سەد، دووسەد، سێسەد…
-const HUNDREDS = ["", "سەد", "دووسەد", "سێسەد", "چوارسەد",
-  "پێنجسەد", "شەشسەد", "حەوتسەد", "هەشتسەد", "نۆسەد"];
+// The count and سەد stay separate words — «پێنج سەد», not «پێنجسەد». Both
+// spellings are current, and this is the one the office writes by hand.
+const HUNDREDS = ["", "سەد", "دوو سەد", "سێ سەد", "چوار سەد",
+  "پێنج سەد", "شەش سەد", "حەوت سەد", "هەشت سەد", "نۆ سەد"];
 
 /** Kurdish strings numbers together with a plain "و". */
 const JOIN = " و ";
