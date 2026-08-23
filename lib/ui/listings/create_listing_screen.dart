@@ -7,6 +7,7 @@ import '../../data/plan_config_repository.dart';
 import '../../models/enums.dart';
 import '../../models/property_model.dart';
 import '../widgets/house_gallery_picker.dart';
+import '../widgets/location_picker.dart';
 import '../../theme/app_colors.dart';
 import '../../l10n/app_strings.dart';
 
@@ -108,6 +109,11 @@ class _CreateListingScreenState extends ConsumerState<CreateListingScreen> {
           .map(ListingImage.stored)
           .toList();
 
+  /// The map pin, held here until Save. Null means the listing has none, which
+  /// is normal — see PropertyListing.lat.
+  late double? _lat = widget.existing?.lat;
+  late double? _lng = widget.existing?.lng;
+
   bool get _isOffer => widget.kind == ListingKind.offer;
   bool get _isEdit => widget.existing != null;
 
@@ -194,6 +200,8 @@ class _CreateListingScreenState extends ConsumerState<CreateListingScreen> {
       rooms: _hasBuilding ? (int.tryParse(_rooms.text.trim()) ?? 0) : 0,
       bathrooms: _hasBuilding ? (int.tryParse(_bathrooms.text.trim()) ?? 0) : 0,
       floors: _hasBuilding ? (int.tryParse(_floors.text.trim()) ?? 0) : 0,
+      lat: _lat,
+      lng: _lng,
     );
     try {
       final repo = ref.read(listingRepositoryProvider);
@@ -260,6 +268,18 @@ class _CreateListingScreenState extends ConsumerState<CreateListingScreen> {
                     onChanged: (images) => _images = images,
                   ),
                   const SizedBox(height: 28),
+                  // شوێنی موڵکەکە لەسەر ماپ — ئارەزوومەندانە، وەک گەلەرییەکە.
+                  // داواکاری موڵکێکی دیاریکراوی نییە کە شوێنێکی هەبێت.
+                  // بە پلان gate دەکرێت: ماپ خزمەتگوزارییەکی پارەدارە.
+                  if (ref.watch(currentPlanFeaturesProvider).map) ...[
+                    LocationPicker(
+                      lat: _lat,
+                      lng: _lng,
+                      onChanged: (lat, lng) =>
+                          setState(() { _lat = lat; _lng = lng; }),
+                    ),
+                    const SizedBox(height: 28),
+                  ],
                 ],
 
                 // فرۆشتن یان کرێ — سەرەتای فۆڕمەکە، چونکە هەموو شتەکانی تری

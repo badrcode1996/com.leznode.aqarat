@@ -16,6 +16,15 @@
 		<string>6.0</string>
 		<key>CFBundleName</key>
 		<string>aqarat</string>
+		<!-- Google Maps key, read by AppDelegate. Filled from the MAPS_API_KEY
+		     build setting (ios/Flutter/Maps.xcconfig, not committed) so the key
+		     stays out of git — see docs/maps-setup.md. -->
+		<key>MAPS_API_KEY</key>
+		<string>$(MAPS_API_KEY)</string>
+		<!-- Shown when the agent taps "my location" on the listing form. It is
+		     asked for only then, never at launch. -->
+		<key>NSLocationWhenInUseUsageDescription</key>
+		<string>بۆ دانانی شوێنی موڵکەکە لەسەر ماپ لە کاتی زیادکردنی خستنەڕوو.</string>
 		<key>CFBundlePackageType</key>
 		<string>APPL</string>
 		<key>CFBundleShortVersionString</key>

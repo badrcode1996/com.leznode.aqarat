@@ -81,6 +81,8 @@ class PropertyListing {
     this.rooms = 0,
     this.bathrooms = 0,
     this.floors = 0,
+    this.lat,
+    this.lng,
   });
 
   final String id;
@@ -111,6 +113,21 @@ class PropertyListing {
   final int rooms;
   final int bathrooms;
   final int floors;
+
+  // ----- PRIVATE: never expose in the Global Market -----
+  /// Where the property actually stands. Null when nobody has pinned it —
+  /// most listings are typed up at a desk, and a wrong pin is worse than none.
+  ///
+  /// Deliberately absent from [publicView], alongside the owner's name and
+  /// phone. The market hides those so another company cannot go round the
+  /// agent to the owner; an exact position on a map hands back the same thing
+  /// by another route, since the owner is findable at the address.
+  final double? lat;
+  final double? lng;
+
+  /// True once both halves of the pin are present. Either alone is a
+  /// half-written document, and would put the property in the Gulf of Guinea.
+  bool get hasLocation => lat != null && lng != null;
 
   /// True once the listing is completed → moved to the archive section.
   final bool isArchived;
@@ -176,9 +193,23 @@ class PropertyListing {
       rooms: (json['rooms'] as num?)?.toInt() ?? 0,
       bathrooms: (json['bathrooms'] as num?)?.toInt() ?? 0,
       floors: (json['floors'] as num?)?.toInt() ?? 0,
+      // Read as a pair: a document carrying only one half is treated as
+      // unpinned rather than as a point on the equator.
+      lat: _coord(json['lat'], json['lng'], 90),
+      lng: _coord(json['lng'], json['lat'], 180),
       createdAt:
           (json['created_at'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
+  }
+
+  /// One half of a stored pin, or null unless [other] is a usable number too.
+  /// [max] is the half's own range — 90 for a latitude, 180 for a longitude —
+  /// so a bad write cannot leave a point the map cannot show.
+  static double? _coord(Object? value, Object? other, num max) {
+    if (value is! num || other is! num) return null;
+    final d = value.toDouble();
+    if (d.isNaN || d.abs() > max) return null;
+    return d;
   }
 
   Map<String, dynamic> toJson() => {
@@ -207,6 +238,9 @@ class PropertyListing {
         'rooms': rooms,
         'bathrooms': bathrooms,
         'floors': floors,
+        // Written as a pair or not at all, which is what fromJson reads back.
+        'lat': hasLocation ? lat : null,
+        'lng': hasLocation ? lng : null,
         'created_at': Timestamp.fromDate(createdAt),
       };
 

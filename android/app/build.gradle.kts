@@ -38,6 +38,14 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        // Google Maps key, substituted into AndroidManifest.xml. It lives in
+        // android/key.properties beside the signing credentials, which is not
+        // committed — see docs/maps-setup.md. Falling back to "" rather than
+        // failing keeps a checkout without the file buildable: the map comes
+        // up grey and every other screen works.
+        manifestPlaceholders["MAPS_API_KEY"] =
+            (keystoreProperties["mapsApiKey"] as String?) ?: ""
     }
 
     signingConfigs {

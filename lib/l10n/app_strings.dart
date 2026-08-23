@@ -414,6 +414,7 @@ class AppStrings {
     required this.featureGuarantees,
     required this.featureCommission,
     required this.featureArabicContracts,
+    required this.featureMap,
     required this.contractTemplate,
     required this.exportTitle,
     required this.exportCompanyData,
@@ -450,6 +451,14 @@ class AppStrings {
     required this.resetToDefaultConfirm,
     required this.reloadKurdishClauses,
     required this.reloadKurdishClausesDone,
+    required this.propertyLocation,
+    required this.tapMapToPin,
+    required this.useMyLocation,
+    required this.clearLocation,
+    required this.openInMaps,
+    required this.locationServiceOff,
+    required this.locationDenied,
+    required this.locationFailed,
     required this.resetDone,
     required this.reset,
     required this.no,
@@ -875,6 +884,7 @@ class AppStrings {
   final String featureGuarantees;
   final String featureCommission;
   final String featureArabicContracts;
+  final String featureMap;
   final String contractTemplate;
   final String exportTitle;
   final String exportCompanyData;
@@ -915,6 +925,16 @@ class AppStrings {
   /// left dirty so the change can be read before Save commits it.
   final String reloadKurdishClauses;
   final String reloadKurdishClausesDone;
+
+  // ----- Property location (map pin on a listing) -----
+  final String propertyLocation;
+  final String tapMapToPin;
+  final String useMyLocation;
+  final String clearLocation;
+  final String openInMaps;
+  final String locationServiceOff;
+  final String locationDenied;
+  final String locationFailed;
   final String resetDone;
   final String reset;
   final String no;
@@ -1350,7 +1370,8 @@ class AppStrings {
         features, companyFeatures, featuresUpdated, featuresPlanNote, overrideNote,
         asPlan, planSubscription, planSettings, plansSaved, maxBranches,
         maxUsers, zeroUnlimited, webOnlyBlocked, webOnlyNote, featureOverdue,
-        featureGuarantees, featureCommission, featureArabicContracts, contractTemplate,
+        featureGuarantees, featureCommission, featureArabicContracts, featureMap,
+        contractTemplate,
         exportTitle, exportCompanyData, backupData, tabularReport, excelTwoSheets,
         tapToChange, change, inactive, templateDesign, receiptDesign, primaryColorHex,
         receiptColorHex, clauseFontSize, fieldFontSize, rentClauses, rentClausesAr,
@@ -1359,6 +1380,8 @@ class AppStrings {
         tokensAlsoHere, arabicClausesHint, noAutoTranslation, noArabicClausesYet,
         templateSaved, resetToDefault, resetToDefaultConfirm, resetDone,
         reloadKurdishClauses, reloadKurdishClausesDone,
+        propertyLocation, tapMapToPin, useMyLocation, clearLocation,
+        openInMaps, locationServiceOff, locationDenied, locationFailed,
         reset, no, invalidEnglishName,
 ];
 
@@ -1750,6 +1773,7 @@ class AppStrings {
     featureGuarantees: 'کۆی دڵنیایی',
     featureCommission: 'کۆی عمولە',
     featureArabicContracts: 'گرێبەستی عەرەبی',
+    featureMap: 'ماپی موڵک',
     contractTemplate: 'تێمپلەیتی گرێبەست',
     exportTitle: 'دەرهێنان (Export)',
     exportCompanyData: 'دەرهێنانی داتای کۆمپانیا',
@@ -1786,6 +1810,14 @@ class AppStrings {
     resetToDefaultConfirm: 'هەموو دەستکارییەکان دەسڕێنەوە و تێمپلەیتی بنەڕەتی (default) دەگەڕێتەوە. دڵنیایت؟',
     reloadKurdishClauses: 'بەندە کوردییەکان لە بنەڕەتەوە بار بکە',
     reloadKurdishClausesDone: 'بەندە کوردییەکان بارکران — بۆ جێگیرکردنیان «هەڵگرتن» دابگرە',
+    propertyLocation: 'شوێنی موڵک',
+    tapMapToPin: 'کلیک لەسەر ماپەکە بکە بۆ دانانی شوێنی موڵکەکە',
+    useMyLocation: 'شوێنی ئێستام',
+    clearLocation: 'لابردن',
+    openInMaps: 'کردنەوە لە گووگڵ ماپ',
+    locationServiceOff: 'خزمەتگوزاری شوێن (GPS) کوژاوەتەوە — چالاکی بکە',
+    locationDenied: 'مۆڵەتی شوێن نەدرا — لە ڕێکخستنەکانی ئامێرەکە بیدە',
+    locationFailed: 'نەتوانرا شوێنەکە بدۆزرێتەوە — دیسان هەوڵبدە یان لەسەر ماپەکە دایبنێ',
     resetDone: 'گەڕایەوە بۆ بنەڕەت',
     reset: 'گەڕاندنەوە',
     no: 'نەخێر',
@@ -2170,6 +2202,7 @@ class AppStrings {
     featureGuarantees: 'مجموع التأمينات',
     featureCommission: 'مجموع العمولات',
     featureArabicContracts: 'العقود العربية',
+    featureMap: 'خريطة العقار',
     contractTemplate: 'قالب العقد',
     exportTitle: 'التصدير',
     exportCompanyData: 'تصدير بيانات الشركة',
@@ -2206,6 +2239,14 @@ class AppStrings {
     resetToDefaultConfirm: 'ستُمحى كل التعديلات ويعود القالب الافتراضي. هل أنت متأكد؟',
     reloadKurdishClauses: 'تحميل البنود الكردية الافتراضية',
     reloadKurdishClausesDone: 'حُمّلت البنود الكردية — اضغط «حفظ» لتثبيتها',
+    propertyLocation: 'موقع العقار',
+    tapMapToPin: 'اضغط على الخريطة لتحديد موقع العقار',
+    useMyLocation: 'موقعي الحالي',
+    clearLocation: 'إزالة',
+    openInMaps: 'فتح في خرائط جوجل',
+    locationServiceOff: 'خدمة الموقع (GPS) متوقفة — فعّلها',
+    locationDenied: 'لم يُمنح إذن الموقع — امنحه من إعدادات الجهاز',
+    locationFailed: 'تعذّر تحديد الموقع — أعد المحاولة أو حدّده على الخريطة',
     resetDone: 'تمت الاستعادة',
     reset: 'استعادة',
     no: 'لا',
@@ -2592,6 +2633,7 @@ class AppStrings {
     featureGuarantees: 'Deposit totals',
     featureCommission: 'Commission totals',
     featureArabicContracts: 'Arabic contracts',
+    featureMap: 'Property map',
     contractTemplate: 'Contract template',
     exportTitle: 'Export',
     exportCompanyData: 'Export the company data',
@@ -2628,6 +2670,14 @@ class AppStrings {
     resetToDefaultConfirm: 'Every change is discarded and the default template returns. Are you sure?',
     reloadKurdishClauses: 'Load the default Kurdish clauses',
     reloadKurdishClausesDone: 'Kurdish clauses loaded — press Save to keep them',
+    propertyLocation: 'Property location',
+    tapMapToPin: 'Tap the map to pin where the property stands',
+    useMyLocation: 'My location',
+    clearLocation: 'Clear',
+    openInMaps: 'Open in Google Maps',
+    locationServiceOff: 'Location services (GPS) are off — turn them on',
+    locationDenied: 'Location permission denied — grant it in device settings',
+    locationFailed: 'Could not get a fix — try again, or pin it on the map',
     resetDone: 'Reset to default',
     reset: 'Reset',
     no: 'No',

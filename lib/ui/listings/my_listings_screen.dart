@@ -8,6 +8,7 @@ import '../../models/property_model.dart';
 import '../market/global_market_tab.dart';
 import '../widgets/deal_filter_bar.dart';
 import '../widgets/house_cover_image.dart';
+import '../widgets/location_view.dart';
 import 'create_listing_screen.dart';
 import '../../theme/app_colors.dart';
 import '../../l10n/app_strings.dart';
@@ -424,6 +425,24 @@ class _ListingCard extends ConsumerWidget {
             Row(
               children: [
                 Expanded(child: _mainAction(context, ref)),
+                // ماپ تەنها بۆ ئەو موڵکانەی شوێنیان دانراوە، و تەنها بۆ ئەو
+                // پلانانەی ماپیان هەیە — بەبێ ئەمە، بەکارهێنەرێکی بڕۆنز
+                // دوگمەیەک دەبینێت کە شاشەیەکی خۆڵەمێشی دەکاتەوە.
+                if (listing.hasLocation &&
+                    ref.watch(currentPlanFeaturesProvider).map) ...[
+                  const SizedBox(width: 8),
+                  _iconAction(
+                    icon: Icons.location_on_outlined,
+                    color: AppColors.current.brand,
+                    tooltip: S.propertyLocation,
+                    onPressed: () => LocationView.show(
+                      context,
+                      lat: listing.lat!,
+                      lng: listing.lng!,
+                      title: listing.projectName,
+                    ),
+                  ),
+                ],
                 const SizedBox(width: 8),
                 _iconAction(
                   icon: Icons.edit_outlined,

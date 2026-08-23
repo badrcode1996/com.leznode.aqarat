@@ -35,6 +35,13 @@
                 <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </activity>
+        <!-- Google Maps, for the property pin on a listing. The value is read
+             from the MAPS_API_KEY Gradle property so the key is NOT committed —
+             see docs/maps-setup.md. An absent key leaves a grey map, not a
+             crash, so a developer without one can still run everything else. -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${MAPS_API_KEY}" />
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

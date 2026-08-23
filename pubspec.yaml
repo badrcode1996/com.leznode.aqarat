@@ -41,6 +41,13 @@ dependencies:
 
   # Click-to-call / external links
   url_launcher: ^6.3.1
+  # Property location. google_maps_flutter draws the map on all three
+  # platforms (the _web package is an endorsed implementation — it only has to
+  # be listed so pub resolves it); geolocator is the "use my location" button.
+  # All of them need the API keys wired per platform — see docs/maps-setup.md.
+  google_maps_flutter: ^2.9.0
+  google_maps_flutter_web: ^0.5.10
+  geolocator: ^13.0.2
 
   # Plain HTTP fetch of public house images. Image.network under CanvasKit
   # fails to paint cross-origin Storage images; fetching the bytes and drawing

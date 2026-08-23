@@ -97,6 +97,20 @@
       document.body.style.background = "transparent";
     }
   </script>
+  <!--
+    Google Maps JavaScript API, for the property pin on a listing.
+
+    A web Maps key is public by nature — it ships in the page, and there is no
+    way to hide it. What makes it safe is the HTTP-referrer restriction on the
+    key itself: locked to aqarat.leznode.com it is useless to anyone else, and
+    unlocked it is a bill waiting to happen. See docs/maps-setup.md.
+
+    `loading=async` with no callback: google_maps_flutter_web waits for the
+    library itself, so the page does not block on this.
+  -->
+  <script async
+    src="https://maps.googleapis.com/maps/api/js?key=YOUR_WEB_MAPS_API_KEY&loading=async">
+  </script>
 </head>
 <body>
   <picture id="splash">

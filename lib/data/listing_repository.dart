@@ -48,6 +48,11 @@ class ListingRepository {
         // Cover kept under the old key too, for clients still on the
         // single-image build. See PropertyListing.toJson.
         'image_url': imageUrls.isEmpty ? '' : imageUrls.first,
+        // NO `lat`/`lng`. The map pin is private to the owning company, for the
+        // same reason owner_name and owner_mobile are: the market exists so
+        // another company can reach the AGENT, and an exact position lets them
+        // skip the agent and knock on the owner's door instead. If the market
+        // ever should show a location, show the district, not the address.
         'created_at': Timestamp.fromDate(l.createdAt),
       };
 

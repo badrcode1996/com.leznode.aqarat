@@ -192,6 +192,7 @@ class _PlanSettingsScreenState extends ConsumerState<PlanSettingsScreen> {
               (v) => onChanged(f.copyWith(commission: v))),
           _toggle(S.featureArabicContracts, f.arabicContracts,
               (v) => onChanged(f.copyWith(arabicContracts: v))),
+          _toggle(S.featureMap, f.map, (v) => onChanged(f.copyWith(map: v))),
           _toggle(S.webOnlyBlocked, f.webOnly,
               (v) => onChanged(f.copyWith(webOnly: v))),
           const Divider(height: 24),
