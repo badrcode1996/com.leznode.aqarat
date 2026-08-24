@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'location_picker.dart' show kMapGestures;
 import '../../l10n/app_strings.dart';
 import '../../theme/app_colors.dart';
 
@@ -90,6 +91,9 @@ class LocationView extends StatelessWidget {
                   zoomControlsEnabled: false,
                   mapToolbarEnabled: false,
                   myLocationButtonEnabled: false,
+                  // Without this the sheet's drag-to-dismiss eats the pan and
+                  // the map cannot be moved off the pin — see kMapGestures.
+                  gestureRecognizers: kMapGestures,
                 ),
               ),
             ),

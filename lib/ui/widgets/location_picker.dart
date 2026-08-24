@@ -1,9 +1,23 @@
+import 'package:flutter/foundation.dart' show Factory;
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../l10n/app_strings.dart';
 import '../../theme/app_colors.dart';
+
+/// Hands the map the drag before the scrollable around it can claim it.
+///
+/// A GoogleMap on Android is a platform view, and Flutter's default is to let
+/// the enclosing ListView win any drag that starts on it. The map then never
+/// pans: the pin can be placed, but the street around it cannot be reached, so
+/// the property looks like it is somewhere it is not. iOS does not show this —
+/// UIKit resolves the same gesture the other way — which is why it only ever
+/// gets reported by Android users.
+const Set<Factory<OneSequenceGestureRecognizer>> kMapGestures = {
+  Factory<OneSequenceGestureRecognizer>(EagerGestureRecognizer.new),
+};
 
 Color get _primaryDarkBlue => AppColors.current.brand;
 Color get _fill => AppColors.current.inputFill;
@@ -128,7 +142,10 @@ class _LocationPickerState extends State<LocationPicker> {
         ClipRRect(
           borderRadius: BorderRadius.circular(14),
           child: SizedBox(
-            height: 220,
+            // Enough of the surrounding streets to recognise where the pin is.
+            // At 220 the agent could see the pin but not the junction that
+            // tells them it is the right street.
+            height: 280,
             child: Stack(
               children: [
                 GoogleMap(
@@ -150,8 +167,13 @@ class _LocationPickerState extends State<LocationPicker> {
                           ),
                         },
                   myLocationButtonEnabled: false,
-                  zoomControlsEnabled: false,
+                  // The +/- buttons stay ON here. Pinch works, but the map is
+                  // 220px in a form an agent is filling one-handed, and a
+                  // two-finger pinch in that strip is awkward enough that
+                  // people give up and leave the pin roughly placed.
+                  zoomControlsEnabled: true,
                   mapToolbarEnabled: false,
+                  gestureRecognizers: kMapGestures,
                 ),
                 if (pin == null)
                   IgnorePointer(
