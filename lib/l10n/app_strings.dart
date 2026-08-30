@@ -304,6 +304,7 @@ class AppStrings {
     required this.docLanguage,
     required this.langKurdish,
     required this.langArabic,
+    required this.langEnglish,
     required this.attachments,
     required this.printAttachments,
     required this.shareOrSave,
@@ -439,6 +440,11 @@ class AppStrings {
     required this.rentTitleFieldAr,
     required this.saleTitleField,
     required this.saleTitleFieldAr,
+    required this.rentTitleFieldEn,
+    required this.saleTitleFieldEn,
+    required this.englishHeadings,
+    required this.rentClausesEn,
+    required this.saleClausesEn,
     required this.arabicHeadings,
     required this.tokensTitle,
     required this.tokensHint,
@@ -767,6 +773,7 @@ class AppStrings {
   final String docLanguage;
   final String langKurdish;
   final String langArabic;
+  final String langEnglish;
   final String attachments;
   final String printAttachments;
   final String shareOrSave;
@@ -909,6 +916,11 @@ class AppStrings {
   final String rentTitleFieldAr;
   final String saleTitleField;
   final String saleTitleFieldAr;
+  final String rentTitleFieldEn;
+  final String saleTitleFieldEn;
+  final String englishHeadings;
+  final String rentClausesEn;
+  final String saleClausesEn;
   final String arabicHeadings;
   final String tokensTitle;
   final String tokensHint;
@@ -1347,7 +1359,7 @@ class AppStrings {
         pickFromList, pickLawyer, noLawyersHint, newRentContract, editRentContract,
         newSaleContract, editSaleContract, savingContract, updatingContract,
         rentContractUpdated, saleContractUpdated, docLanguage, langKurdish,
-        langArabic, attachments, printAttachments, shareOrSave,
+        langArabic, langEnglish, attachments, printAttachments, shareOrSave,
         attachmentNotDownloaded,
         noRentReceipts, noExternalReceipts, deleteReceipt, receiptDeleted,
         print,
@@ -1377,6 +1389,8 @@ class AppStrings {
         receiptColorHex, clauseFontSize, fieldFontSize, rentClauses, rentClausesAr,
         saleClauses, saleClausesAr, newClause, rentTitleField, rentTitleFieldAr,
         saleTitleField, saleTitleFieldAr, arabicHeadings, tokensTitle, tokensHint,
+        rentTitleFieldEn, saleTitleFieldEn, englishHeadings,
+        rentClausesEn, saleClausesEn,
         tokensAlsoHere, arabicClausesHint, noAutoTranslation, noArabicClausesYet,
         templateSaved, resetToDefault, resetToDefaultConfirm, resetDone,
         reloadKurdishClauses, reloadKurdishClausesDone,
@@ -1664,6 +1678,7 @@ class AppStrings {
     docLanguage: 'زمانی گرێبەست',
     langKurdish: 'کوردی',
     langArabic: 'عەرەبی',
+    langEnglish: 'ئینگلیزی',
     attachments: 'بەڵگەکان',
     printAttachments: 'چاپکردنی بەڵگەکان لەگەڵ گرێبەست',
     shareOrSave: 'هاوبەشکردن / پاشەکەوتکردن',
@@ -1798,6 +1813,11 @@ class AppStrings {
     rentTitleFieldAr: 'ناونیشانی گرێبەستی کرێ (عەرەبی)',
     saleTitleField: 'ناونیشانی گرێبەستی فرۆشتن',
     saleTitleFieldAr: 'ناونیشانی گرێبەستی فرۆشتن (عەرەبی)',
+    rentTitleFieldEn: 'ناونیشانی گرێبەستی کرێ (ئینگلیزی)',
+    saleTitleFieldEn: 'ناونیشانی گرێبەستی فرۆشتن (ئینگلیزی)',
+    englishHeadings: 'ناونیشانەکانی ئینگلیزی',
+    rentClausesEn: 'بەندەکانی گرێبەستی کرێ — ئینگلیزی',
+    saleClausesEn: 'بەندەکانی گرێبەستی فرۆشتن — ئینگلیزی',
     arabicHeadings: 'ناونیشانەکانی عەرەبی',
     tokensTitle: 'کۆدەکانی جێگرەوە (tokens)',
     tokensHint: 'لەناو بەندەکاندا ئەم کۆدانە بەکاربهێنە؛ خۆکارانە بە داتای گرێبەست پڕدەبنەوە.',
@@ -2093,6 +2113,7 @@ class AppStrings {
     docLanguage: 'لغة العقد',
     langKurdish: 'الكردية',
     langArabic: 'العربية',
+    langEnglish: 'الإنجليزية',
     attachments: 'المستندات',
     printAttachments: 'طباعة المستندات مع العقد',
     shareOrSave: 'مشاركة / حفظ',
@@ -2227,6 +2248,11 @@ class AppStrings {
     rentTitleFieldAr: 'عنوان عقد الإيجار (عربي)',
     saleTitleField: 'عنوان عقد البيع',
     saleTitleFieldAr: 'عنوان عقد البيع (عربي)',
+    rentTitleFieldEn: 'عنوان عقد الإيجار (إنجليزي)',
+    saleTitleFieldEn: 'عنوان عقد البيع (إنجليزي)',
+    englishHeadings: 'العناوين الإنجليزية',
+    rentClausesEn: 'بنود عقد الإيجار — إنجليزي',
+    saleClausesEn: 'بنود عقد البيع — إنجليزي',
     arabicHeadings: 'العناوين العربية',
     tokensTitle: 'رموز الاستبدال (tokens)',
     tokensHint: 'استخدم هذه الرموز داخل البنود؛ تُملأ تلقائياً ببيانات العقد.',
@@ -2524,6 +2550,7 @@ class AppStrings {
     docLanguage: 'Contract language',
     langKurdish: 'Kurdish',
     langArabic: 'Arabic',
+    langEnglish: 'English',
     attachments: 'Attachments',
     printAttachments: 'Print the attachments with the contract',
     shareOrSave: 'Share / save',
@@ -2658,6 +2685,11 @@ class AppStrings {
     rentTitleFieldAr: 'Rent contract heading (Arabic)',
     saleTitleField: 'Sale contract heading',
     saleTitleFieldAr: 'Sale contract heading (Arabic)',
+    rentTitleFieldEn: 'Rent contract heading (English)',
+    saleTitleFieldEn: 'Sale contract heading (English)',
+    englishHeadings: 'English headings',
+    rentClausesEn: 'Rent contract clauses — English',
+    saleClausesEn: 'Sale contract clauses — English',
     arabicHeadings: 'Arabic headings',
     tokensTitle: 'Placeholder tokens',
     tokensHint: 'Use these tokens inside the clauses; they fill automatically from the contract data.',

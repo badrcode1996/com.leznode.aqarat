@@ -29,12 +29,16 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
   final _saleTitle = TextEditingController();
   final _rentTitleAr = TextEditingController();
   final _saleTitleAr = TextEditingController();
+  final _rentTitleEn = TextEditingController();
+  final _saleTitleEn = TextEditingController();
   final _color = TextEditingController();
   final _receiptColor = TextEditingController();
   final _rent = <TextEditingController>[];
   final _sale = <TextEditingController>[];
   final _rentAr = <TextEditingController>[];
   final _saleAr = <TextEditingController>[];
+  final _rentEn = <TextEditingController>[];
+  final _saleEn = <TextEditingController>[];
   double _fontSize = 11;
   double _receiptFontSize = 10;
 
@@ -59,6 +63,8 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
     _saleTitle.text = tpl.saleTitle;
     _rentTitleAr.text = tpl.rentTitleAr;
     _saleTitleAr.text = tpl.saleTitleAr;
+    _rentTitleEn.text = tpl.rentTitleEn;
+    _saleTitleEn.text = tpl.saleTitleEn;
     _color.text = tpl.primaryColorHex;
     _receiptColor.text = tpl.receiptColorHex;
     _fontSize = tpl.clauseFontSize;
@@ -76,10 +82,16 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
     _saleAr
       ..clear()
       ..addAll(tpl.saleClausesAr.map((c) => TextEditingController(text: c)));
+    _rentEn
+      ..clear()
+      ..addAll(tpl.rentClausesEn.map((c) => TextEditingController(text: c)));
+    _saleEn
+      ..clear()
+      ..addAll(tpl.saleClausesEn.map((c) => TextEditingController(text: c)));
   }
 
   void _disposeLists() {
-    for (final l in [_rent, _sale, _rentAr, _saleAr]) {
+    for (final l in [_rent, _sale, _rentAr, _saleAr, _rentEn, _saleEn]) {
       for (final c in l) {
         c.dispose();
       }
@@ -92,6 +104,8 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
     _saleTitle.dispose();
     _rentTitleAr.dispose();
     _saleTitleAr.dispose();
+    _rentTitleEn.dispose();
+    _saleTitleEn.dispose();
     _color.dispose();
     _receiptColor.dispose();
     _disposeLists();
@@ -116,8 +130,12 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
       receiptFontSize: _receiptFontSize,
       rentClausesAr: clean(_rentAr),
       saleClausesAr: clean(_saleAr),
+      rentClausesEn: clean(_rentEn),
+      saleClausesEn: clean(_saleEn),
       rentTitleAr: _rentTitleAr.text.trim(),
       saleTitleAr: _saleTitleAr.text.trim(),
+      rentTitleEn: _rentTitleEn.text.trim(),
+      saleTitleEn: _saleTitleEn.text.trim(),
     );
   }
 
@@ -289,6 +307,12 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
                 const SizedBox(height: 16),
                 _clauseSection(S.saleClausesAr, _saleAr,
                     arabic: true),
+                const SizedBox(height: 24),
+                _englishTitles(),
+                const SizedBox(height: 16),
+                _clauseSection(S.rentClausesEn, _rentEn),
+                const SizedBox(height: 16),
+                _clauseSection(S.saleClausesEn, _saleEn),
               ],
             ),
     );
@@ -501,6 +525,24 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
           ],
         ),
       );
+
+  Widget _englishTitles() => _panel(S.englishHeadings, [
+        TextField(
+          controller: _rentTitleEn,
+          textDirection: TextDirection.ltr,
+          decoration: InputDecoration(
+              labelText: S.rentTitleFieldEn,
+              hintText: 'Tenancy Agreement'),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _saleTitleEn,
+          textDirection: TextDirection.ltr,
+          decoration: InputDecoration(
+              labelText: S.saleTitleFieldEn,
+              hintText: 'Sale Agreement'),
+        ),
+      ]);
 
   Widget _arabicTitles() => _panel(S.arabicHeadings, [
         TextField(

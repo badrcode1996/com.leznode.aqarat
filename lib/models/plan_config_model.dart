@@ -18,6 +18,7 @@ class PlanFeatures {
     this.guarantees = false,
     this.commission = false,
     this.arabicContracts = false,
+    this.englishContracts = false,
     this.map = false,
     this.maxBranches = 0,
     this.maxUsers = 0,
@@ -33,6 +34,7 @@ class PlanFeatures {
   final bool guarantees; // کۆی دڵنیایی (guarantee/deposit totals)
   final bool commission; // کۆی عمولە (sale-contract commission totals)
   final bool arabicContracts; // گرێبەستی عەرەبی (Arabic contract PDF)
+  final bool englishContracts; // گرێبەستی ئینگلیزی (English contract PDF)
 
   /// شوێنی موڵک لەسەر ماپ — pinning a listing and seeing the pin. Off for
   /// bronze: the map is a paid Google service, so it is priced as one.
@@ -66,6 +68,8 @@ class PlanFeatures {
         commission: j['commission'] as bool? ?? fallback.commission,
         arabicContracts:
             j['arabic_contracts'] as bool? ?? fallback.arabicContracts,
+        englishContracts:
+            j['english_contracts'] as bool? ?? fallback.englishContracts,
         map: j['map'] as bool? ?? fallback.map,
         maxBranches: (j['max_branches'] as num?)?.toInt() ?? fallback.maxBranches,
         maxUsers: (j['max_users'] as num?)?.toInt() ?? fallback.maxUsers,
@@ -82,6 +86,7 @@ class PlanFeatures {
         'guarantees': guarantees,
         'commission': commission,
         'arabic_contracts': arabicContracts,
+        'english_contracts': englishContracts,
         'map': map,
         'max_branches': maxBranches,
         'max_users': maxUsers,
@@ -100,6 +105,7 @@ class PlanFeatures {
     'guarantees',
     'commission',
     'arabic_contracts',
+    'english_contracts',
     'map',
   ];
 
@@ -118,6 +124,7 @@ class PlanFeatures {
       guarantees: overrides['guarantees'],
       commission: overrides['commission'],
       arabicContracts: overrides['arabic_contracts'],
+      englishContracts: overrides['english_contracts'],
       map: overrides['map'],
     );
   }
@@ -132,6 +139,7 @@ class PlanFeatures {
     bool? guarantees,
     bool? commission,
     bool? arabicContracts,
+    bool? englishContracts,
     bool? map,
     int? maxBranches,
     int? maxUsers,
@@ -147,6 +155,7 @@ class PlanFeatures {
         guarantees: guarantees ?? this.guarantees,
         commission: commission ?? this.commission,
         arabicContracts: arabicContracts ?? this.arabicContracts,
+        englishContracts: englishContracts ?? this.englishContracts,
         map: map ?? this.map,
         maxBranches: maxBranches ?? this.maxBranches,
         maxUsers: maxUsers ?? this.maxUsers,
@@ -208,10 +217,11 @@ class PlanConfig {
       offers: true,
       requests: true,
       lawyers: false,
-      // Arabic contracts are Gold-and-up. A Silver company that needs them is
-      // handled one at a time through its feature_overrides, not by moving the
-      // whole tier.
+      // The Arabic and English editions are Gold-and-up. A Silver company that
+      // needs one is handled through its feature_overrides, one at a time,
+      // rather than by moving the whole tier.
       arabicContracts: false,
+      englishContracts: false,
       map: true,
       // Multiple branches are a Gold-only feature; Bronze and Silver run as a
       // single branch.
@@ -229,6 +239,7 @@ class PlanConfig {
       guarantees: true,
       commission: true,
       arabicContracts: true,
+      englishContracts: true,
       map: true,
       maxBranches: 0,
       maxUsers: 0,
@@ -246,6 +257,7 @@ class PlanConfig {
       guarantees: true,
       commission: true,
       arabicContracts: true,
+      englishContracts: true,
       map: true,
       maxBranches: 0,
       maxUsers: 0,

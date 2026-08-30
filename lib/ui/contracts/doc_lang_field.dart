@@ -21,14 +21,29 @@ Color get _inputFill => AppColors.current.inputFill;
 /// company of their own, and the template stream is briefly unresolved on a
 /// cold open; neither means "no Arabic", so both fall back to the built-in
 /// template, which always carries the Arabic clauses.
-bool arabicDocAvailable(WidgetRef ref, {required bool isRent}) {
-  if (!ref.watch(currentPlanFeaturesProvider).arabicContracts) return false;
+bool arabicDocAvailable(WidgetRef ref, {required bool isRent}) =>
+    _docAvailable(ref, isRent: isRent, lang: 'ar');
+
+/// The same for the English edition — see [arabicDocAvailable].
+bool englishDocAvailable(WidgetRef ref, {required bool isRent}) =>
+    _docAvailable(ref, isRent: isRent, lang: 'en');
+
+bool _docAvailable(WidgetRef ref,
+    {required bool isRent, required String lang}) {
+  final features = ref.watch(currentPlanFeaturesProvider);
+  final sold = lang == 'ar' ? features.arabicContracts
+      : features.englishContracts;
+  if (!sold) return false;
+
   final companyId = ref.watch(currentUserProvider).companyId;
   final tpl = companyId.isEmpty
       ? ContractTemplate.defaults()
       : (ref.watch(contractTemplateProvider(companyId)).valueOrNull ??
           ContractTemplate.defaults());
-  return (isRent ? tpl.rentClausesAr : tpl.saleClausesAr).isNotEmpty;
+  final clauses = lang == 'ar'
+      ? (isRent ? tpl.rentClausesAr : tpl.saleClausesAr)
+      : (isRent ? tpl.rentClausesEn : tpl.saleClausesEn);
+  return clauses.isNotEmpty;
 }
 
 /// The language a contract's document opens on, given the interface language.
@@ -77,7 +92,11 @@ class DocLangField extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     watchAppShell(context);
-    if (!arabicDocAvailable(ref, isRent: isRent)) return const SizedBox.shrink();
+    // Nothing to pick between when Kurdish is the only edition on offer.
+    if (!arabicDocAvailable(ref, isRent: isRent) &&
+        !englishDocAvailable(ref, isRent: isRent)) {
+      return const SizedBox.shrink();
+    }
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -110,26 +129,41 @@ class DocLangField extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(16)),
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
+              // Only the editions this company can actually produce. Kurdish
+              // is always there; the other two appear once the plan sells them
+              // and the clauses exist.
               segments: [
-                ButtonSegment(
-                  value: 'ku',
-                  label: Text(S.langKurdish,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 15)),
-                ),
-                ButtonSegment(
-                  value: 'ar',
-                  label: Text(S.langArabic,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 15)),
-                ),
+                _segment('ku', S.langKurdish),
+                if (arabicDocAvailable(ref, isRent: isRent))
+                  _segment('ar', S.langArabic),
+                if (englishDocAvailable(ref, isRent: isRent))
+                  _segment('en', S.langEnglish),
               ],
-              selected: {value},
+              // A stored value whose edition has since been switched off would
+              // leave the button with nothing selected, which throws.
+              selected: {_usable(ref, value)},
               onSelectionChanged: (s) => onChanged(s.first),
             ),
           ),
         ],
       ),
     );
+  }
+
+  static ButtonSegment<String> _segment(String value, String label) =>
+      ButtonSegment(
+        value: value,
+        label: Text(label,
+            style:
+                const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+      );
+
+  /// [value], or Kurdish when that edition is no longer on offer — a contract
+  /// saved as Arabic keeps its stored value, but a plan downgrade must not
+  /// leave the picker pointing at a segment that is not there.
+  String _usable(WidgetRef ref, String value) {
+    if (value == 'ar' && arabicDocAvailable(ref, isRent: isRent)) return 'ar';
+    if (value == 'en' && englishDocAvailable(ref, isRent: isRent)) return 'en';
+    return 'ku';
   }
 }

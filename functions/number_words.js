@@ -94,6 +94,73 @@ function integerWords(n) {
   return parts.join(JOIN);
 }
 
+// ---------------------------------------------------------------------------
+// English
+// ---------------------------------------------------------------------------
+
+const EN_ONES = ["", "one", "two", "three", "four", "five", "six", "seven",
+  "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen",
+  "sixteen", "seventeen", "eighteen", "nineteen"];
+
+const EN_TENS = ["", "", "twenty", "thirty", "forty", "fifty", "sixty",
+  "seventy", "eighty", "ninety"];
+
+const EN_SCALES = [
+  [1e12, "trillion"],
+  [1e9, "billion"],
+  [1e6, "million"],
+  [1e3, "thousand"],
+];
+
+const EN_UNIT = {IQD: "dinars", USD: "dollars"};
+const EN_SUBUNIT = {IQD: "fils", USD: "cents"};
+
+/**
+ * 1..999 in English.
+ * @param {number} n a whole number in [1, 999]
+ * @return {string} the wording
+ */
+function enBelow1000(n) {
+  const parts = [];
+  const h = Math.floor(n / 100);
+  const rest = n % 100;
+  if (h) parts.push(EN_ONES[h] + " hundred");
+  if (rest) {
+    // "one hundred AND five" — the British form, which is what a contract
+    // written in Erbil is read in.
+    if (h) parts.push("and");
+    if (rest < 20) {
+      parts.push(EN_ONES[rest]);
+    } else {
+      const ones = rest % 10;
+      const tens = EN_TENS[Math.floor(rest / 10)];
+      parts.push(ones ? tens + "-" + EN_ONES[ones] : tens);
+    }
+  }
+  return parts.join(" ");
+}
+
+/**
+ * A whole number in English.
+ * @param {number} n a non-negative whole number below [MAX]
+ * @return {string} the wording, or "" when out of range
+ */
+function enIntegerWords(n) {
+  if (!Number.isFinite(n) || n < 0 || n >= MAX) return "";
+  if (n === 0) return "zero";
+
+  const parts = [];
+  let rest = Math.floor(n);
+  for (const [value, name] of EN_SCALES) {
+    const count = Math.floor(rest / value);
+    if (!count) continue;
+    rest -= count * value;
+    parts.push(enBelow1000(count) + " " + name);
+  }
+  if (rest) parts.push(enBelow1000(rest));
+  return parts.join(" ");
+}
+
 /**
  * An amount of money in words, WITHOUT the currency — the clause text places
  * `{currency}` itself, so the wording stays composable.
@@ -106,13 +173,20 @@ function integerWords(n) {
  *
  * @param {number|string} amount as stored on the document
  * @param {string} [currencyCode] "IQD" | "USD" — only used on a fraction
- * @return {string} the Kurdish wording, or "" when the amount is unusable
+ * @param {string} [lang] "ku" (default) or "en"
+ * @return {string} the wording, or "" when the amount is unusable
  */
-function moneyWords(amount, currencyCode) {
+function moneyWords(amount, currencyCode, lang) {
   // `|| 0` matches the money() formatters: a missing amount reads as zero
   // rather than as a blank, and null and undefined behave alike.
   const n = Number(amount || 0);
   if (!Number.isFinite(n) || n < 0 || n >= MAX) return "";
+
+  const en = lang === "en";
+  const spell = en ? enIntegerWords : integerWords;
+  const join = en ? " and " : JOIN;
+  const unit = (en ? EN_UNIT : UNIT)[currencyCode];
+  const sub = (en ? EN_SUBUNIT : SUBUNIT)[currencyCode];
 
   let whole = Math.floor(n);
   // Amounts are stored as plain numbers, so a fraction is possible. Two places
@@ -123,13 +197,11 @@ function moneyWords(amount, currencyCode) {
     frac = 0;
   }
 
-  const words = integerWords(whole);
+  const words = spell(whole);
   if (!frac) return words;
 
-  const unit = UNIT[currencyCode];
-  const sub = SUBUNIT[currencyCode];
   return words + (unit ? " " + unit : "") +
-    JOIN + integerWords(frac) + (sub ? " " + sub : "");
+    join + spell(frac) + (sub ? " " + sub : "");
 }
 
-module.exports = {integerWords, moneyWords};
+module.exports = {integerWords, enIntegerWords, moneyWords};

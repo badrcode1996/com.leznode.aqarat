@@ -22,6 +22,9 @@ const FONT_FILES = {
 };
 const _fontCache = {};
 function fonts(lang) {
+  // English rides on Speda: it carries the full Latin alphabet and the digits,
+  // so the English edition sets in the same face as the Kurdish one rather
+  // than shipping a third font for the sake of one edition.
   const key = lang === "ar" ? "ar" : "ku";
   if (!_fontCache[key]) {
     const [reg, bold] = FONT_FILES[key];
@@ -327,6 +330,7 @@ async function planAllows(db, company, key, isSuper) {
   // Mirrors PlanConfig.defaults in lib/models/plan_config_model.dart.
   const DEFAULT_ON = {
     arabic_contracts: ["gold", "diamond"],
+    english_contracts: ["gold", "diamond"],
     overdue: ["silver", "gold", "diamond"],
   };
   return (DEFAULT_ON[key] || []).includes(plan);
@@ -487,14 +491,21 @@ exports.renderContractPdf = onCall(
       const t = tSnap.exists ? tSnap.data() : {};
       assertCompanyActive(cd, isSuper);
 
-      // Language of the rendered document. Arabic is a paid feature; the
-      // clauses themselves fall back to the shipped Arabic defaults when a
-      // company has not customised them.
-      const lang = request.data && request.data.lang === "ar" ? "ar" : "ku";
-      if (lang === "ar" &&
-          !await planAllows(db, cd, "arabic_contracts", isSuper)) {
+      // Language of the rendered document. Kurdish is the house edition and
+      // always available; Arabic and English are each a paid feature. The
+      // clauses themselves fall back to the shipped defaults when a company
+      // has not customised them.
+      //
+      // Re-checked here and not merely in the app: the picker hides an edition
+      // the plan does not include, and a caller that skips the app would
+      // otherwise have it for free.
+      const asked = request.data && request.data.lang;
+      const lang = (asked === "ar" || asked === "en") ? asked : "ku";
+      const FEATURE = {ar: "arabic_contracts", en: "english_contracts"};
+      if (lang !== "ku" &&
+          !await planAllows(db, cd, FEATURE[lang], isSuper)) {
         throw new HttpsError(
-            "permission-denied", "Arabic contracts are not in this plan.");
+            "permission-denied", `${lang} contracts are not in this plan.`);
       }
 
       const company = {

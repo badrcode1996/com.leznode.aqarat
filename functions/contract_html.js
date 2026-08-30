@@ -63,10 +63,33 @@ const L = {
     signAgent: "الموظف المسؤول",
     sign2: "الطرف الثاني",
   },
+  en: {
+    currency: {IQD: "Iraqi Dinars", USD: "US Dollars"},
+    company: "the Company",
+    areaUnit: " m²",
+    cardTitle: "Contract details",
+    contractNo: "Contract no.:",
+    party1Rent: "First party (owner):",
+    party2Rent: "Second party (tenant):",
+    party1Sale: "First party (seller):",
+    party2Sale: "Second party (buyer):",
+    propertyType: "Property type:",
+    project: "Project / district:",
+    propertyNo: "Property no.:",
+    area: "Area:",
+    clausesHead: "Both parties have agreed to the following terms:",
+    notes: "Note: ",
+    sign1: "First party",
+    signAgent: "Agent",
+    sign2: "Second party",
+  },
 };
 
-/** Falls back to Kurdish for any value that is not exactly "ar". */
-const langOf = (v) => (v === "ar" ? "ar" : "ku");
+/** The three editions. Anything else is Kurdish, which is the house default. */
+const langOf = (v) => (v === "ar" || v === "en" ? v : "ku");
+
+/** True for the editions written right to left — Kurdish and Arabic. */
+const isRtl = (lang) => langOf(lang) !== "en";
 
 /**
  * Rewrites 0-9 as ٠-٩. Only the ten digits change, so a thousands comma, a date
@@ -96,7 +119,11 @@ const escHtml = (s) =>
  * amounts, the contract number, the area and the tokens substituted into
  * clauses are all covered at once.
  */
-const esc = (s) => arabicNum(escHtml(s));
+const escArabicNum = (s) => arabicNum(escHtml(s));
+
+/// The Kurdish/Arabic default. buildContractHtml rebinds this per edition —
+/// the English one keeps Latin digits.
+const esc = escArabicNum;
 
 /**
  * For a value going into an attribute: quotes escaped too, or it can close the
@@ -119,22 +146,24 @@ function fmtDate(d) {
 }
 
 function tokensFor(c, company, lang) {
-  const t = L[langOf(lang)];
-  // An Arabic contract names the company in Arabic when the company has an
-  // Arabic name on file; otherwise its Kurdish name still beats a placeholder.
-  const cn = (langOf(lang) === "ar" ? company.nameAr || company.nameKu :
-    company.nameKu) || t.company;
+  const l = langOf(lang);
+  const t = L[l];
+  // Each edition names the company in its own language when the company has
+  // that name on file; the Kurdish one still beats a placeholder otherwise.
+  const cn = ({
+    ar: company.nameAr,
+    en: company.nameEn,
+  }[l] || company.nameKu) || t.company;
   const cur = t.currency[c.dinar_dolar] || "";
 
   // An amount spelled out, for the `{…_words}` twin of each money token.
   //
-  // KURDISH ONLY — see number_words.js. On an Arabic contract the key is left
-  // undefined on purpose, so applyTokens leaves `{total_price_words}` standing
-  // in the text: a clause that reaches for it shows the mistake to whoever
-  // wrote it, rather than quietly printing Kurdish on an Arabic document or
-  // swallowing the amount into a blank.
+  // Kurdish and English only. Arabic is left undefined on purpose, so
+  // applyTokens leaves `{total_price_words}` standing in the text: its numerals
+  // inflect for gender, case and the counted noun, and a wrong ending on a
+  // filed document is worse than a visible token. English has no such trap.
   const words = (n) =>
-    langOf(lang) === "ar" ? undefined : moneyWords(n, c.dinar_dolar);
+    l === "ar" ? undefined : moneyWords(n, c.dinar_dolar, l);
 
   // Only the keys that came back with a value, so `undefined` above really
   // does leave the token unknown rather than defining it as empty.
@@ -220,26 +249,31 @@ function contractViewModel(o) {
 
   const pick = (...lists) =>
     lists.find((l) => Array.isArray(l) && l.length > 0) || [];
-  // Migration shim: rent_clauses_house is the newest edit on templates saved
-  // while clauses were split per property kind. Drop once all are re-saved.
-  const rawClauses = isAr ?
-    (isRent ?
-      pick(t.rent_clauses_ar, DEFAULTS.rent_clauses_ar) :
-      pick(t.sale_clauses_ar, DEFAULTS.sale_clauses_ar)) :
+
+  // Each edition reads its own clause list, falling back to the built-in one.
+  // Migration shim on the Kurdish side: rent_clauses_house is the newest edit
+  // on templates saved while clauses were split per property kind. Drop once
+  // all are re-saved.
+  const kind = isRent ? "rent" : "sale";
+  const rawClauses = lang === "ku" ?
     (isRent ?
       pick(t.rent_clauses_house, t.rent_clauses, DEFAULTS.rent_clauses) :
-      pick(t.sale_clauses, DEFAULTS.sale_clauses));
+      pick(t.sale_clauses, DEFAULTS.sale_clauses)) :
+    pick(t[`${kind}_clauses_${lang}`], DEFAULTS[`${kind}_clauses_${lang}`]);
 
   // A stored heading wins over the default, EXCEPT when it is one a rename
   // has retired — see LEGACY_TITLES.
   const heading = (stored) =>
     (stored && !LEGACY_TITLES.includes(stored.trim())) ? stored : "";
 
+  // The Kurdish heading is the fallback for every edition: a company that has
+  // not named its English one is better served by a Kurdish title on an English
+  // page than by a blank where the title goes.
   const kuTitle = isRent ?
     (heading(t.rent_title) || DEFAULTS.rent_title) :
     (heading(t.sale_title) || DEFAULTS.sale_title);
-  const arTitle = heading(isRent ? t.rent_title_ar : t.sale_title_ar) ||
-    (isRent ? DEFAULTS.rent_title_ar : DEFAULTS.sale_title_ar);
+  const langTitle = lang === "ku" ? "" :
+    (heading(t[`${kind}_title_${lang}`]) || DEFAULTS[`${kind}_title_${lang}`]);
 
   return {
     contract: c,
@@ -247,13 +281,13 @@ function contractViewModel(o) {
     template: t,
     isRent,
     tokens,
-    /** "ku" | "ar" — a custom design can branch on this. */
+    /** "ku" | "ar" | "en" — a custom design can branch on this. */
     lang,
     /** Every fixed string on the document, already in [lang]. */
     label,
     accent: "#" + (t.primary_color || DEFAULTS.primary_color),
     fontSize: (t.clause_font_size || DEFAULTS.clause_font_size) + "px",
-    title: (isAr ? arTitle : "") || kuTitle,
+    title: langTitle || kuTitle,
     /** Clause texts with every {token} already substituted. */
     clauses: rawClauses.map((cl) => applyTokens(cl, tokens)),
     /**
@@ -306,6 +340,15 @@ function buildContractHtml(o) {
   const vm = contractViewModel(o);
   const {accent, title, names, propertyPairs: propPairs, lang, label: T} = vm;
   const fs = vm.fontSize;
+
+  // Shadows the module-level esc for the rest of this function. The English
+  // edition keeps Latin digits — "500,000" reads as itself to an English
+  // reader, and ٥٠٠,٠٠٠ does not — while Kurdish and Arabic convert as before.
+  // Everything on the page already goes through esc, so switching it here
+  // switches the whole document at once. `num` does the same for the clause
+  // numbering, which is written separately.
+  const esc = isRtl(lang) ? escArabicNum : escHtml;
+  const num = isRtl(lang) ? arabicNum : String;
   const logo = company.logo_data_uri ?
     `<img class="logo" src="${escAttr(company.logo_data_uri)}">` : "";
   // Faint full-page watermark of the company logo (all plans).
@@ -343,7 +386,7 @@ function buildContractHtml(o) {
   // vm.clauses already has its {token}s substituted.
   const clausesHtml = vm.clauses
       .map((cl, i) =>
-        `<div class="clause">${arabicNum(i + 1)}- ${esc(cl)}</div>`)
+        `<div class="clause">${num(i + 1)}- ${esc(cl)}</div>`)
       .join("");
 
   const notes = (c.notes && c.notes.trim()) ?
@@ -378,7 +421,10 @@ function buildContractHtml(o) {
   // 'DocFont' is deliberately generic: index.js embeds Speda for Kurdish and
   // Amiri for Arabic under the same family name, so the stylesheet — and any
   // per-company design that copies it — needs no language branch.
-  return `<!doctype html><html lang="${lang === "ar" ? "ar" : "ckb"}"><head>
+  const htmlLang = {ar: "ar", en: "en", ku: "ckb"}[lang];
+  const dir = isRtl(lang) ? "rtl" : "ltr";
+
+  return `<!doctype html><html lang="${htmlLang}" dir="${dir}"><head>
 <meta charset="utf-8">
 <style>
 @font-face{font-family:'DocFont';src:url(data:font/ttf;base64,${o.fontRegB64}) format('truetype');font-weight:normal;}
@@ -399,7 +445,7 @@ function buildContractHtml(o) {
 /* 1.4 rather than 1.6. At the 16px clauses print in, the difference is about
    three quarters of a line per clause, which over a contract is most of a
    page — and 1.4 is still comfortable for justified Kurdish. */
-body{font-family:'DocFont';direction:rtl;color:#111;font-size:${fs};line-height:1.4;}
+body{font-family:'DocFont';direction:${dir};color:#111;font-size:${fs};line-height:1.4;}
 table.page{width:100%;border-collapse:collapse;}
 thead{display:table-header-group;}
 .band{display:flex;align-items:center;padding-bottom:4px;}

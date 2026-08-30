@@ -26,6 +26,10 @@ class ContractTemplate {
     this.saleClausesAr = const [],
     this.rentTitleAr = '',
     this.saleTitleAr = '',
+    this.rentClausesEn = const [],
+    this.saleClausesEn = const [],
+    this.rentTitleEn = '',
+    this.saleTitleEn = '',
   });
 
   final List<String> rentClauses;
@@ -40,11 +44,21 @@ class ContractTemplate {
   final String rentTitleAr;
   final String saleTitleAr;
 
+  /// The English edition, mirroring the Arabic one above.
+  final List<String> rentClausesEn;
+  final List<String> saleClausesEn;
+  final String rentTitleEn;
+  final String saleTitleEn;
+
   /// True when THIS contract type can be rendered in Arabic. Clause lists are
   /// filled from the built-in Arabic defaults by [fromJson], so this is only
   /// false if a company deliberately cleared them.
   bool arabicReadyFor(Contract c) =>
       (c is RentContract ? rentClausesAr : saleClausesAr).isNotEmpty;
+
+  /// The same for the English edition.
+  bool englishReadyFor(Contract c) =>
+      (c is RentContract ? rentClausesEn : saleClausesEn).isNotEmpty;
 
   /// 6-digit RRGGBB hex (no leading #).
   final String primaryColorHex;
@@ -67,6 +81,10 @@ class ContractTemplate {
     List<String>? saleClausesAr,
     String? rentTitleAr,
     String? saleTitleAr,
+    List<String>? rentClausesEn,
+    List<String>? saleClausesEn,
+    String? rentTitleEn,
+    String? saleTitleEn,
   }) =>
       ContractTemplate(
         rentClauses: rentClauses ?? this.rentClauses,
@@ -81,6 +99,10 @@ class ContractTemplate {
         saleClausesAr: saleClausesAr ?? this.saleClausesAr,
         rentTitleAr: rentTitleAr ?? this.rentTitleAr,
         saleTitleAr: saleTitleAr ?? this.saleTitleAr,
+        rentClausesEn: rentClausesEn ?? this.rentClausesEn,
+        saleClausesEn: saleClausesEn ?? this.saleClausesEn,
+        rentTitleEn: rentTitleEn ?? this.rentTitleEn,
+        saleTitleEn: saleTitleEn ?? this.saleTitleEn,
       );
 
   /// Reads a stored template, filling every absent/empty field from
@@ -126,6 +148,10 @@ class ContractTemplate {
       saleClausesAr: list('sale_clauses_ar', d.saleClausesAr),
       rentTitleAr: title('rent_title_ar', d.rentTitleAr),
       saleTitleAr: title('sale_title_ar', d.saleTitleAr),
+      rentClausesEn: list('rent_clauses_en', d.rentClausesEn),
+      saleClausesEn: list('sale_clauses_en', d.saleClausesEn),
+      rentTitleEn: title('rent_title_en', d.rentTitleEn),
+      saleTitleEn: title('sale_title_en', d.saleTitleEn),
     );
   }
 
@@ -142,6 +168,10 @@ class ContractTemplate {
         'sale_clauses_ar': saleClausesAr,
         'rent_title_ar': rentTitleAr,
         'sale_title_ar': saleTitleAr,
+        'rent_clauses_en': rentClausesEn,
+        'sale_clauses_en': saleClausesEn,
+        'rent_title_en': rentTitleEn,
+        'sale_title_en': saleTitleEn,
         'updated_at': FieldValue.serverTimestamp(),
       };
 
@@ -296,6 +326,10 @@ class ContractTemplate {
         saleTitleAr: 'عقد بيع',
         rentClausesAr: _defaultRentClausesAr,
         saleClausesAr: _defaultSaleClausesAr,
+        rentTitleEn: 'Tenancy Agreement',
+        saleTitleEn: 'Sale Agreement',
+        rentClausesEn: _defaultRentClausesEn,
+        saleClausesEn: _defaultSaleClausesEn,
       );
 
   static const List<String> _defaultRentClauses = [
@@ -392,4 +426,54 @@ class ContractTemplate {
     'على الطرف الأول دفع ما نسبته ١٪ من سعر العقار الموصوف أعلاه إلى {company} مقابل بيع هذا العقار.',
     'على الطرف الثاني دفع ما نسبته ١٪ من سعر العقار الموصوف أعلاه إلى {company} مقابل شراء هذا العقار.',
   ];
+
+  // ---------------------------------------------------------------------------
+  // English edition. GENERATED from functions/contract_defaults.js — the two
+  // copies must stay verbatim-identical, so edit there and regenerate rather
+  // than retyping here.
+  // ---------------------------------------------------------------------------
+
+  static const List<String> _defaultRentClausesEn = [
+    'The first party agrees to let the property described above to the second party for a term of ({period_months}) months.',
+    'Both parties agree a monthly rent of ({rent_amount}) {rent_amount_words} {currency}.',
+    'This contract runs from {start_date} until {end_date}.',
+    'The second party pays ({down_payment}) {down_payment_words} to the first party in advance for {down_payment_months} months; thereafter the rent is paid every {payment_frequency} months.',
+    'The second party shall lodge ({guarantee}) {guarantee_words} with {company} as a deposit, returnable to the second party once the property has been handed back to the first party in good order.',
+    'The second party shall use the property for {purpose}. Any other use requires the consent of {company} and of the first party.',
+    'The second party may not ask for the keys before security clearance has been granted. If clearance cannot be obtained from the authority concerned within {grace_period} days, this contract is dissolved forthwith and the monies are returned to the second party.',
+    'Before furnishing the property, the second party shall change the locks on the external doors at their own cost; failing that, they are answerable for anything that follows.',
+    'If, at the end of the term, the second party neither vacates the property nor renews this contract, they shall pay ({late_fee}) {late_fee_words} {currency} for each day of delay until the matter is settled.',
+    'Water, electricity and any other service connected to the property are the second party\'s charge for the duration of this contract.',
+    'Any alteration to the property, inside or out, requires the consent of the first party and of {company}. The first party bears only the cost of repairing a defect or of a change the property requires; any decorative or unnecessary change is at the second party\'s cost.',
+    'The second party may not sublet the property, in whole or in part, without notice to {company} and the consent of the first party.',
+    'If the first party sells the property, the second party may remain until the end of the term, and the new owner is bound by this contract.',
+    'If the second party leaves before the term ends, {company} will assist in recovering part or all of the rent for the unoccupied period, should the property be let again through {company}.',
+    'If the property is furnished, the first party shall draw up an inventory of its contents, to be checked by the second party, signed, and attached to this contract.',
+    'The second party shall keep the contents in good order and return them as received on leaving; failing that, the second party bears the cost of repair or replacement.',
+    'Before letting the property, the first party shall clear it of any liability and settle the water, electricity and other service accounts attaching to it, and is answerable for repairing any defect in the fabric of the property.',
+    'When the rent falls due, the first party shall attend {company} promptly to collect it; failing that, the sum is paid into {company}\'s bank account and released to them by cheque.',
+    'The first party and the second party shall each pay {company} half a month\'s rent for each year, as the fee for arranging this contract.',
+    'The second party shall give {company} one month\'s notice before the end of the term of an intention to renew or to vacate; failing that, one month\'s rent falls to the second party.',
+    'Before vacating, the second party shall return the property to the first party as received and in good order; failing that, they are answerable for putting right any defect without delay, and shall clear the property of liability and settle the water, electricity and other service accounts attaching to it.',
+    'At the end of the term this contract may be renewed at the rate of the day, by agreement of both parties and with {company} mediating on the rent and the manner of payment; otherwise the property is vacated and returned to its owner.',
+    'On renewal, each of the two parties shall pay {company} half a month\'s rent for the year.',
+    'The second party shall use the property for the purpose agreed, and in a manner that causes no harm or nuisance to the neighbours; failing that, they answer before the law and this contract is dissolved.',
+    'Should a dispute between the two parties not be settled, {company} bears no responsibility, and the matter goes to court to be decided on the testimony of the responsible staff.',
+    'If the first party collects the rent from the tenant directly, {company} bears no responsibility for any difficulty arising.',
+  ];
+
+  static const List<String> _defaultSaleClausesEn = [
+    'This contract is made for the sale of the property described above, owned by the first party, to the second party at a price of ({total_price}) {total_price_words} {currency}, to which both parties have given their full consent.',
+    '{company} receives ({down_payment}) {down_payment_words} {currency} as a deposit on behalf of the first party.',
+    'The balance is paid as follows: {payment_method}',
+    'The first party shall hand the property to the second party on {delivery_date}, once the sums due have been received.',
+    'If the first party does not hand the property to the second party on the date set, they shall pay ({late_fee}) {late_fee_words} {currency} for each day of delay.',
+    'If either party withdraws from this contract for any reason, they shall pay ({withdrawal}) {withdrawal_words} {currency} to the other party, without need of formal notice.',
+    'The fees for sale, transfer, partition, merger, correction and property tax fall to the first party under the law where the property is registered; where it is not registered, the first party shall pay the cost of registering it in their own name.',
+    'The fees for survey and registration fall to the second party under the law where the property is registered; where it is not registered, the second party shall pay the cost of registration.',
+    'The first party shall grant the lawyer {lawyer} a special power of attorney for this property before the notary public, for the purpose of pursuing the formalities and registering it in the name of the second party at the land registry.',
+    'The first party shall pay {company} 1% of the price of the property described above, for the sale of this property.',
+    'The second party shall pay {company} 1% of the price of the property described above, for the purchase of this property.',
+  ];
+
 }
