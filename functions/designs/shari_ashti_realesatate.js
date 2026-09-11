@@ -84,4 +84,9 @@ body{font-family:'Hejar','DocFont' !important;}
 .ashti-meta b{color:inherit;}
 `;
 
-module.exports = {css, metaHtml};
+// The receipt works on a different principle from the contract — values
+// dropped onto a pre-printed pad rather than a document we lay out — so it
+// lives in its own file.
+const {receiptHtml} = require("./shari_ashti_receipt");
+
+module.exports = {css, metaHtml, receiptHtml};
