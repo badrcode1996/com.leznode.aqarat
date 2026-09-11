@@ -43,6 +43,41 @@ const metaHtml = (vm) => `
   <div><b>${vm.esc("بەروار:")}</b> ${vm.esc(vm.dateText)}</div>
 </div>`;
 
+/**
+ * The info block, laid out the way their Windows program had it: each party on
+ * its own line with the phone beside it, and the four property facts one per
+ * line rather than run together. No heading and no box — the old forms had
+ * neither; the frames on the printout came from the report tool, not the
+ * design.
+ *
+ * @param {object} vm the contract view model
+ * @return {string} markup
+ */
+const cardHtml = (vm) => {
+  const e = vm.esc;
+  const c = vm.contract;
+  const T = vm.label;
+
+  const party = (label, name, phone) => `
+    <div class="a-row">
+      <span class="a-l">${e(label)}</span> <span class="a-v">${e(name || "")}</span>
+      ${phone ? `<span class="a-ph">${e(T.phone || "ژمارە تەلەفۆن:")} ${e(phone)}</span>` : ""}
+    </div>`;
+
+  const parties = vm.isRent ?
+    party(T.party1Rent, c.party1_name, c.party1_mobile) +
+      party(T.party2Rent, c.party2_name, c.party2_mobile) :
+    party(T.party1Sale, c.party1_name, c.party1_mobile) +
+      party(T.party2Sale, c.party2_name, c.party2_mobile);
+
+  // One fact per line, in the order the old form listed them.
+  const facts = vm.propertyPairs.map(([l, v]) =>
+    `<div class="a-row"><span class="a-l">${e(l)}</span> <span class="a-v">${e(v)}</span></div>`
+  ).join("");
+
+  return `<div class="a-card">${parties}${facts}</div>`;
+};
+
 const css = `
 /* Unikurd Hejar, what this company's paperwork has always been set in. Named
    as its own family rather than redefining DocFont, so which face is in use
@@ -82,6 +117,15 @@ body{font-family:'Hejar','DocFont' !important;}
 .ashti-meta{margin:6px 0 10px;line-height:1.9;}
 .ashti-meta div{text-align:right;}
 .ashti-meta b{color:inherit;}
+
+/* The info block: plain lines, no heading and no box. The old forms had
+   neither — the frames on that printout came from the report tool. */
+.a-card{margin:4px 0 12px;line-height:2;}
+.a-row{white-space:nowrap;}
+.a-l{font-weight:bold;}
+/* The phone sits away from the name, as it did in its own field on the old
+   form, rather than running on from it. */
+.a-ph{margin-right:28px;}
 `;
 
 // The receipt works on a different principle from the contract — values
@@ -89,4 +133,4 @@ body{font-family:'Hejar','DocFont' !important;}
 // lives in its own file.
 const {receiptHtml} = require("./shari_ashti_receipt");
 
-module.exports = {css, metaHtml, receiptHtml};
+module.exports = {css, metaHtml, cardHtml, receiptHtml};

@@ -42,6 +42,7 @@ const L = {
     sign1: "لایەنی یەکەم",
     signAgent: "کارمەندی بەرپرس",
     sign2: "لایەنی دووەم",
+    phone: "ژمارە تەلەفۆن:",
   },
   ar: {
     currency: {IQD: "دينار عراقي", USD: "دولار أمريكي"},
@@ -62,6 +63,7 @@ const L = {
     sign1: "الطرف الأول",
     signAgent: "الموظف المسؤول",
     sign2: "الطرف الثاني",
+    phone: "رقم الهاتف:",
   },
   en: {
     currency: {IQD: "Iraqi Dinars", USD: "US Dollars"},
@@ -82,6 +84,7 @@ const L = {
     sign1: "First party",
     signAgent: "Agent",
     sign2: "Second party",
+    phone: "Phone:",
   },
 };
 
@@ -407,6 +410,14 @@ function buildContractHtml(o) {
         `<div class="clause">${num(i + 1)}- ${esc(cl)}</div>`)
       .join("");
 
+  // A design may replace the whole info block — the bordered card with its
+  // heading — when its paperwork lays the same facts out differently. It gets
+  // the row helper and the property pairs, so it writes only the arrangement
+  // and not the data handling. Everything else on the page stays shared.
+  const cardBlock = typeof design.cardHtml === "function" ?
+    design.cardHtml(vm, {row, propLine, esc}) :
+    `<div class="card"><div class="ct">${esc(T.cardTitle)}</div>${card}</div>`;
+
   const notes = (c.notes && c.notes.trim()) ?
     `<div class="notes">${esc(T.notes)}${esc(c.notes)}</div>` : "";
 
@@ -549,7 +560,7 @@ ${watermark}
   <tbody><tr><td>
     <div class="title">${esc(title)}</div>
     ${meta}
-    <div class="card"><div class="ct">${esc(T.cardTitle)}</div>${card}</div>
+    ${cardBlock}
     <div class="chead">${esc(T.clausesHead)}</div>
     ${clausesHtml}
     ${notes}
