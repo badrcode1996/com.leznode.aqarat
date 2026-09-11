@@ -28,6 +28,10 @@
 
 const REGISTRY = {
   // "al_azud_real_estate": require("./al_azud_real_estate"),
+  // Note the id's spelling: the companies document is "realesatate", not
+  // "realestate". It is the document id, so it is not ours to correct — this
+  // key has to match it exactly or the design silently never resolves.
+  "shari_ashti_realesatate": require("./shari_ashti_realesatate"),
 };
 
 const EMPTY = {};
