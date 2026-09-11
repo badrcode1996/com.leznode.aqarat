@@ -138,7 +138,12 @@ const money = (n) => Number(n || 0).toLocaleString("en-US");
 
 function fmtDate(d) {
   if (!d) return "";
+  // A Firestore Timestamp that reached here unconverted, or any other value
+  // Date cannot read, becomes an Invalid Date — which formats as
+  // "NaN/NaN/NaN" and prints that onto the contract. Blank is the honest
+  // answer, and it is visible enough to get reported.
   const dt = d instanceof Date ? d : new Date(d);
+  if (isNaN(dt.getTime())) return "";
   const y = dt.getFullYear();
   const m = String(dt.getMonth() + 1).padStart(2, "0");
   const day = String(dt.getDate()).padStart(2, "0");

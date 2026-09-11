@@ -523,6 +523,11 @@ exports.renderContractPdf = onCall(
         start_date: toDate(k.start_date),
         end_date: toDate(k.end_date),
         delivery_date: toDate(k.delivery_date),
+        // Every date the renderer formats has to be converted here: a
+        // Firestore Timestamp reaches `new Date()` as an object and comes out
+        // NaN/NaN/NaN on the page. created_at is the one a dated document
+        // prints — see contractViewModel's dateText.
+        created_at: toDate(k.created_at),
       };
 
       // Attachment photos (IDs, deeds…) print as appendix pages when the
