@@ -415,6 +415,7 @@ class AppStrings {
     required this.featureGuarantees,
     required this.featureCommission,
     required this.featureArabicContracts,
+    required this.featureEnglishContracts,
     required this.featureMap,
     required this.contractTemplate,
     required this.exportTitle,
@@ -891,6 +892,7 @@ class AppStrings {
   final String featureGuarantees;
   final String featureCommission;
   final String featureArabicContracts;
+  final String featureEnglishContracts;
   final String featureMap;
   final String contractTemplate;
   final String exportTitle;
@@ -1382,7 +1384,8 @@ class AppStrings {
         features, companyFeatures, featuresUpdated, featuresPlanNote, overrideNote,
         asPlan, planSubscription, planSettings, plansSaved, maxBranches,
         maxUsers, zeroUnlimited, webOnlyBlocked, webOnlyNote, featureOverdue,
-        featureGuarantees, featureCommission, featureArabicContracts, featureMap,
+        featureGuarantees, featureCommission, featureArabicContracts,
+        featureEnglishContracts, featureMap,
         contractTemplate,
         exportTitle, exportCompanyData, backupData, tabularReport, excelTwoSheets,
         tapToChange, change, inactive, templateDesign, receiptDesign, primaryColorHex,
@@ -1788,6 +1791,7 @@ class AppStrings {
     featureGuarantees: 'کۆی دڵنیایی',
     featureCommission: 'کۆی عمولە',
     featureArabicContracts: 'گرێبەستی عەرەبی',
+    featureEnglishContracts: 'گرێبەستی ئینگلیزی',
     featureMap: 'ماپی موڵک',
     contractTemplate: 'تێمپلەیتی گرێبەست',
     exportTitle: 'دەرهێنان (Export)',
@@ -2223,6 +2227,7 @@ class AppStrings {
     featureGuarantees: 'مجموع التأمينات',
     featureCommission: 'مجموع العمولات',
     featureArabicContracts: 'العقود العربية',
+    featureEnglishContracts: 'العقود الإنجليزية',
     featureMap: 'خريطة العقار',
     contractTemplate: 'قالب العقد',
     exportTitle: 'التصدير',
@@ -2660,6 +2665,7 @@ class AppStrings {
     featureGuarantees: 'Deposit totals',
     featureCommission: 'Commission totals',
     featureArabicContracts: 'Arabic contracts',
+    featureEnglishContracts: 'English contracts',
     featureMap: 'Property map',
     contractTemplate: 'Contract template',
     exportTitle: 'Export',
