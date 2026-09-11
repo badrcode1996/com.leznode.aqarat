@@ -47,10 +47,12 @@ const cardHtml = (vm) => {
   const c = vm.contract;
   const T = vm.label;
 
+  // The party rows carry the phone at the far end of the line, as the old form
+  // did — it had its own field over there, not a note trailing the name.
   const party = (label, name, phone) => `
-    <div class="a-row">
-      <span class="a-l">${e(label)}</span> <span class="a-v">${e(name || "")}</span>
-      ${phone ? `<span class="a-ph">${e(T.phone || "ژمارە تەلەفۆن:")} ${e(phone)}</span>` : ""}
+    <div class="a-row a-party">
+      <span><span class="a-l">${e(label)}</span> <span class="a-v">${e(name || "")}</span></span>
+      ${phone ? `<span class="a-ph">${e(T.phone)} ${e(phone)}</span>` : ""}
     </div>`;
 
   const parties = vm.isRent ?
@@ -110,19 +112,26 @@ body{font-size:14px !important;}
 .title{margin-top:0;}
 
 /* Number and date, the way the old documents opened. Right-aligned under the
-   title, which is where they sat on the printed forms. */
-.ashti-meta{margin:6px 0 10px;line-height:1.9;}
+   title, which is where they sat on the printed forms.
+
+   Line spacing is the thing that makes this read like the old paperwork. That
+   was set tight — about 1.3 — and the shared document's 2.0 spread the same
+   six lines over nearly twice the depth, which is what "hiç wekû yek nîn"
+   was pointing at. */
+.ashti-meta{margin:2px 0 6px;line-height:1.35;}
 .ashti-meta div{text-align:right;}
 .ashti-meta b{color:inherit;}
 
 /* The info block: plain lines, no heading and no box. The old forms had
    neither — the frames on that printout came from the report tool. */
-.a-card{margin:4px 0 12px;line-height:2;}
+.a-card{margin:2px 0 8px;line-height:1.35;}
 .a-row{white-space:nowrap;}
 .a-l{font-weight:bold;}
-/* The phone sits away from the name, as it did in its own field on the old
-   form, rather than running on from it. */
-.a-ph{margin-right:28px;}
+
+/* A party line runs label+name at the start and the phone at the far end,
+   which is where its own field sat on the old form. */
+.a-party{display:flex;justify-content:space-between;align-items:baseline;
+  gap:10mm;}
 `;
 
 // The receipt works on a different principle from the contract — values
