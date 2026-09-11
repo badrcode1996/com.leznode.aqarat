@@ -1245,9 +1245,17 @@ class _CompanyUsersScreen extends ConsumerWidget {
     'guarantees': S.featureGuarantees,
     'commission': S.featureCommission,
     'arabic_contracts': S.featureArabicContracts,
+    'english_contracts': S.featureEnglishContracts,
+    'map': S.featureMap,
   };
 
   Future<void> _editFeatures(BuildContext context, WidgetRef ref) async {
+    // A key with no label falls back to printing itself, which is how
+    // english_contracts and map reached a Super Admin as raw identifiers.
+    // Fail in debug instead, so the next feature added is caught here.
+    assert(PlanFeatures.overridableKeys.every(_featureLabels.containsKey),
+        'Every overridable feature needs a label in _featureLabels');
+
     // 0 = inherit (وەک پلان), 1 = on, 2 = off
     final state = <String, int>{};
     for (final k in PlanFeatures.overridableKeys) {
