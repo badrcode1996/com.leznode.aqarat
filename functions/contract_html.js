@@ -285,6 +285,12 @@ function contractViewModel(o) {
     lang,
     /** Every fixed string on the document, already in [lang]. */
     label,
+    /**
+     * The day the contract was written, formatted. Nothing in the shared
+     * layout prints it — it is here for a design that wants a dated document,
+     * which is what the paper forms these replaced always had.
+     */
+    dateText: fmtDate(c.created_at),
     accent: "#" + (t.primary_color || DEFAULTS.primary_color),
     fontSize: (t.clause_font_size || DEFAULTS.clause_font_size) + "px",
     title: langTitle || kuTitle,
@@ -367,13 +373,20 @@ function buildContractHtml(o) {
         .join('<span class="sep"> - </span>') +
     `</div>`;
 
+  // A design may lift the contract number out of the card and print it in its
+  // own block above — see design.metaHtml. When it does, the card drops the
+  // row so the number does not appear twice on the page.
+  const meta = typeof design.metaHtml === "function" ?
+    design.metaHtml(vm) : "";
+  const numberRow = meta ? "" : row(T.contractNo, c.contract_number);
+
   const card = isRent ? [
-    row(T.contractNo, c.contract_number),
+    numberRow,
     row(T.party1Rent, c.party1_name),
     row(T.party2Rent, c.party2_name),
     propLine(propPairs),
   ].join("") : [
-    row(T.contractNo, c.contract_number),
+    numberRow,
     row(T.party1Sale, c.party1_name),
     row(T.party2Sale, c.party2_name),
     propLine(propPairs),
@@ -530,6 +543,7 @@ ${watermark}
   </td></tr></thead>
   <tbody><tr><td>
     <div class="title">${esc(title)}</div>
+    ${meta}
     <div class="card"><div class="ct">${esc(T.cardTitle)}</div>${card}</div>
     <div class="chead">${esc(T.clausesHead)}</div>
     ${clausesHtml}

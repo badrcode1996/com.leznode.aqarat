@@ -12,6 +12,12 @@
  *   css          — extra CSS appended AFTER the base stylesheet, so any rule
  *                  here overrides the default look. This is the cheap path:
  *                  most companies need only a few rules.
+ *   metaHtml     — (vm) => string. A block printed between the title and the
+ *                  info card, for a company whose paperwork opens with the
+ *                  contract number and the date. Providing it also takes the
+ *                  number OUT of the card, so it is not on the page twice.
+ *                  Still the shared layout otherwise — unlike contractHtml,
+ *                  this keeps the company on base fixes.
  *   contractHtml — (o) => string. Full takeover of the contract document.
  *                  Only for layouts the base template can't be pushed into.
  *   receiptHtml  — (o) => string. Same, for the receipt (وەصڵ).
