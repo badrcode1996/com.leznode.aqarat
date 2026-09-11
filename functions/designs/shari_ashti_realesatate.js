@@ -13,18 +13,7 @@
  * company still rides the shared document and still gets fixes made to it.
  */
 
-const fs = require("fs");
-const path = require("path");
-
-/**
- * Unikurd Hejar, base64, read once per container.
- *
- * One file, used for both weights — there is no separate bold cut, so the
- * renderer synthesises it, which is what the old Windows program did too.
- */
-const HEJAR = fs
-    .readFileSync(path.join(__dirname, "..", "fonts", "UnikurdHejar.ttf"))
-    .toString("base64");
+const {hejarFace} = require("./ashti_font");
 
 /**
  * The block the old documents opened with: contract number, then date.
@@ -82,9 +71,17 @@ const css = `
 /* Unikurd Hejar, what this company's paperwork has always been set in. Named
    as its own family rather than redefining DocFont, so which face is in use
    is unambiguous rather than depending on declaration order. */
-@font-face{font-family:'Hejar';src:url(data:font/ttf;base64,${HEJAR}) format('truetype');font-weight:normal;font-style:normal;}
-@font-face{font-family:'Hejar';src:url(data:font/ttf;base64,${HEJAR}) format('truetype');font-weight:bold;font-style:normal;}
+${hejarFace()}
 body{font-family:'Hejar','DocFont' !important;}
+
+/* Sizes the company asked for: the title at 25, everything else at 14.
+   The body rule carries the 14 so it inherits everywhere, and the handful of
+   base rules that set their own size are brought back in line — otherwise the
+   clause heading and the signature captions would stay at 12 and 11 and read
+   as a different document from the body above them. */
+body{font-size:14px !important;}
+.title{font-size:25px !important;}
+.chead, .sgn, .notes{font-size:14px !important;}
 
 /* --- The pre-printed letterhead ---------------------------------------
    The sheet already carries the ASHTI branding, so the document adds nothing

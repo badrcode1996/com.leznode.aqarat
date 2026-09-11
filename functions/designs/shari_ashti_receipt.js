@@ -26,6 +26,8 @@
  * numbers should only be touched if one line alone is off.
  */
 
+const {hejarFace} = require("./ashti_font");
+
 /** Shifts every printed value. Positive moves down / left. Test prints tune this. */
 const NUDGE = {down: 0, left: 0};
 
@@ -95,13 +97,14 @@ const receiptHtml = (vm) => {
 
   return `<!doctype html><html lang="ckb" dir="rtl"><head><meta charset="utf-8">
 <style>
-@font-face{font-family:'DocFont';src:url(data:font/ttf;base64,${vm.fontRegB64}) format('truetype');font-weight:normal;}
-@font-face{font-family:'DocFont';src:url(data:font/ttf;base64,${vm.fontBoldB64}) format('truetype');font-weight:bold;}
+/* Unikurd Hejar here too. The values printed onto the pad have to look like
+   the labels already on it, which the old Windows program set in this face. */
+${hejarFace()}
 *{box-sizing:border-box;margin:0;padding:0;}
 /* No margin: every value is positioned from the page edge, because that is
    what the pre-printed form is aligned to. */
 @page{size:A4;margin:0;}
-body{font-family:'DocFont';direction:rtl;font-size:13px;color:#000;
+body{font-family:'Hejar';direction:rtl;font-size:14px;color:#000;
   position:relative;width:210mm;height:297mm;}
 /* Each value sits on the pad's own dotted rule. bottom-anchored line height so
    the text rests ON the rule rather than straddling it. */
