@@ -96,12 +96,12 @@ body{font-size:14pt !important;}
    to the middle of each line, in mm from the top of the sheet:
 
      title 18.7 (in the header band, level with the logo, right-aligned)
-     contract no. 39.9   date 46.0
-     first party 53.8    second party 64.8   (phone in a column 96mm in)
-     property facts 75.0 / 81.1 / 87.2 / 93.3
-     "both parties agree…" 104.8
-     first clause 111.3, lines 6.9mm apart, 3.3mm between clauses
-     last line ≈ 272, just above the footer rule at 280
+     contract no. 39.9 (the first line under the letterhead rules)
+     phone column 96mm in from the text's right edge
+     clause lines 6.9mm apart; last line ≈ 272, above the footer rule at 280
+
+   The spacing between lines below the number no longer copies the printout:
+   the company asked for one even gap throughout (see --gap).
 
    Header lines sit 6mm in from the clauses' right edge, as they did there.
    A photo is good to a millimetre or two; a test print settles the rest. */
@@ -142,14 +142,23 @@ table.page thead td::before{content:"";display:block;height:22.85mm;}
 .title{position:absolute;top:-0.6mm;right:6mm;margin:0;line-height:1.2;
   text-align:right;}
 
+/* One gap everywhere, at the company's request: the same 3.3mm between
+   number and date, between the parties, between the property lines, around
+   "both parties agree…", and between clauses. The old printout's uneven
+   spacing (a wide gap between the two parties, tight property lines) read as
+   a mistake on paper. --gap is the one number to change. */
+:root{--gap:3.3mm;}
+
 /* Number and date. */
 .ashti-meta{margin:0;padding-inline-end:6mm;line-height:6.1mm;}
 .ashti-meta div{text-align:start;}
+.ashti-meta div + div{margin-top:var(--gap);}
 .ashti-meta b{color:inherit;}
 
 /* The info block: plain lines, no heading and no box. */
-.a-card{margin:1.7mm 0 0;padding-inline-end:6mm;line-height:6.1mm;}
+.a-card{margin:var(--gap) 0 0;padding-inline-end:6mm;line-height:6.1mm;}
 .a-row{white-space:nowrap;}
+.a-row + .a-row{margin-top:var(--gap);}
 .a-l{font-weight:bold;}
 
 /* Party lines: label and name, then the phone in its own column 90mm to the
@@ -157,19 +166,12 @@ table.page thead td::before{content:"";display:block;height:22.85mm;}
    name part grows past 90mm rather than overprinting a long name. */
 .a-party{display:flex;align-items:baseline;}
 .a-party > span:first-child{flex:none;min-width:90mm;}
-.a-party + .a-party{margin-top:4.9mm;}
-.a-party + .a-row:not(.a-party){margin-top:4.1mm;}
-/* Air between the property lines themselves. The old form set them 6.1mm
-   apart; the company asked for more, so they read as separate facts. */
-.a-row:not(.a-party) + .a-row{margin-top:2mm;}
 
 /* "Both parties agree on the clauses below", 26.7mm in from the start. */
-/* 4mm under it before clause 1, which the company asked for: flush, the
-   heading read as the first line of clause 1. */
-.chead{margin:5.4mm 0 4mm !important;padding-inline-end:26.7mm;text-align:start;
-  line-height:6.1mm;}
+.chead{margin:var(--gap) 0 !important;padding-inline-end:26.7mm;
+  text-align:start;line-height:6.1mm;}
 
-.clause{line-height:6.9mm;margin-bottom:3.3mm !important;}
+.clause{line-height:6.9mm;margin-bottom:var(--gap) !important;}
 `;
 
 // The receipt works on a different principle from the contract — values
