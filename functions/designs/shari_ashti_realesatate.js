@@ -76,27 +76,43 @@ const css = `
 ${hejarFace()}
 body{font-family:'Hejar','DocFont' !important;}
 
-/* Sizes the company asked for: the title at 25, everything else at 14.
-   The body rule carries the 14 so it inherits everywhere, and the handful of
-   base rules that set their own size are brought back in line — otherwise the
-   clause heading and the signature captions would stay at 12 and 11 and read
-   as a different document from the body above them. */
-body{font-size:14px !important;}
-.title{font-size:25px !important;}
-.chead, .sgn, .notes{font-size:14px !important;}
+/* Sizes the company asked for: the title at 25, everything else at 14 — in
+   POINTS, which is what their old report tool meant by them. Set as px the
+   text came out three quarters of the size of the same words on the old
+   printout. The body rule carries the 14 so it inherits everywhere, and the
+   base rules that set their own size are brought back in line. */
+body{font-size:14pt !important;}
+.title{font-size:25pt !important;}
+.chead, .sgn, .notes{font-size:14pt !important;}
 
-/* --- The pre-printed letterhead ---------------------------------------
-   The sheet already carries the ASHTI branding, so the document adds nothing
-   to those areas and keeps off them. Measured from a scan of the sheet:
-     left edge   a dark ASHTI strip, 3.07% of the width  = 6.4mm on A4
-     top         the logo and two rules, down to 10.2%   = 30.3mm
-     bottom      rules, an arc and the contact details,
-                 from 96.2% down                          = 11.3mm
-   The margins below are those numbers plus a few mm, because a scan is
-   approximate and sheet feeding is not exact. If a test print still lands on
-   the letterhead, these are the values to change. The sides keep the base
-   16mm, which already clears the 6.4mm strip. */
-@page{margin:35mm 16mm 16mm;}
+/* --- Where everything sits ---------------------------------------------
+   Every figure below reproduces a printout from their old Windows program,
+   photographed flat on the letterhead and scaled against the letterhead's own
+   landmarks (header rules at 28mm, footer text at 285.6mm). Page 1, measured
+   to the middle of each line, in mm from the top of the sheet:
+
+     title 18.7 (in the header band, level with the logo, right-aligned)
+     contract no. 39.9   date 46.0
+     first party 53.8    second party 64.8   (phone in a column 96mm in)
+     property facts 75.0 / 81.1 / 87.2 / 93.3
+     "both parties agree…" 104.8
+     first clause 111.3, lines 6.9mm apart, 3.3mm between clauses
+     last line ≈ 272, just above the footer rule at 280
+
+   Header lines sit 6mm in from the clauses' right edge, as they did there.
+   A photo is good to a millimetre or two; a test print settles the rest. */
+
+/* One margin for every page, so the renderer's page rehearsal (which assumes
+   uniform pages) stays true. 14mm is where page 1's title belongs; pages
+   after it still have to clear the letterhead, which the repeating header
+   spacer below does. Sides clear the 6.4mm strip on the left. */
+@page{margin:14mm 18mm 21mm 22mm;}
+/* The rehearsal reads the page height from --page-h and forces the text
+   width to 178mm; both have to describe THESE margins or the signatures get
+   dropped by the wrong amount. (The earlier 35/16/16 margins never updated
+   either.) */
+:root{--page-h:262mm;}
+body{width:170mm !important;}
 
 /* The sheet has the logo and company name at the top, and the phones, e-mail
    and address along the foot. Ours would print over theirs. */
@@ -108,30 +124,40 @@ body{font-size:14px !important;}
    already branded top, bottom and side it reads as a printing fault. */
 .watermark{display:none !important;}
 
-/* The title is now the first thing on the page. */
-.title{margin-top:0;}
+/* The table header repeats on every printed page, so a spacer in it pushes
+   each page's text below the letterhead rules: 14 + 22.85 = 36.85mm, the top
+   of the contract-number line. The rehearsal measures the thead, so this is
+   accounted for there too. */
+table.page thead td::before{content:"";display:block;height:22.85mm;}
 
-/* Number and date, the way the old documents opened. Right-aligned under the
-   title, which is where they sat on the printed forms.
+/* The title prints once, up in the header band beside the logo — above the
+   spacer, where the flow cannot reach. Absolute against page 1. */
+.title{position:absolute;top:-0.6mm;right:6mm;margin:0;line-height:1.2;
+  text-align:right;}
 
-   Line spacing is the thing that makes this read like the old paperwork. That
-   was set tight — about 1.3 — and the shared document's 2.0 spread the same
-   six lines over nearly twice the depth, which is what "hiç wekû yek nîn"
-   was pointing at. */
-.ashti-meta{margin:2px 0 6px;line-height:1.35;}
+/* Number and date. */
+.ashti-meta{margin:0;padding-right:6mm;line-height:6.1mm;}
 .ashti-meta div{text-align:right;}
 .ashti-meta b{color:inherit;}
 
-/* The info block: plain lines, no heading and no box. The old forms had
-   neither — the frames on that printout came from the report tool. */
-.a-card{margin:2px 0 8px;line-height:1.35;}
+/* The info block: plain lines, no heading and no box. */
+.a-card{margin:1.7mm 0 0;padding-right:6mm;line-height:6.1mm;}
 .a-row{white-space:nowrap;}
 .a-l{font-weight:bold;}
 
-/* A party line runs label+name at the start and the phone at the far end,
-   which is where its own field sat on the old form. */
-.a-party{display:flex;justify-content:space-between;align-items:baseline;
-  gap:10mm;}
+/* Party lines: label and name, then the phone in its own column 90mm to the
+   left — a fixed column, as on the old form, not pushed to the far edge. The
+   name part grows past 90mm rather than overprinting a long name. */
+.a-party{display:flex;align-items:baseline;}
+.a-party > span:first-child{flex:none;min-width:90mm;}
+.a-party + .a-party{margin-top:4.9mm;}
+.a-party + .a-row:not(.a-party){margin-top:4.1mm;}
+
+/* "Both parties agree on the clauses below", right-aligned 26.7mm in. */
+.chead{margin:5.4mm 0 0 !important;padding-right:26.7mm;text-align:right;
+  line-height:6.1mm;}
+
+.clause{line-height:6.9mm;margin-bottom:3.3mm !important;}
 `;
 
 // The receipt works on a different principle from the contract — values
