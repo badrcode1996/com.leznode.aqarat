@@ -35,8 +35,8 @@ const NUDGE = {down: 0, left: 0};
 /** Top of each voucher's banner on the sheet, in mm. */
 const COPY_TOP = [10.7, 10.7 + 149.2];
 
-/** Half the height of a 14px line, to centre a value on its label's line. */
-const HALF_LINE = 1.9;
+/** Half the height of a 16px line (4.23mm), to centre a value on its label's line. */
+const HALF_LINE = 2.1;
 
 /**
  * Each field: `line` is the centre of its row, in mm below the voucher top;
@@ -120,7 +120,9 @@ ${hejarFace()}
 /* No margin: every value is positioned from the page edge, because that is
    what the pre-printed form is aligned to. */
 @page{size:A4;margin:0;}
-body{font-family:'Hejar';direction:rtl;font-size:14px;color:#000;
+/* 16px and bold: the company found 14px regular too light to read against
+   the pad's own printed labels. */
+body{font-family:'Hejar';direction:rtl;font-size:16px;font-weight:bold;color:#000;
   position:relative;width:210mm;height:297mm;}
 /* line-height 1 makes each box exactly one line tall, which HALF_LINE
    assumes when it centres the value on its row. */
