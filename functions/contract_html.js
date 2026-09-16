@@ -29,6 +29,7 @@ const L = {
     areaUnit: " م²",
     cardTitle: "زانیاری گرێبەست",
     contractNo: "ژمارەی گرێبەست:",
+    date: "بەروار:",
     party1Rent: "لایەنی یەکەم (خاوەن موڵک):",
     party2Rent: "لایەنی دووەم (کرێچی):",
     party1Sale: "لایەنی یەکەم (فرۆشیار):",
@@ -50,6 +51,7 @@ const L = {
     areaUnit: " م²",
     cardTitle: "معلومات العقد",
     contractNo: "رقم العقد:",
+    date: "التاريخ:",
     party1Rent: "الطرف الأول (مالك العقار):",
     party2Rent: "الطرف الثاني (المستأجر):",
     party1Sale: "الطرف الأول (البائع):",
@@ -71,6 +73,7 @@ const L = {
     areaUnit: " m²",
     cardTitle: "Contract details",
     contractNo: "Contract no.:",
+    date: "Date:",
     party1Rent: "First party (owner):",
     party2Rent: "Second party (tenant):",
     party1Sale: "First party (seller):",
@@ -327,8 +330,11 @@ function contractViewModel(o) {
     ].filter(Boolean),
     fontRegB64: o.fontRegB64,
     fontBoldB64: o.fontBoldB64,
-    // Helpers, so a design doesn't re-implement them.
-    esc, money, fmtDate, applyTokens, arabicNum,
+    // Helpers, so a design doesn't re-implement them. esc follows the
+    // language like the shared layout's does: a design that printed through
+    // the module-level one put Arabic-Indic digits into the English edition.
+    esc: isRtl(lang) ? escArabicNum : escHtml,
+    money, fmtDate, applyTokens, arabicNum,
   };
 }
 
@@ -470,7 +476,7 @@ function buildContractHtml(o) {
    Two other places need the same figure (the appendix grid, and the rehearsal
    __fitLayout runs), and both had it written out again; they read it from here
    now, so changing the margins above cannot leave one of them behind. */
-:root{--page-h:275mm;}
+:root{--page-h:275mm;--text-w:178mm;}
 /* 1.4 rather than 1.6. At the 16px clauses print in, the difference is about
    three quarters of a line per clause, which over a contract is most of a
    page — and 1.4 is still comfortable for justified Kurdish. */
@@ -606,8 +612,11 @@ window.__fitLayout = function () {
   if (!table || !cell || !gap) return null;
 
   // The paper's text width (A4 less the side margins), so the rehearsal wraps
-  // its lines where the printed page will.
-  document.body.style.width = "178mm";
+  // its lines where the printed page will. From --text-w, which a design that
+  // changes the side margins sets too: at a fixed 178mm a narrower page wrapped
+  // fewer lines here than on paper, and the signatures were pushed onto a page
+  // of their own.
+  document.body.style.width = "var(--text-w)";
 
   // A column has to stand for the strip of page the CLAUSES get, not the whole
   // page: the company band and the footer's reserved band repeat on every
@@ -628,10 +637,15 @@ window.__fitLayout = function () {
   };
   var colH = pageH - box("table.page thead") - box(".footspace");
 
+  // Columns follow the text direction: right to left for Kurdish and Arabic,
+  // left to right for English. Counting them one way only gave the English
+  // edition page numbers below zero.
+  var rtl = getComputedStyle(document.body).direction === "rtl";
+
   var sim = document.createElement("div");
   sim.style.cssText = "position:absolute;left:-20000px;top:0;" +
-    "visibility:hidden;width:178mm;height:" + colH + "px;" +
-    "column-width:178mm;column-gap:0;column-fill:auto;";
+    "visibility:hidden;width:var(--text-w);height:" + colH + "px;" +
+    "column-width:var(--text-w);column-gap:0;column-fill:auto;";
   document.body.appendChild(sim);
 
   // Lays the clauses out with the given filler and reports where they end.
@@ -644,8 +658,8 @@ window.__fitLayout = function () {
     var s = sim.getBoundingClientRect();
     var end = sim.querySelector(".signend").getBoundingClientRect();
     return {
-      // Columns run right to left, the document being RTL.
-      page: Math.round((s.right - end.right) / s.width) + 1,
+      page: Math.round(
+          (rtl ? s.right - end.right : end.left - s.left) / s.width) + 1,
       // Every column starts at the box's top, so this is the room left below
       // the signatures on the page they landed on.
       room: colH - (end.bottom - s.top),
@@ -672,7 +686,12 @@ window.__fitLayout = function () {
     var mid = (lo + hi) / 2;
     if (rehearse(mid).page === flat.page) lo = mid; else hi = mid;
   }
-  var applied = Math.floor(lo);
+  // Held back a little. The columns agree with the printed pages to within a
+  // few pixels, not exactly, and when the signatures end close to the foot of
+  // a page those few pixels decide it: a filler the rehearsal swore would fit
+  // pushed an Arabic contract's signatures onto a page of their own. 16px is
+  // about 4mm — invisible at the foot of a page, and more than the error.
+  var applied = Math.max(0, Math.floor(lo) - 16);
   gap.style.height = applied + "px";
   sim.remove();
   return {pages: flat.page, room: Math.round(flat.room),

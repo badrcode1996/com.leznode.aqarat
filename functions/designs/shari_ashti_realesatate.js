@@ -29,7 +29,7 @@ const {hejarFace} = require("./ashti_font");
 const metaHtml = (vm) => `
 <div class="ashti-meta">
   <div><b>${vm.esc(vm.label.contractNo)}</b> ${vm.esc(vm.contract.contract_number || "")}</div>
-  <div><b>${vm.esc("بەروار:")}</b> ${vm.esc(vm.dateText)}</div>
+  <div><b>${vm.esc(vm.label.date)}</b> ${vm.esc(vm.dateText)}</div>
 </div>`;
 
 /**
@@ -61,8 +61,10 @@ const cardHtml = (vm) => {
     party(T.party1Sale, c.party1_name, c.party1_mobile) +
       party(T.party2Sale, c.party2_name, c.party2_mobile);
 
-  // One fact per line, in the order the old form listed them.
-  const facts = vm.propertyPairs.map(([l, v]) =>
+  // One fact per line, in the order the old form listed them: type, number,
+  // project, area. The shared pairs run type, project, number, area.
+  const [type, project, number, area] = vm.propertyPairs;
+  const facts = [type, number, project, area].map(([l, v]) =>
     `<div class="a-row"><span class="a-l">${e(l)}</span> <span class="a-v">${e(v)}</span></div>`
   ).join("");
 
@@ -74,7 +76,9 @@ const css = `
    as its own family rather than redefining DocFont, so which face is in use
    is unambiguous rather than depending on declaration order. */
 ${hejarFace()}
-body{font-family:'Hejar','DocFont' !important;}
+html:not([lang="en"]) body{font-family:'Hejar','DocFont' !important;}
+/* Hejar has no Latin letters. The English edition set in it fell back to
+   whatever the system had, so English keeps the house Latin face. */
 
 /* Sizes the company asked for: the title at 25, everything else at 14 — in
    POINTS, which is what their old report tool meant by them. Set as px the
@@ -110,9 +114,8 @@ body{font-size:14pt !important;}
 /* The rehearsal reads the page height from --page-h and forces the text
    width to 178mm; both have to describe THESE margins or the signatures get
    dropped by the wrong amount. (The earlier 35/16/16 margins never updated
-   either.) */
-:root{--page-h:262mm;}
-body{width:170mm !important;}
+   either, which printed the signatures alone on a page.) */
+:root{--page-h:262mm;--text-w:170mm;}
 
 /* The sheet has the logo and company name at the top, and the phones, e-mail
    and address along the foot. Ours would print over theirs. */
@@ -131,17 +134,21 @@ body{width:170mm !important;}
 table.page thead td::before{content:"";display:block;height:22.85mm;}
 
 /* The title prints once, up in the header band beside the logo — above the
-   spacer, where the flow cannot reach. Absolute against page 1. */
+   spacer, where the flow cannot reach. Absolute against page 1. Physically
+   right in every edition, English included: the logo holds the left.
+
+   Everything below uses start/end rather than right/left, so the English
+   edition mirrors the layout instead of half-following it. */
 .title{position:absolute;top:-0.6mm;right:6mm;margin:0;line-height:1.2;
   text-align:right;}
 
 /* Number and date. */
-.ashti-meta{margin:0;padding-right:6mm;line-height:6.1mm;}
-.ashti-meta div{text-align:right;}
+.ashti-meta{margin:0;padding-inline-end:6mm;line-height:6.1mm;}
+.ashti-meta div{text-align:start;}
 .ashti-meta b{color:inherit;}
 
 /* The info block: plain lines, no heading and no box. */
-.a-card{margin:1.7mm 0 0;padding-right:6mm;line-height:6.1mm;}
+.a-card{margin:1.7mm 0 0;padding-inline-end:6mm;line-height:6.1mm;}
 .a-row{white-space:nowrap;}
 .a-l{font-weight:bold;}
 
@@ -153,8 +160,8 @@ table.page thead td::before{content:"";display:block;height:22.85mm;}
 .a-party + .a-party{margin-top:4.9mm;}
 .a-party + .a-row:not(.a-party){margin-top:4.1mm;}
 
-/* "Both parties agree on the clauses below", right-aligned 26.7mm in. */
-.chead{margin:5.4mm 0 0 !important;padding-right:26.7mm;text-align:right;
+/* "Both parties agree on the clauses below", 26.7mm in from the start. */
+.chead{margin:5.4mm 0 0 !important;padding-inline-end:26.7mm;text-align:start;
   line-height:6.1mm;}
 
 .clause{line-height:6.9mm;margin-bottom:3.3mm !important;}
