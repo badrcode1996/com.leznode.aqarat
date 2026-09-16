@@ -159,9 +159,14 @@ table.page thead td::before{content:"";display:block;height:22.85mm;}
 .a-party > span:first-child{flex:none;min-width:90mm;}
 .a-party + .a-party{margin-top:4.9mm;}
 .a-party + .a-row:not(.a-party){margin-top:4.1mm;}
+/* Air between the property lines themselves. The old form set them 6.1mm
+   apart; the company asked for more, so they read as separate facts. */
+.a-row:not(.a-party) + .a-row{margin-top:2mm;}
 
 /* "Both parties agree on the clauses below", 26.7mm in from the start. */
-.chead{margin:5.4mm 0 0 !important;padding-inline-end:26.7mm;text-align:start;
+/* 4mm under it before clause 1, which the company asked for: flush, the
+   heading read as the first line of clause 1. */
+.chead{margin:5.4mm 0 4mm !important;padding-inline-end:26.7mm;text-align:start;
   line-height:6.1mm;}
 
 .clause{line-height:6.9mm;margin-bottom:3.3mm !important;}
