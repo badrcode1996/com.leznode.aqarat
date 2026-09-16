@@ -319,6 +319,7 @@ class AppStrings {
     required this.preview,
     required this.previewHint,
     required this.printArabic,
+    required this.printEnglish,
     required this.share,
     required this.pickViewLanguage,
     required this.deleteContract,
@@ -789,6 +790,7 @@ class AppStrings {
   final String preview;
   final String previewHint;
   final String printArabic;
+  final String printEnglish;
   final String share;
   final String pickViewLanguage;
   final String deleteContract;
@@ -1365,7 +1367,7 @@ class AppStrings {
         attachmentNotDownloaded,
         noRentReceipts, noExternalReceipts, deleteReceipt, receiptDeleted,
         print,
-        preview, previewHint, printArabic, share, pickViewLanguage, deleteContract,
+        preview, previewHint, printArabic, printEnglish, share, pickViewLanguage, deleteContract,
         contractDeleted, noRentContracts, noSaleContracts, searchHint, attachmentsEmpty,
         attachmentsNoneHint, previewFailedTitle, previewFailedBody, amount,
         date, purpose, receivedFrom, paidTo, createAndPrint, emptyFunctionResponse,
@@ -1694,6 +1696,7 @@ class AppStrings {
     preview: 'پێشبینین',
     previewHint: 'پێشبینین (دایبگرە بۆ هەڵبژاردنی زمان)',
     printArabic: 'پرینتی عەرەبی',
+    printEnglish: 'پرینتی ئینگلیزی',
     share: 'هاوبەشکردن',
     pickViewLanguage: 'بینینی گرێبەست بە کام زمان؟',
     deleteContract: 'سڕینەوەی گرێبەست',
@@ -2130,6 +2133,7 @@ class AppStrings {
     preview: 'معاينة',
     previewHint: 'معاينة (اضغط مطوّلاً لاختيار اللغة)',
     printArabic: 'طباعة بالعربية',
+    printEnglish: 'طباعة بالإنجليزية',
     share: 'مشاركة',
     pickViewLanguage: 'بأي لغة تريد عرض العقد؟',
     deleteContract: 'حذف العقد',
@@ -2568,6 +2572,7 @@ class AppStrings {
     preview: 'Preview',
     previewHint: 'Preview (long-press to pick the language)',
     printArabic: 'Print in Arabic',
+    printEnglish: 'Print in English',
     share: 'Share',
     pickViewLanguage: 'Which language should the contract open in?',
     deleteContract: 'Delete contract',

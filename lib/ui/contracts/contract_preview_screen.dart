@@ -33,7 +33,7 @@ class ContractPreviewScreen extends ConsumerStatefulWidget {
   final Company? company;
   final ContractTemplate? template;
 
-  /// Which edition to open on — 'ku' or 'ar'. Set by the stepper (the language
+  /// Which edition to open on — 'ku', 'ar' or 'en'. Set by the stepper (the language
   /// picked while creating the contract) and by the archive's long-press menu.
   final String initialLang;
 
@@ -44,7 +44,7 @@ class ContractPreviewScreen extends ConsumerStatefulWidget {
 
 class _ContractPreviewScreenState
     extends ConsumerState<ContractPreviewScreen> {
-  /// 'ku' or 'ar' — which edition of the document is on screen.
+  /// 'ku', 'ar' or 'en' — which edition of the document is on screen.
   late String _lang = widget.initialLang;
 
   late Future<List<Uint8List>> _pages = _render();
@@ -100,8 +100,9 @@ class _ContractPreviewScreenState
     }
   }
 
-  /// Two pills in the app bar. Deliberately not a dropdown: there are exactly
-  /// two editions and the user needs to see at a glance which one is printing.
+  /// One pill per edition this company can produce, in the app bar.
+  /// Deliberately not a dropdown: there are at most three and the user needs
+  /// to see at a glance which one is printing.
   Widget _langToggle() => Container(
         margin: const EdgeInsets.symmetric(vertical: 10),
         padding: const EdgeInsets.all(3),
@@ -113,7 +114,8 @@ class _ContractPreviewScreenState
           mainAxisSize: MainAxisSize.min,
           children: [
             _langPill(S.langKurdish, 'ku'),
-            _langPill(S.langArabic, 'ar'),
+            if (_canArabic) _langPill(S.langArabic, 'ar'),
+            if (_canEnglish) _langPill(S.langEnglish, 'en'),
           ],
         ),
       );
@@ -168,6 +170,15 @@ class _ContractPreviewScreenState
     return ref.watch(currentPlanFeaturesProvider).arabicContracts;
   }
 
+  /// The same for the English edition. Until this existed the preview offered
+  /// Kurdish and Arabic only, so a contract could be created in English but
+  /// never viewed or printed in it from here.
+  bool get _canEnglish {
+    final tpl = widget.template ?? ContractTemplate.defaults();
+    if (!tpl.englishReadyFor(widget.contract)) return false;
+    return ref.watch(currentPlanFeaturesProvider).englishContracts;
+  }
+
   @override
   Widget build(BuildContext context) {
     watchAppShell(context);
@@ -183,7 +194,7 @@ class _ContractPreviewScreenState
         elevation: 0,
         centerTitle: true,
         actions: [
-          if (_canArabic) _langToggle(),
+          if (_canArabic || _canEnglish) _langToggle(),
           IconButton(
             tooltip: S.share,
             icon: const Icon(Icons.share_rounded),

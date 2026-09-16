@@ -223,7 +223,8 @@ class _ContractCard extends ConsumerWidget {
   /// Long-pressing the view button asks which edition to open. A plain tap
   /// still goes straight to Kurdish, so the common case stays one tap.
   Future<void> _pickLangThenPreview(
-      BuildContext context, Company? company, ContractTemplate? template) async {
+      BuildContext context, Company? company, ContractTemplate? template,
+      {required bool arabicAvailable, required bool englishAvailable}) async {
     final lang = await showModalBottomSheet<String>(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -248,13 +249,22 @@ class _ContractCard extends ConsumerWidget {
                   style: const TextStyle(fontWeight: FontWeight.bold)),
               onTap: () => Navigator.pop(ctx, 'ku'),
             ),
-            ListTile(
-              leading:
-                  Icon(Icons.translate_rounded, color: AppColors.current.textStrong),
-              title: Text(S.langArabic,
-                  style: const TextStyle(fontWeight: FontWeight.bold)),
-              onTap: () => Navigator.pop(ctx, 'ar'),
-            ),
+            if (arabicAvailable)
+              ListTile(
+                leading: Icon(Icons.translate_rounded,
+                    color: AppColors.current.textStrong),
+                title: Text(S.langArabic,
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
+                onTap: () => Navigator.pop(ctx, 'ar'),
+              ),
+            if (englishAvailable)
+              ListTile(
+                leading: Icon(Icons.translate_rounded,
+                    color: AppColors.current.textStrong),
+                title: Text(S.langEnglish,
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
+                onTap: () => Navigator.pop(ctx, 'en'),
+              ),
             const SizedBox(height: 8),
           ],
         ),
@@ -379,6 +389,12 @@ class _ContractCard extends ConsumerWidget {
     // the built-in template always carries the Arabic clauses.
     final arabicAvailable = features.arabicContracts &&
         (template ?? ContractTemplate.defaults()).arabicReadyFor(contract);
+    // The English edition was only ever offered while creating a contract;
+    // the archive — where contracts are actually reopened and printed — knew
+    // nothing of it.
+    final englishAvailable = features.englishContracts &&
+        (template ?? ContractTemplate.defaults()).englishReadyFor(contract);
+    final otherEdition = arabicAvailable || englishAvailable;
     final typeLabel = isRent ? S.contractRent : S.contractSale;
 
     // ڕەنگکردنی جۆری گرێبەستەکە
@@ -527,17 +543,19 @@ class _ContractCard extends ConsumerWidget {
                         )),
                       ),
                     // InkWell, not IconButton: IconButton has no long-press,
-                    // and the long press is what offers the Arabic edition.
+                    // and the long press is what offers the other editions.
                     Tooltip(
-                      message: arabicAvailable
+                      message: otherEdition
                           ? S.previewHint
                           : S.preview,
                       child: InkWell(
                         customBorder: const CircleBorder(),
                         onTap: () => _openPreview(context, company, template, arabicAvailable: arabicAvailable),
-                        onLongPress: arabicAvailable
+                        onLongPress: otherEdition
                             ? () => _pickLangThenPreview(
-                                context, company, template)
+                                context, company, template,
+                                arabicAvailable: arabicAvailable,
+                                englishAvailable: englishAvailable)
                             : null,
                         child: Padding(
                           padding: const EdgeInsets.all(8),
@@ -557,6 +575,9 @@ class _ContractCard extends ConsumerWidget {
                         } else if (v == 'print_ar') {
                           _run(context,
                               () => ContractPdfRemote.printContract(contract.id, lang: 'ar'));
+                        } else if (v == 'print_en') {
+                          _run(context,
+                              () => ContractPdfRemote.printContract(contract.id, lang: 'en'));
                         } else if (v == 'share') {
                           _run(context, () => ContractPdfRemote.shareContract(contract.id));
                         } else if (v == 'edit') {
@@ -597,6 +618,18 @@ class _ContractCard extends ConsumerWidget {
                                     color: AppColors.current.textStrong, size: 20),
                                 const SizedBox(width: 12),
                                 Text(S.printArabic),
+                              ],
+                            ),
+                          ),
+                        if (englishAvailable)
+                          PopupMenuItem(
+                            value: 'print_en',
+                            child: Row(
+                              children: [
+                                Icon(Icons.translate_rounded,
+                                    color: AppColors.current.textStrong, size: 20),
+                                const SizedBox(width: 12),
+                                Text(S.printEnglish),
                               ],
                             ),
                           ),

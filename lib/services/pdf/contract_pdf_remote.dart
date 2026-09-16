@@ -10,10 +10,11 @@ import '../../l10n/app_strings.dart';
 /// ێ — is correct. The function takes the saved contract's id and returns the
 /// PDF bytes.
 class ContractPdfRemote {
-  /// [lang] is 'ku' or 'ar'. Arabic is a paid feature and needs the company's
-  /// Arabic clauses on file; the function rejects the request when either is
-  /// missing, so callers should only offer it when [ContractTemplate
-  /// .arabicReadyFor] and the plan both say yes.
+  /// [lang] is 'ku', 'ar' or 'en'. Arabic and English are paid features and
+  /// each needs its clauses on file; the function rejects the request when
+  /// either is missing, so callers should only offer an edition when the
+  /// plan and [ContractTemplate.arabicReadyFor] / [ContractTemplate
+  /// .englishReadyFor] both say yes.
   static Future<Uint8List> build(String contractId,
       {String lang = 'ku'}) async {
     final callable =
