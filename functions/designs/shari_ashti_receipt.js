@@ -8,16 +8,17 @@
  * Their receipt pad is pre-printed, two vouchers to an A4 sheet, each carrying
  * its own logo, banner, trilingual field labels, signature captions and
  * contact footer. So NOTHING here draws any of that. Every position below is
- * measured off a scan of the pad, at 200dpi:
+ * measured off a 200dpi scan of the pad.
  *
- *     copy 1 banner   y=84    10.7mm      copy period   1175px = 149.2mm
- *     date rule       y=254   32.3mm      voucher no.   y=336   42.7mm
- *     received from   y=421   53.5mm      amount        y=507   64.4mm
- *     purpose         y=593   75.3mm      note          y=679   86.2mm
- *     signatures      y=965  122.6mm
+ * Horizontal positions are CSS `right`, i.e. mm from the RIGHT edge of the
+ * sheet. The form is right-to-left: each value starts just left of its Kurdish
+ * label and grows leftward, as it would be written by hand. (The first cut
+ * took offsets measured from the left and used them as `right`, which put
+ * every value over the English labels and swapped the signature names.)
  *
- * and the writable span between the English label on the left and the
- * Kurdish/Arabic one on the right runs x=210..1310 = 26.7mm..166.4mm.
+ * Vertical positions are the centre of the label's line, from the top of that
+ * voucher's banner; the value is then raised by half its own height so it
+ * sits on the line with the label rather than under it.
  *
  * READ THIS BEFORE CHANGING ANYTHING: paper does not feed the same way twice,
  * and a scan is approximate. These numbers are a starting point that WILL need
@@ -28,45 +29,57 @@
 
 const {hejarFace} = require("./ashti_font");
 
-/** Shifts every printed value. Positive moves down / left. Test prints tune this. */
+/** Shifts every printed value, in mm. Positive moves down / left. */
 const NUDGE = {down: 0, left: 0};
 
-/** Where the pad's own labels stop and the writable span begins. */
-const SPAN = {right: 166.4, width: 139.7};
-
-/** One voucher's rows, in mm from the top of that voucher's own block. */
-const ROW = {
-  date: 32.3 - 10.7,
-  branch: 32.3 - 10.7,
-  number: 42.7 - 10.7,
-  person: 53.5 - 10.7,
-  amount: 64.4 - 10.7,
-  purpose: 75.3 - 10.7,
-  note: 86.2 - 10.7,
-  signatures: 122.6 - 10.7,
-};
-
-/** Top of each voucher on the sheet, in mm. */
+/** Top of each voucher's banner on the sheet, in mm. */
 const COPY_TOP = [10.7, 10.7 + 149.2];
 
-/** The date line carries the branch too, further left. */
-const BRANCH_RIGHT = 100;
+/** Half the height of a 14px line, to centre a value on its label's line. */
+const HALF_LINE = 1.9;
 
 /**
- * A value, positioned. Right-aligned because the form is right-to-left: the
- * text grows leftward from the label, exactly as it would be written by hand.
+ * Each field: `line` is the centre of its row, in mm below the voucher top;
+ * `right` is where the value ends, in mm from the sheet's right edge (just
+ * clear of the Kurdish label); `width` is the dotted span it may fill.
+ * Measured on the scan as label edge (mm from the left) → 210 − that − 2.
+ */
+const FIELD = {
+  date: {line: 25.8 - 10.7, right: 40, width: 28},
+  branch: {line: 25.8 - 10.7, right: 80, width: 55},
+  number: {line: 41.6 - 10.7, right: 48.5, width: 128},
+  person: {line: 52.6 - 10.7, right: 65.5, width: 107},
+  amount: {line: 63.5 - 10.7, right: 40.5, width: 147},
+  purpose: {line: 74.3 - 10.7, right: 35.5, width: 141},
+  note: {line: 85.2 - 10.7, right: 32.5, width: 162},
+};
+
+/**
+ * The three names, centred over the pad's own signature rules (which sit at
+ * 122.6mm, captions below). Right to left as printed: accountant, received
+ * by, delivered to — column centres 153.6, 103 and 52.5mm from the left.
+ */
+const SIGN_LINE = 119.5 - 10.7;
+const SIGN_WIDTH = 50;
+const SIGN_RIGHT = {
+  accountant: 210 - 153.6 - SIGN_WIDTH / 2,
+  receivedBy: 210 - 103 - SIGN_WIDTH / 2,
+  deliveredTo: 210 - 52.5 - SIGN_WIDTH / 2,
+};
+
+/**
+ * A value, positioned.
  *
- * @param {number} top mm from the page top
+ * @param {number} line mm from the page top to the centre of the row
  * @param {string} text already escaped
- * @param {object} [opt] {right, width, align}
+ * @param {object} opt {right, width, align}
  * @return {string} markup
  */
-function at(top, text, opt) {
-  const o = opt || {};
-  const right = (o.right || SPAN.right) + NUDGE.left;
-  const width = o.width || SPAN.width;
-  return `<div class="v" style="top:${top + NUDGE.down}mm;right:${right}mm;` +
-    `width:${width}mm;text-align:${o.align || "right"}">${text}</div>`;
+function at(line, text, opt) {
+  const top = line - HALF_LINE + NUDGE.down;
+  const right = opt.right - NUDGE.left;
+  return `<div class="v" style="top:${top}mm;right:${right}mm;` +
+    `width:${opt.width}mm;text-align:${opt.align || "right"}">${text}</div>`;
 }
 
 /**
@@ -80,19 +93,22 @@ const receiptHtml = (vm) => {
   const e = vm.esc;
   const r = vm.receipt || {};
 
+  const field = (top, name, text) =>
+    at(top + FIELD[name].line, text, FIELD[name]);
+  const sign = (top, who, text) => at(top + SIGN_LINE, text,
+      {right: SIGN_RIGHT[who], width: SIGN_WIDTH, align: "center"});
+
   const voucher = (top) => [
-    at(top + ROW.date, e(vm.dateText)),
-    at(top + ROW.branch, e(r.branch || ""), {right: BRANCH_RIGHT, width: 55}),
-    at(top + ROW.number, e(r.receipt_number || "")),
-    at(top + ROW.person, e(r.person_name || "")),
-    at(top + ROW.amount, e(vm.amountText)),
-    at(top + ROW.purpose, e(r.payment_purpose || "")),
-    at(top + ROW.note, e(r.note || ""), {}),
-    // The three names under the pad's own signature captions, in its order:
-    // accountant on the right, then received by, then delivered to.
-    at(top + ROW.signatures, e(r.agent_name || ""), {right: 118, width: 45, align: "center"}),
-    at(top + ROW.signatures, e(vm.receivedBy || ""), {right: 68, width: 45, align: "center"}),
-    at(top + ROW.signatures, e(vm.deliveredTo || ""), {right: 18, width: 45, align: "center"}),
+    field(top, "date", e(vm.dateText)),
+    field(top, "branch", e(r.branch || "")),
+    field(top, "number", e(r.receipt_number || "")),
+    field(top, "person", e(r.person_name || "")),
+    field(top, "amount", e(vm.amountText)),
+    field(top, "purpose", e(r.payment_purpose || "")),
+    field(top, "note", e(r.note || "")),
+    sign(top, "accountant", e(r.agent_name || "")),
+    sign(top, "receivedBy", e(vm.receivedBy || "")),
+    sign(top, "deliveredTo", e(vm.deliveredTo || "")),
   ].join("");
 
   return `<!doctype html><html lang="ckb" dir="rtl"><head><meta charset="utf-8">
@@ -106,8 +122,8 @@ ${hejarFace()}
 @page{size:A4;margin:0;}
 body{font-family:'Hejar';direction:rtl;font-size:14px;color:#000;
   position:relative;width:210mm;height:297mm;}
-/* Each value sits on the pad's own dotted rule. bottom-anchored line height so
-   the text rests ON the rule rather than straddling it. */
+/* line-height 1 makes each box exactly one line tall, which HALF_LINE
+   assumes when it centres the value on its row. */
 .v{position:absolute;line-height:1;white-space:nowrap;overflow:hidden;}
 </style></head><body>
 ${voucher(COPY_TOP[0])}
