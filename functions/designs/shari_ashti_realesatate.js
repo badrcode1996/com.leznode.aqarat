@@ -140,7 +140,14 @@ table.page thead td::before{content:"";display:block;height:22.85mm;}
    Everything below uses start/end rather than right/left, so the English
    edition mirrors the layout instead of half-following it. */
 .title{position:absolute;top:-0.6mm;right:6mm;margin:0;line-height:1.2;
-  text-align:right;}
+  text-align:right;font-weight:bold;}
+
+/* Weights. Hejar has no bold cut, so what is bold here is synthesised — and
+   until the font declaration was fixed none of it showed at all. The title is
+   bold, as the company asked; everything else keeps the single weight their
+   paperwork has always printed in, which is what the labels, the clause
+   heading and the signature captions had on the sheets they signed off. */
+.a-l, .chead, .sgl, .ashti-meta b{font-weight:normal;}
 
 /* One gap everywhere, at the company's request: the same 3.3mm between
    number and date, between the parties, between the property lines, around
@@ -159,7 +166,6 @@ table.page thead td::before{content:"";display:block;height:22.85mm;}
 .a-card{margin:var(--gap) 0 0;padding-inline-end:6mm;line-height:6.1mm;}
 .a-row{white-space:nowrap;}
 .a-row + .a-row{margin-top:var(--gap);}
-.a-l{font-weight:bold;}
 
 /* Party lines: label and name, then the phone in its own column 90mm to the
    left — a fixed column, as on the old form, not pushed to the far edge. The

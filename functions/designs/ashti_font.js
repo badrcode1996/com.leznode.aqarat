@@ -6,8 +6,11 @@
  * two are built by different files. Reading it in each would parse 62KB twice
  * and, worse, let the two drift onto different faces.
  *
- * One file for both weights: there is no separate bold cut, so the renderer
- * synthesises it — which is what the Windows program it replaces did too.
+ * Only the regular face is declared, and deliberately so. There is no bold cut
+ * of this font, so bold has to be synthesised — but declaring a second
+ * @font-face at font-weight:bold pointing at the SAME file tells Chrome a real
+ * bold exists, and it then stops synthesising one. Everything asked to print
+ * bold — the title, the receipt values — came out at regular weight.
  */
 
 const fs = require("fs");
@@ -18,7 +21,7 @@ const HEJAR = fs
     .toString("base64");
 
 /**
- * The @font-face pair, ready to drop into a stylesheet.
+ * The @font-face, ready to drop into a stylesheet.
  *
  * @param {string} [family] the family name to declare it under
  * @return {string} CSS
@@ -26,8 +29,7 @@ const HEJAR = fs
 const hejarFace = (family) => {
   const f = family || "Hejar";
   const src = `url(data:font/ttf;base64,${HEJAR}) format('truetype')`;
-  return `@font-face{font-family:'${f}';src:${src};font-weight:normal;font-style:normal;}\n` +
-    `@font-face{font-family:'${f}';src:${src};font-weight:bold;font-style:normal;}`;
+  return `@font-face{font-family:'${f}';src:${src};font-weight:normal;font-style:normal;}`;
 };
 
 module.exports = {HEJAR, hejarFace};
