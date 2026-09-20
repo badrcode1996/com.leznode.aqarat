@@ -20,6 +20,9 @@ Color get accentYellow => AppColors.current.accent;
 /// Grid of the 12 rent installments. Tapping the status chip cycles
 /// pending → received → delivered and persists via the transactional
 /// [ContractRepository.updateInstallmentStatus] (which also updates stats).
+///
+/// A payment may cover several months at once — the dialog asks how many, and
+/// that run of months is settled together on one voucher.
 class InstallmentGrid extends ConsumerWidget {
   const InstallmentGrid({super.key, required this.contract});
 
@@ -40,50 +43,91 @@ class InstallmentGrid extends ConsumerWidget {
     PaymentStatus.deliveredToOwner => (S.instDelivered, AppColors.current.success, Icons.done_all_rounded), // سەوزێکی مۆدێرن
   };
 
-  /// Asks the user for an optional note/code before a rent receipt is created,
-  /// and whether the receipt PDF should be printed. Returns `(note, print)`, or
-  /// null if the user cancelled (abort the action). When `print` is false the
-  /// receipt is still saved — it just isn't opened/printed (for tenants/owners
-  /// who don't need a paper voucher).
-  Future<({String note, bool print})?> _askNote(
-      BuildContext context, bool isReceive) {
+  /// Asks how many months the payment covers, for an optional note/code, and
+  /// whether the receipt PDF should be printed. Returns `(note, months,
+  /// print)`, or null if the user cancelled (abort the action). When `print`
+  /// is false the receipt is still saved — it just isn't opened/printed (for
+  /// tenants/owners who don't need a paper voucher).
+  ///
+  /// [maxMonths] is how many installments are left from the tapped one, so a
+  /// run can never be asked for that runs off the end of the contract.
+  Future<({String note, int months, bool print})?> _askNote(
+      BuildContext context, bool isReceive, int maxMonths) {
     final controller = TextEditingController();
-    return showDialog<({String note, bool print})>(
+    var months = 1;
+    return showDialog<({String note, int months, bool print})>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(isReceive ? S.collectRent : S.payRentBack),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          maxLines: 2,
-          decoration: InputDecoration(
-            labelText: S.noteOrCode,
-            hintText: S.noteOrCodeHint,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialog) => AlertDialog(
+          title: Text(isReceive ? S.collectRent : S.payRentBack),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // A tenant often pays two or three months together, and wants
+              // one voucher for them. The months run on from the one tapped.
+              DropdownButtonFormField<int>(
+                isExpanded: true,
+                initialValue: months,
+                decoration: InputDecoration(labelText: S.monthsToSettle),
+                items: [
+                  for (var m = 1; m <= maxMonths; m++)
+                    DropdownMenuItem(value: m, child: Text('$m')),
+                ],
+                onChanged: (v) => setDialog(() => months = v ?? 1),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                maxLines: 2,
+                decoration: InputDecoration(
+                  labelText: S.noteOrCode,
+                  hintText: S.noteOrCodeHint,
+                ),
+              ),
+            ],
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(S.cancel),
+            ),
+            // بەبێ پرینتی پسولە — کردارەکە ئەنجام دەدرێت و پسولە تۆمار دەکرێت،
+            // بەڵام PDF ـەکە ناکرێتەوە (بۆ کرێچی/خاوەن خانووی پسولەی ناوێت).
+            OutlinedButton(
+              onPressed: () => Navigator.pop(ctx,
+                  (note: controller.text.trim(), months: months, print: false)),
+              child: Text(S.withoutReceipt),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx,
+                  (note: controller.text.trim(), months: months, print: true)),
+              child: Text(S.createReceipt),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(S.cancel),
-          ),
-          // بەبێ پرینتی پسولە — کردارەکە ئەنجام دەدرێت و پسولە تۆمار دەکرێت،
-          // بەڵام PDF ـەکە ناکرێتەوە (بۆ کرێچی/خاوەن خانووی پسولەی ناوێت).
-          OutlinedButton(
-            onPressed: () =>
-                Navigator.pop(ctx, (note: controller.text.trim(), print: false)),
-            child: Text(S.withoutReceipt),
-          ),
-          ElevatedButton(
-            onPressed: () =>
-                Navigator.pop(ctx, (note: controller.text.trim(), print: true)),
-            child: Text(S.createReceipt),
-          ),
-        ],
       ),
     );
   }
 
-  Future<void> _cycle(BuildContext context, WidgetRef ref, Installment inst) async {
+  /// Tells the user nothing was recorded because one month of the run had
+  /// already been dealt with. A dialog rather than a snackbar: the action they
+  /// asked for did not happen, and that should not scroll away.
+  Future<void> _sayConflict(BuildContext context, int month) => showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(S.attention),
+          content: Text(S.monthAlreadySettled(month)),
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(S.ok),
+            ),
+          ],
+        ),
+      );
+
+  Future<void> _cycle(BuildContext context, WidgetRef ref, RentContract live,
+      Installment inst) async {
     final newStatus = _next(inst.status);
 
     // Auto-generate the matching rent receipt on the forward transitions; ask
@@ -93,17 +137,31 @@ class InstallmentGrid extends ConsumerWidget {
     final isReceive = newStatus == PaymentStatus.receivedFromTenant;
     String note = '';
     bool printReceipt = true;
+    // Only a payment settles months in a run; stepping an installment back to
+    // pending is a correction of that one month.
+    var months = 1;
     if (makesReceipt) {
-      final entered = await _askNote(context, isReceive);
+      final left = live.installments
+          .where((i) => i.monthNumber >= inst.monthNumber)
+          .length;
+      final entered = await _askNote(context, isReceive, left);
       if (entered == null) return; // cancelled
       note = entered.note;
       printReceipt = entered.print;
+      months = entered.months;
     }
+    final monthNumbers = [
+      for (var m = 0; m < months; m++) inst.monthNumber + m,
+    ];
+    // The last month settled decides the period the voucher covers.
+    final lastDue = live.installments
+        .firstWhere((i) => i.monthNumber == monthNumbers.last)
+        .dueDate;
 
     try {
       await ref.read(contractRepositoryProvider).updateInstallmentStatus(
         contractId: contract.id,
-        monthNumber: inst.monthNumber,
+        monthNumbers: monthNumbers,
         newStatus: newStatus,
       );
 
@@ -120,9 +178,12 @@ class InstallmentGrid extends ConsumerWidget {
           receiptNumber: 0,
           date: DateTime.now(),
           personName: isReceive ? contract.party2Name : contract.party1Name,
-          amount: contract.rentAmount,
+          // One voucher for the whole run: the months' rent added up, over a
+          // period that ends with the last month it covers.
+          amount: live.rentAmount * months,
           currency: contract.currency,
-          paymentPurpose: Receipt.rentPurpose(inst.dueDate),
+          paymentPurpose:
+              Receipt.rentPurpose(inst.dueDate, lastDueDate: lastDue),
           note: note,
           contractId: contract.id,
           monthNumber: inst.monthNumber,
@@ -154,6 +215,9 @@ class InstallmentGrid extends ConsumerWidget {
           );
         }
       }
+    } on InstallmentConflict catch (e) {
+      // Another device got to one of these months first. Nothing was written.
+      if (context.mounted) await _sayConflict(context, e.month);
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -214,7 +278,7 @@ class InstallmentGrid extends ConsumerWidget {
             borderRadius: BorderRadius.circular(16),
             child: InkWell(
               borderRadius: BorderRadius.circular(16),
-              onTap: () => _cycle(context, ref, inst),
+              onTap: () => _cycle(context, ref, live, inst),
               child: Padding(
                 padding: const EdgeInsets.all(12),
                 child: Column(

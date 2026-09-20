@@ -69,9 +69,18 @@ class Receipt {
             (json['created_at'] as Timestamp?)?.toDate() ?? DateTime.now(),
       );
 
-  /// Rent purpose text: "لە بڕی کرێی {start} تاکو {start + 1 month - 1 day}".
-  static String rentPurpose(DateTime start) {
-    final end = DateTime(start.year, start.month + 1, start.day)
+  /// Rent purpose text: "لە بڕی کرێی {start} تاکو {end}".
+  ///
+  /// One voucher can settle several months at once, so the period runs to the
+  /// end of the LAST month it covers: pass that month's due date as
+  /// [lastDueDate]. It defaults to [start], which is the single-month case.
+  ///
+  /// The end is taken from the last due date rather than by multiplying —
+  /// installments are not always a month apart (see RentContract's
+  /// everyMonths), and months are not all the same length.
+  static String rentPurpose(DateTime start, {DateTime? lastDueDate}) {
+    final last = lastDueDate ?? start;
+    final end = DateTime(last.year, last.month + 1, last.day)
         .subtract(const Duration(days: 1));
     String f(DateTime d) => '${d.day}-${d.month}-${d.year}';
     return S.rentPeriodPurpose(f(start), f(end));

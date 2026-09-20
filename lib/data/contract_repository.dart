@@ -530,8 +530,20 @@ class ContractRepository {
     });
   }
 
-  /// Updates a single rent installment's `payment_status` and adjusts the
+  /// Updates one or more rent installments' `payment_status` and adjusts the
   /// company stats in the SAME transaction.
+  ///
+  /// [monthNumbers] is usually one month, but a tenant who pays several months
+  /// together settles them in a single call — and a single transaction, so a
+  /// run of months can never half-apply and leave the collected-revenue
+  /// counter describing a payment that did not happen.
+  ///
+  /// Every month named must currently be in the status the move comes FROM
+  /// (all pending when receiving, all received when delivering). If one of
+  /// them has already been dealt with, nothing is written and an
+  /// [InstallmentConflict] says which month — the caller shows it. That check
+  /// lives here, not only in the UI: the months are chosen from a snapshot
+  /// that another device may already have changed.
   ///
   /// Transactions matter here because two devices could touch the same
   /// installment concurrently; the read-modify-write below is replayed by
@@ -542,9 +554,10 @@ class ContractRepository {
   ///   - moving AWAY from status 1 (e.g. correction) → −monthlyAmount collected
   Future<void> updateInstallmentStatus({
     required String contractId,
-    required int monthNumber,
+    required List<int> monthNumbers,
     required PaymentStatus newStatus,
   }) async {
+    if (monthNumbers.isEmpty) return;
     final contractRef = _contracts.doc(contractId);
 
     await _db.runTransaction((txn) async {
@@ -565,18 +578,30 @@ class ContractRepository {
         throw StateError('Installments only exist on rent contracts.');
       }
 
-      final index =
-          contract.installments.indexWhere((i) => i.monthNumber == monthNumber);
-      if (index == -1) {
-        throw StateError('Installment month $monthNumber not found.');
+      // The status every named month has to be in now. Taken from the first
+      // one, which is the month the user actually tapped.
+      final firstIndex = contract.installments
+          .indexWhere((i) => i.monthNumber == monthNumbers.first);
+      if (firstIndex == -1) {
+        throw StateError('Installment month ${monthNumbers.first} not found.');
       }
-
-      final oldStatus = contract.installments[index].status;
+      final oldStatus = contract.installments[firstIndex].status;
       if (oldStatus == newStatus) return; // no-op, avoid useless write.
 
-      // 2. MODIFY the array in memory.
+      // 2. MODIFY the array in memory, once every month has been checked —
+      //    an unwritable month must stop the whole run, not part of it.
       final updated = [...contract.installments];
-      updated[index] = updated[index].copyWith(status: newStatus);
+      for (final month in monthNumbers) {
+        final index =
+            contract.installments.indexWhere((i) => i.monthNumber == month);
+        if (index == -1) {
+          throw StateError('Installment month $month not found.');
+        }
+        if (contract.installments[index].status != oldStatus) {
+          throw InstallmentConflict(month);
+        }
+        updated[index] = updated[index].copyWith(status: newStatus);
+      }
 
       // 3. WRITE the whole array back (Firestore can't patch one array item),
       //    together with the queryable due-date mirror it describes. Paying an
@@ -595,8 +620,10 @@ class ContractRepository {
       final wasReceived = oldStatus == PaymentStatus.receivedFromTenant;
       final nowReceived = newStatus == PaymentStatus.receivedFromTenant;
       num delta = 0;
-      if (!wasReceived && nowReceived) delta = contract.rentAmount;
-      if (wasReceived && !nowReceived) delta = -contract.rentAmount;
+      // Per month settled, not per call.
+      final rent = contract.rentAmount * monthNumbers.length;
+      if (!wasReceived && nowReceived) delta = rent;
+      if (wasReceived && !nowReceived) delta = -rent;
 
       if (delta != 0) {
         _bumpStats(txn, data['branch'] as String? ?? '', {
@@ -606,6 +633,17 @@ class ContractRepository {
       }
     });
   }
+}
+
+/// One of the months in a multi-month settlement had already been dealt with,
+/// so none of them were written. [month] is the one that clashed.
+class InstallmentConflict implements Exception {
+  const InstallmentConflict(this.month);
+
+  final int month;
+
+  @override
+  String toString() => 'Installment month $month is in another state.';
 }
 
 /// ---------------------------------------------------------------------------

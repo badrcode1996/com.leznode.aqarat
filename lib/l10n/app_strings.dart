@@ -76,6 +76,8 @@ class AppStrings {
     required this.aboutUs,
     required this.aboutUsSubtitle,
     required this.cancel,
+    required this.attention,
+    required this.ok,
     required this.refresh,
     required this.profilePhotoUpdated,
     required this.themeLight,
@@ -319,6 +321,7 @@ class AppStrings {
     required this.preview,
     required this.previewHint,
     required this.printArabic,
+    required this.monthsToSettle,
     required this.printEnglish,
     required this.share,
     required this.pickViewLanguage,
@@ -532,6 +535,9 @@ class AppStrings {
   final String aboutUs;
   final String aboutUsSubtitle;
   final String cancel;
+  /// Title of a dialog that reports something did not happen.
+  final String attention;
+  final String ok;
   final String refresh;
   final String profilePhotoUpdated;
   final String themeLight;
@@ -790,6 +796,8 @@ class AppStrings {
   final String preview;
   final String previewHint;
   final String printArabic;
+  /// Label of the "how many months does this voucher cover" picker.
+  final String monthsToSettle;
   final String printEnglish;
   final String share;
   final String pickViewLanguage;
@@ -1260,6 +1268,18 @@ class AppStrings {
         _ => 'گرێبەست #$contract · موڵک $property',
       };
 
+  /// Shown when a run of months cannot be settled together because one of
+  /// them has already been dealt with. Nothing was changed.
+  String monthAlreadySettled(int n) => switch (language) {
+        AppLanguage.ar =>
+          'الشهر $n سبق أن تمت معالجته، فلم يُسجَّل أي شيء. اختر عدد أشهر أقل.',
+        AppLanguage.en =>
+          'Month $n has already been dealt with, so nothing was recorded. '
+              'Choose fewer months.',
+        _ => 'مانگی $n پێشتر کراوە، بۆیە هیچ تۆمار نەکرا. '
+            'ژمارەی مانگی کەمتر هەڵبژێرە.',
+      };
+
   String monthNumber(int n) => switch (language) {
         AppLanguage.ar => 'الشهر $n',
         AppLanguage.en => 'Month $n',
@@ -1309,7 +1329,7 @@ class AppStrings {
         roleCompanyAdmin, roleAgent, roleSuperAdmin, settings, sectionInfo,
         company, companyPhone, mobileNumber, sectionAdmin, lawyers,
         lawyersSubtitle, recalcStats, recalcStatsSubtitle, recalcStatsBody,
-        recalcStatsDone, appearance, aboutUs, aboutUsSubtitle, cancel,
+        recalcStatsDone, appearance, aboutUs, aboutUsSubtitle, cancel, attention, ok,
         refresh, profilePhotoUpdated, themeLight, themeDark, themeSystem,
         languageLabel,
         notifications, markAllRead, noNotifications, noNotificationsBody,
@@ -1367,7 +1387,7 @@ class AppStrings {
         attachmentNotDownloaded,
         noRentReceipts, noExternalReceipts, deleteReceipt, receiptDeleted,
         print,
-        preview, previewHint, printArabic, printEnglish, share, pickViewLanguage, deleteContract,
+        preview, previewHint, printArabic, printEnglish, monthsToSettle, share, pickViewLanguage, deleteContract,
         contractDeleted, noRentContracts, noSaleContracts, searchHint, attachmentsEmpty,
         attachmentsNoneHint, previewFailedTitle, previewFailedBody, amount,
         date, purpose, receivedFrom, paidTo, createAndPrint, emptyFunctionResponse,
@@ -1473,6 +1493,8 @@ class AppStrings {
     aboutUs: 'دەربارەی ئێمە',
     aboutUsSubtitle: 'پەیوەندی و زانیاری ئەپەکە',
     cancel: 'پاشگەزبوونەوە',
+    attention: 'ئاگاداری',
+    ok: 'باشە',
     refresh: 'نوێکردنەوە',
     profilePhotoUpdated: 'وێنەی پرۆفایل نوێ کرایەوە',
     themeLight: 'ڕووناک',
@@ -1696,6 +1718,7 @@ class AppStrings {
     preview: 'پێشبینین',
     previewHint: 'پێشبینین (دایبگرە بۆ هەڵبژاردنی زمان)',
     printArabic: 'پرینتی عەرەبی',
+    monthsToSettle: 'کرێی چەند مانگ؟',
     printEnglish: 'پرینتی ئینگلیزی',
     share: 'هاوبەشکردن',
     pickViewLanguage: 'بینینی گرێبەست بە کام زمان؟',
@@ -1911,6 +1934,8 @@ class AppStrings {
     aboutUs: 'من نحن',
     aboutUsSubtitle: 'التواصل ومعلومات التطبيق',
     cancel: 'إلغاء',
+    attention: 'تنبيه',
+    ok: 'حسناً',
     refresh: 'تحديث',
     profilePhotoUpdated: 'تم تحديث الصورة الشخصية',
     themeLight: 'فاتح',
@@ -2133,6 +2158,7 @@ class AppStrings {
     preview: 'معاينة',
     previewHint: 'معاينة (اضغط مطوّلاً لاختيار اللغة)',
     printArabic: 'طباعة بالعربية',
+    monthsToSettle: 'إيجار كم شهر؟',
     printEnglish: 'طباعة بالإنجليزية',
     share: 'مشاركة',
     pickViewLanguage: 'بأي لغة تريد عرض العقد؟',
@@ -2348,6 +2374,8 @@ class AppStrings {
     aboutUs: 'About us',
     aboutUsSubtitle: 'Contact and app information',
     cancel: 'Cancel',
+    attention: 'Notice',
+    ok: 'OK',
     refresh: 'Refresh',
     profilePhotoUpdated: 'Profile photo updated',
     themeLight: 'Light',
@@ -2572,6 +2600,7 @@ class AppStrings {
     preview: 'Preview',
     previewHint: 'Preview (long-press to pick the language)',
     printArabic: 'Print in Arabic',
+    monthsToSettle: 'How many months?',
     printEnglish: 'Print in English',
     share: 'Share',
     pickViewLanguage: 'Which language should the contract open in?',
