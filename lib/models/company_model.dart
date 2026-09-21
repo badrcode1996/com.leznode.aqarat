@@ -34,6 +34,18 @@ class Company {
   /// How long a demo profile stays usable once the Super Admin switches it on.
   static const demoDuration = Duration(days: 7);
 
+  /// Companies whose contracts and receipts print from a design of their own
+  /// rather than the shared one.
+  ///
+  /// KEEP IN STEP WITH functions/designs/index.js — that registry is what
+  /// actually decides, and it runs on the server where the app cannot see it.
+  /// A bespoke design changes what a document looks like and has to be
+  /// re-checked whenever the shared layout moves, so the Super Admin needs to
+  /// know at a glance which customers have one.
+  static const customDesignIds = {
+    'shari_ashti_realesatate',
+  };
+
   final String id;
   final String nameKu;
   final String nameAr;
@@ -51,6 +63,9 @@ class Company {
   /// Per-company feature overrides on top of the plan. key = feature name,
   /// value = forced on/off. Absent key → inherit the plan value.
   final Map<String, bool> featureOverrides;
+
+  /// Whether this company's paperwork prints from its own design.
+  bool get hasCustomDesign => customDesignIds.contains(id);
 
   /// The city the company operates in — scopes the Global Market.
   final CompanyCity city;

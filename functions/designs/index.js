@@ -26,7 +26,10 @@
  * receipt_html.js — so a bug fixed in the base layout is fixed for every
  * company that didn't take the layout over.
  *
- * To onboard a company: add `designs/<slug>.js`, then map its company id here.
+ * To onboard a company: add `designs/<slug>.js`, then map its company id here
+ * AND in Company.customDesignIds (lib/models/company_model.dart), which is how
+ * the app's Super Admin list marks these companies out — it cannot read this
+ * registry, which only ever runs on the server.
  * The id is the `companies` document id, which is already the slug of the
  * English name (Company.slugify: "Al Azud Real Estate" -> "al_azud_real_estate"),
  * so these keys stay readable — no opaque ids to look up.

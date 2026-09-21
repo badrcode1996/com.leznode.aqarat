@@ -136,10 +136,19 @@ class SuperAdminPanel extends ConsumerWidget {
             separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (_, i) {
               final c = list[i];
+              // A company with paperwork of its own is worth spotting in the
+              // list: its documents don't follow the shared layout, so a
+              // change to that layout has to be checked against them.
+              final bespoke = c.hasCustomDesign;
               return Container(
                 decoration: BoxDecoration(
-                  color: AppColors.current.card,
+                  color: bespoke
+                      ? Color.alphaBlend(accentYellow.withValues(alpha: 0.16),
+                          AppColors.current.card)
+                      : AppColors.current.card,
                   borderRadius: BorderRadius.circular(16),
+                  border:
+                      bespoke ? Border.all(color: accentYellow, width: 1.5) : null,
                   boxShadow: [
                     BoxShadow(
                       color: AppColors.current.shadow,
@@ -151,8 +160,12 @@ class SuperAdminPanel extends ConsumerWidget {
                 child: ListTile(
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   leading: CircleAvatar(
-                    backgroundColor: inputFillColor,
-                    child: Icon(Icons.business, color: AppColors.current.textStrong),
+                    backgroundColor:
+                        bespoke ? accentYellow : inputFillColor,
+                    child: Icon(Icons.business,
+                        color: bespoke
+                            ? AppColors.current.onAccent
+                            : AppColors.current.textStrong),
                   ),
                   title: Text(c.displayName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   subtitle: Text('${c.phone1}  ·  ${c.city.uiLabel}', style: TextStyle(color: AppColors.current.textMuted)),
