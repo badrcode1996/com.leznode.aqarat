@@ -89,6 +89,15 @@ body{font-size:14pt !important;}
 .title{font-size:25pt !important;}
 .chead, .sgn, .notes{font-size:14pt !important;}
 
+/* One size up for the Arabic SALE contract only, which the company asked for.
+   Amiri sets smaller on the line than Hejar does at the same point size, and
+   that edition is the one they hand to buyers. Rent and the other languages
+   stay at 14 — data-type comes from the renderer. */
+html[lang="ar"][data-type="sale"] body,
+html[lang="ar"][data-type="sale"] .chead,
+html[lang="ar"][data-type="sale"] .sgn,
+html[lang="ar"][data-type="sale"] .notes{font-size:15pt !important;}
+
 /* --- Where everything sits ---------------------------------------------
    Every figure below reproduces a printout from their old Windows program,
    photographed flat on the letterhead and scaled against the letterhead's own

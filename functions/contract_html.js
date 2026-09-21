@@ -459,7 +459,11 @@ function buildContractHtml(o) {
   const htmlLang = {ar: "ar", en: "en", ku: "ckb"}[lang];
   const dir = isRtl(lang) ? "rtl" : "ltr";
 
-  return `<!doctype html><html lang="${htmlLang}" dir="${dir}"><head>
+  // data-type carries rent/sale onto the root element, so a per-company design
+  // can style one kind of contract without taking the layout over: the
+  // language is already on <html>, and this puts the other axis beside it.
+  return `<!doctype html><html lang="${htmlLang}" dir="${dir}" ` +
+    `data-type="${isRent ? "rent" : "sale"}"><head>
 <meta charset="utf-8">
 <style>
 @font-face{font-family:'DocFont';src:url(data:font/ttf;base64,${o.fontRegB64}) format('truetype');font-weight:normal;}
