@@ -423,9 +423,13 @@ exports.renderReceiptPdf = onCall(
         note: r.note || "",
         agent_name: r.agent_name || "",
       };
+      // Passed through as stored, defaults and all. Filling the colour in
+      // here made the company look like it had chosen blue, which beat the
+      // brown its own design asks for — the renderer is where that order is
+      // decided (chosen colour, then the design's, then the house blue).
       const template = {
-        receipt_color: t.receipt_color || "1E4D8B",
-        receipt_font_size: t.receipt_font_size || 10,
+        receipt_color: t.receipt_color,
+        receipt_font_size: t.receipt_font_size,
       };
 
       const html = buildReceiptHtml({
