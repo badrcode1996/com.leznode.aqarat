@@ -44,7 +44,7 @@ class Company {
   /// know at a glance which customers have one.
   static const customDesignIds = {
     'shari_ashti_realesatate',
-    'crest_home',
+    'crest_home_company',
   };
 
   final String id;

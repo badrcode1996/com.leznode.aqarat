@@ -40,9 +40,13 @@ const BROWN = "#6B3A18";
  * The lines under the company name on their letterhead: what the firm does,
  * in the three languages, exactly as the printed sheet carries them.
  *
- * SLOGAN is the pair sitting on the rule under the header — theirs reads
- * "your dream, our goal". Left blank until the company gives us their own
- * wording: inventing a slogan for a firm is not ours to do.
+ * SLOGAN is the pair sitting on the rule under the header — the printed sheet
+ * they modelled this on reads "your dream, our goal" there. Left blank until
+ * the company gives us their own wording: inventing a slogan for a firm is not
+ * ours to do.
+ *
+ * That sheet also carries a QR code beside the header. Crest Home asked for
+ * none, so there is none here.
  */
 const TAGLINES = [
   "بۆ خزمەتگوزاری عقارات",
