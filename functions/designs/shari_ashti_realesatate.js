@@ -124,7 +124,11 @@ html[lang="ar"][data-type="sale"] .notes{font-size:15pt !important;}
    width to 178mm; both have to describe THESE margins or the signatures get
    dropped by the wrong amount. (The earlier 35/16/16 margins never updated
    either, which printed the signatures alone on a page.) */
-:root{--page-h:262mm;--text-w:170mm;}
+:root{--page-h:262mm;--text-w:170mm;
+  /* Their Arabic rent contract ended with clause 26 alone on the last page.
+     Three clauses is what the company wants down there, so the break moves up
+     to bring them — unless that would cost another sheet. */
+  --min-tail:3;}
 
 /* The sheet has the logo and company name at the top, and the phones, e-mail
    and address along the foot. Ours would print over theirs. */

@@ -516,6 +516,8 @@ thead{display:table-header-group;}
    schedule back onto the sentence that introduces it. Runs of spaces still
    collapse, so ordinary clauses are unaffected. */
 .clause{text-align:justify;margin-bottom:3px;white-space:pre-line;}
+/* Set by __fitLayout to pull the last clauses down onto the final page. */
+.tailbreak{break-before:page;}
 .notes{margin-top:8px;}
 .signs{display:flex;gap:16px;margin-top:14px;break-inside:avoid;}
 /* Filled in by __fitLayout so the signatures sit on the foot of the last page
@@ -659,6 +661,12 @@ window.__fitLayout = function () {
     for (var n = cell.firstChild; n; n = n.nextSibling) {
       sim.appendChild(n.cloneNode(true));
     }
+    // A forced page break is invisible to the rehearsal: inside a multi-column
+    // box Chrome honours break-before:column, not :page. Without this the
+    // columns would show the unbroken layout and the signatures would be
+    // dropped by an amount computed for a document that isn't being printed.
+    var tb = sim.querySelector(".tailbreak");
+    if (tb) tb.style.breakBefore = "column";
     var s = sim.getBoundingClientRect();
     var end = sim.querySelector(".signend").getBoundingClientRect();
     return {
@@ -671,6 +679,49 @@ window.__fitLayout = function () {
   }
 
   var flat = rehearse(0);
+
+  // How many clauses sit on the page the document ENDS on — the one the
+  // signatures land on, which is not always the last clause's page: a
+  // contract can finish with a page of signatures and nothing else.
+  function tailCount() {
+    var s = sim.getBoundingClientRect();
+    var cls = sim.querySelectorAll(".clause");
+    var end = sim.querySelector(".signend");
+    if (!cls.length || !end) return 0;
+    var pageOf = function (el) {
+      var r = el.getBoundingClientRect();
+      return Math.round((rtl ? s.right - r.right : r.left - s.left) / s.width);
+    };
+    var last = pageOf(end);
+    var n = 0;
+    for (var i = cls.length - 1; i >= 0 && pageOf(cls[i]) === last; i--) n++;
+    return n;
+  }
+
+  // A final page carrying one stray clause — or nothing but the signatures —
+  // reads as a printing accident rather than the end of a contract. --min-tail
+  // asks for at least that many clauses down there, and the break is moved up
+  // to fetch them. A design opts in; unset (0) leaves pagination exactly as it
+  // was for every other company.
+  var minTail = parseInt(getComputedStyle(document.documentElement)
+      .getPropertyValue("--min-tail"), 10) || 0;
+  var clauses = cell.querySelectorAll(".clause");
+  if (minTail > 1 && clauses.length > minTail && tailCount() < minTail) {
+    var forced = clauses[clauses.length - minTail];
+    forced.classList.add("tailbreak");
+    var after = rehearse(0);
+    if (after.page > flat.page) {
+      // Never buy a tidy tail with an extra sheet of paper.
+      forced.classList.remove("tailbreak");
+      rehearse(0);
+    } else {
+      flat = after;
+    }
+  }
+
+  // What the final page ended up carrying, for the caller's log. Read here,
+  // before the filler rehearsals below leave the columns in another state.
+  var tail = tailCount();
 
   // Binary search for the tallest filler the last page still swallows.
   //
@@ -699,7 +750,7 @@ window.__fitLayout = function () {
   gap.style.height = applied + "px";
   sim.remove();
   return {pages: flat.page, room: Math.round(flat.room),
-    applied: Math.round(applied)};
+    applied: Math.round(applied), minTail: minTail, tail: tail};
 };
 </script>
 </body></html>`;
