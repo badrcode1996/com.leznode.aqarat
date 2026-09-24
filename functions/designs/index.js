@@ -21,6 +21,12 @@
  *   contractHtml — (o) => string. Full takeover of the contract document.
  *                  Only for layouts the base template can't be pushed into.
  *   receiptHtml  — (o) => string. Same, for the receipt (وەصڵ).
+ *   receiptCss   — CSS for the receipt in place of `css`. A design built for
+ *                  the contract sets this (even to "") so its page rules stay
+ *                  off the voucher, which is laid out nothing like it.
+ *   receiptAccent— the colour the receipt prints in when the company has not
+ *                  chosen one in the app. A default, not an override: a
+ *                  colour picked in the app still wins.
  *
  * Anything omitted falls back to the shared default in contract_html.js /
  * receipt_html.js — so a bug fixed in the base layout is fixed for every

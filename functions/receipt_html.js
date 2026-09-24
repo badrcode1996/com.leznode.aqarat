@@ -70,7 +70,12 @@ function fmtDate(d) {
  *   companyId}
  * @return {object} prepared values
  */
+/** A colour written either "1E4D8B" or "#1E4D8B", as CSS wants it. */
+const hexColour = (v) => (String(v).startsWith("#") ? String(v) : "#" + v);
+
 function receiptViewModel(o) {
+  // The company's own design, for the colour it falls back to below.
+  const design = resolveDesign(o.companyId);
   const r = o.receipt || {};
   const c = o.company || {};
   const t = o.template || {};
@@ -83,7 +88,15 @@ function receiptViewModel(o) {
     template: t,
     /** true when money leaves the company (پارەدان). */
     isPay,
-    accent: "#" + (t.receipt_color || "1E4D8B"),
+    // The colour the voucher prints in: what the company chose in the app
+    // first, then the shade its design was built around, then the house blue.
+    // A design supplies a DEFAULT rather than forcing the colour, so the
+    // picker in the app still means something for these companies too.
+    //
+    // The stored value is bare hex ("1E4D8B"); a design is likelier to write
+    // the colour the way CSS does, so both spellings are accepted rather than
+    // one of them silently producing "##6B3A18" and printing nothing.
+    accent: hexColour(t.receipt_color || design.receiptAccent || "1E4D8B"),
     // +2 across the board, not a new default: the stored size was set when the
     // voucher printed smaller than it reads on paper, so every company's
     // setting — default or customised — is two points short of legible.
@@ -238,7 +251,10 @@ body{font-family:'Speda';direction:rtl;color:#111;font-size:${fs};}
   display:flex;align-items:center;justify-content:space-between;
   padding:0 14px;margin-top:8px;}
 .footer .sep{width:1px;height:12px;background:rgba(255,255,255,.4);}
-${design.css || ""}
+/* A design written for the contract would otherwise push its page margins
+   and letterhead rules onto the voucher, which is a different document
+   entirely: receiptCss is what it prints here instead, "" for nothing. */
+${design.receiptCss === undefined ? (design.css || "") : design.receiptCss}
 </style></head><body>
 ${copy("کۆپی کۆمپانیا")}
 ${copy("کۆپی زەبوون")}

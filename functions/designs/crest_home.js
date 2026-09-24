@@ -27,6 +27,16 @@ const GOLD = "#F7C10A";
 const SLATE = "#2E3D45";
 
 /**
+ * The brown of their logo, which their vouchers print in instead of the house
+ * blue. Taken as the commonest ink colour in the logo they sent (the dominant
+ * bins were #582808 and #683818; this sits between them, dark enough to carry
+ * white text on the banner).
+ *
+ * A default, not an override — a colour picked in the app still wins.
+ */
+const BROWN = "#6B3A18";
+
+/**
  * The lines under the company name on their letterhead: what the firm does,
  * in the three languages, exactly as the printed sheet carries them.
  *
@@ -217,4 +227,11 @@ html[dir="ltr"] .chead{border-radius:0 3mm 3mm 0;}
 .watermark{display:none !important;}
 `;
 
-module.exports = {css, metaHtml, cardHtml};
+/**
+ * The voucher keeps the shared layout and only changes colour, so it takes
+ * none of the CSS above: those are page margins and letterhead rules for a
+ * document laid out nothing like it.
+ */
+const receiptCss = "";
+
+module.exports = {css, receiptCss, receiptAccent: BROWN, metaHtml, cardHtml};
