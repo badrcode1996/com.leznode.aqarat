@@ -232,10 +232,57 @@ html[dir="ltr"] .chead{border-radius:0 3mm 3mm 0;}
 `;
 
 /**
- * The voucher keeps the shared layout and only changes colour, so it takes
- * none of the CSS above: those are page margins and letterhead rules for a
- * document laid out nothing like it.
+ * The voucher takes none of the CSS above — those are page margins and
+ * letterhead rules for a document laid out nothing like it — but it does get
+ * the foot of their letterhead, which the company asked for: the phones and
+ * the address on white with gold markers, over a gold bar that a pair of
+ * chevrons cuts across at the end.
+ *
+ * The shared footer is a solid bar of the accent colour with the three
+ * details spaced along it, so this re-lays those same three: phones stacked
+ * on one side, address on the other. `background` is set on the element
+ * itself by the renderer, hence the !important.
  */
-const receiptCss = "";
+const receiptCss = `
+/* direction:ltr so the columns run the way their sheet does — phones at the
+   left, address across the middle — whatever language the voucher is in. The
+   address is put back to rtl for its own text; the phone numbers are figures
+   and read left to right either way. */
+.footer{background:transparent !important;color:${SLATE};height:auto;
+  border-radius:0;margin-top:10px;padding:0 10px 16px;position:relative;
+  direction:ltr;display:grid;grid-template-columns:auto 1fr;
+  align-items:center;font-weight:bold;line-height:1.6;}
+/* The dividers belong to the bar this replaces. */
+.footer .sep{display:none;}
+/* Children run phone, divider, phone, divider, address. */
+.footer > span:nth-child(1){grid-area:1 / 1;}
+.footer > span:nth-child(3){grid-area:2 / 1;}
+.footer > span:nth-child(5){grid-area:1 / 2 / span 2;text-align:center;
+  direction:rtl;}
+/* A phone and a pin, drawn rather than fetched: no network in the renderer. */
+/* The pin goes on ::after for the address: that span reads right to left, so
+   its ::after is the physical left — which is the side their sheet has the
+   marker on, the same side as the phone icon. */
+.footer > span:nth-child(1)::before, .footer > span:nth-child(5)::after{
+  content:"";display:inline-block;width:9px;height:9px;
+  vertical-align:-1px;background-size:contain;background-repeat:no-repeat;}
+.footer > span:nth-child(1)::before{margin-inline-end:4px;}
+.footer > span:nth-child(5)::after{margin-inline-start:4px;}
+.footer > span:nth-child(1)::before{background-image:url("data:image/svg+xml;utf8,\
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>\
+<circle cx='12' cy='12' r='12' fill='%23${GOLD.slice(1)}'/>\
+<path fill='%23fff' d='M17.4 15.1l-2-.9a.9.9 0 00-1 .2l-.8.9a8 8 0 01-3.9-3.9l.9-.8a.9.9 0 00.2-1l-.9-2a.9.9 0 00-1-.5l-1.7.4a1 1 0 00-.8 1c.2 5 4.2 9 9.2 9.2a1 1 0 001-.8l.4-1.7a.9.9 0 00-.6-1.1z'/></svg>");}
+.footer > span:nth-child(5)::after{background-image:url("data:image/svg+xml;utf8,\
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>\
+<circle cx='12' cy='12' r='12' fill='%23${GOLD.slice(1)}'/>\
+<path fill='%23fff' d='M12 5.5a4.4 4.4 0 00-4.4 4.4c0 3.3 4.4 8.6 4.4 8.6s4.4-5.3 4.4-8.6A4.4 4.4 0 0012 5.5zm0 6a1.6 1.6 0 110-3.2 1.6 1.6 0 010 3.2z'/></svg>");}
+/* The bar: gold across, cut by two chevrons in the company's brown near the
+   end, as on the sheet they sent. */
+.footer::after{content:"";position:absolute;left:0;right:0;bottom:0;height:9px;
+  background:
+    linear-gradient(115deg, transparent 0 74%, ${BROWN} 74% 80%,
+      transparent 80% 83%, ${BROWN} 83% 89%, transparent 89%),
+    linear-gradient(${GOLD}, ${GOLD});}
+`;
 
 module.exports = {css, receiptCss, receiptAccent: BROWN, metaHtml, cardHtml};
