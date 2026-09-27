@@ -164,6 +164,10 @@ class InstallmentGrid extends ConsumerWidget {
         monthNumbers: monthNumbers,
         newStatus: newStatus,
       );
+      // The grid itself is live, but the arrears list is a one-shot read and
+      // this is the moment a contract leaves it — or rejoins it, when a
+      // payment is stepped back.
+      if (context.mounted) ref.invalidate(overdueContractsProvider);
 
       if (makesReceipt) {
         if (!context.mounted) return;

@@ -132,6 +132,9 @@ class _GuaranteeCard extends ConsumerWidget {
             .setGuaranteeReturned(contract.id, true);
         return ref.read(receiptRepositoryProvider).createReceipt(draft);
       });
+      // Same one-shot read as the commissions list: without this the deposit
+      // stays on screen as though it were still held.
+      if (context.mounted) ref.invalidate(guaranteeContractsProvider);
       if (context.mounted) {
         Navigator.push(
           context,

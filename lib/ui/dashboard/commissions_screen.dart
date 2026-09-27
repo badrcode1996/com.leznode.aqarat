@@ -145,6 +145,10 @@ class _CommissionCard extends ConsumerWidget {
             paid: paid,
             confirmed: confirmed,
           );
+      // The list is a one-shot read, so it has to be told the row changed.
+      // The dashboard's commission tile reads the same provider and refreshes
+      // with it. Only while the screen is still up: ref belongs to the widget.
+      if (context.mounted) ref.invalidate(monthSalesProvider);
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
