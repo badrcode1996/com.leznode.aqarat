@@ -28,6 +28,14 @@
 /** The colour comes from the view model, so the app's picker still works. */
 const {WORDMARK} = require("./crest_home_brand");
 
+/**
+ * Escapes for the page but leaves the digits as typed. vm.esc rewrites 0-9 as
+ * ٠-٩ everywhere, which the company wants for the money but not for the date,
+ * the time or the voucher number — those read as figures on their form.
+ */
+const plain = (s) => String(s == null ? "" : s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
 const receiptHtml = (vm) => {
   const e = vm.esc;
   const r = vm.receipt || {};
@@ -83,9 +91,9 @@ const receiptHtml = (vm) => {
     <div class="head">
       <div class="col right">
         <div class="cname">${e(c.nameKu || c.nameAr || c.nameEn || "")}</div>
-        <div class="meta">${e("بەروار:")} ${e(vm.dateText)}</div>
-        ${timeText ? `<div class="meta">${e(timeText)}</div>` : ""}
-        <div class="meta">${e("ژ. پسوولە:")} ${e(r.receipt_number || "")}</div>
+        <div class="meta">${e("بەروار:")} <b class="fig">${plain(vm.dateText)}</b></div>
+        ${timeText ? `<div class="meta"><b class="fig">${plain(timeText)}</b></div>` : ""}
+        <div class="meta">${e("ژ. پسوولە:")} <b class="fig">${plain(r.receipt_number || "")}</b></div>
       </div>
       <div class="col mid">
         ${logo}
@@ -110,9 +118,9 @@ const receiptHtml = (vm) => {
 
     <div class="foot">
       <span>${e((c.nameKu || "") + branch)}</span>
+      ${c.address ? `<span class="addr">${e(c.address)}</span>` : ""}
       <span class="ph">${e(phones)}</span>
     </div>
-    ${c.address ? `<div class="addr">${e(c.address)}</div>` : ""}
   </div>`;
 
   return `<!doctype html><html lang="ckb" dir="rtl"><head><meta charset="utf-8">
@@ -136,10 +144,13 @@ body{font-family:'Speda';direction:rtl;color:#1A1A1A;font-size:${vm.fontSize};}
 .cname{font-size:1.9em;font-weight:bold;color:${accent};line-height:1.25;
   margin-bottom:2mm;}
 .meta{font-size:0.92em;line-height:1.7;}
-.cen{font-size:1.15em;font-weight:bold;color:${accent};line-height:1.3;
-  letter-spacing:0.5px;}
-/* Bigger than the 34x22mm it started at, at the company's request. */
-.logo{max-width:46mm;max-height:30mm;object-fit:contain;}
+.cen{font-size:1.55em;font-weight:bold;color:${accent};line-height:1.25;
+  letter-spacing:0.5px;text-transform:uppercase;}
+/* 34x22mm at first, then 46x30; the company asked for bigger again. */
+.logo{max-width:62mm;max-height:40mm;object-fit:contain;}
+/* The date, the time and the voucher number keep Latin figures, and stay
+   left-to-right so a date does not come apart in a right-to-left line. */
+.fig{direction:ltr;unicode-bidi:isolate;font-weight:bold;}
 /* The band naming the voucher, under the logo. */
 .band{margin-top:2mm;background:${accent};color:#fff;font-weight:bold;
   font-size:1.05em;padding:1.4mm 3mm;border-radius:1mm;}
@@ -170,7 +181,8 @@ body{font-family:'Speda';direction:rtl;color:#1A1A1A;font-size:${vm.fontSize};}
   display:flex;justify-content:space-between;align-items:center;gap:6mm;
   padding:1.6mm 4mm;border-radius:1mm;}
 .ph{direction:ltr;letter-spacing:0.5px;}
-.addr{margin-top:1.5mm;text-align:center;font-size:0.85em;color:#444;}
+/* In the bar with the rest of the footer, not under it. */
+.addr{flex:1;text-align:center;}
 </style></head><body>
 ${voucher()}
 ${voucher()}

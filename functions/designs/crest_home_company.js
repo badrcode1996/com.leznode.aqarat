@@ -145,8 +145,8 @@ html[dir="ltr"] .band .logo{order:-1;}
 .band::after{content:"${lines(WORDMARK)}";
   white-space:pre-line;position:absolute;left:0;top:50%;
   transform:translateY(-50%);width:28mm;text-align:left;
-  font-size:11pt;font-weight:bold;color:${GOLD};line-height:1.25;
-  letter-spacing:0.3px;}
+  font-size:12pt;font-weight:bold;color:${GOLD};line-height:1.25;
+  letter-spacing:0.3px;text-transform:uppercase;}
 .band .names{flex:1;text-align:center;}
 /* One masthead, as on their sheet, not the company's name in three languages
    stacked: the edition's own name is the big gold one and the others are put
