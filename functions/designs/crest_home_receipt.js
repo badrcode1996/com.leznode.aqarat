@@ -26,6 +26,8 @@
  */
 
 /** The colour comes from the view model, so the app's picker still works. */
+const {WORDMARK} = require("./crest_home_brand");
+
 const receiptHtml = (vm) => {
   const e = vm.esc;
   const r = vm.receipt || {};
@@ -90,7 +92,7 @@ const receiptHtml = (vm) => {
         <div class="band">${e(vm.titleKu)}</div>
       </div>
       <div class="col left">
-        <div class="cen">${e(c.nameEn || "")}</div>
+        ${WORDMARK.map((l) => `<div class="cen">${e(l)}</div>`).join("")}
       </div>
     </div>
 

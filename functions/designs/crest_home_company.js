@@ -46,6 +46,8 @@ const BROWN = "#6B3A18";
  * That sheet also carries a QR code beside the header. Crest Home asked for
  * none, so there is none here.
  */
+const {WORDMARK} = require("./crest_home_brand");
+
 const TAGLINES = [
   "بۆ خزمەتگوزاری عقارات",
   "للخدمات العقارية",
@@ -129,12 +131,22 @@ body{font-size:12pt !important;color:${SLATE};}
    lot. The shared band writes the names first and the logo second, which in
    Kurdish and Arabic already puts the logo on the left; the English edition
    has to be told. */
-.band{display:flex;align-items:center;justify-content:space-between;
-  padding:0 0 1mm;}
+/* The wordmark sits in the padding at the far left, beside the logo rather
+   than under it: the header repeats on every page, so any height added here
+   is paid for on all of them — stacking the two cost a whole extra page. */
+.band{position:relative;display:flex;align-items:center;
+  justify-content:space-between;padding:0 0 1mm 30mm;}
 /* Bigger than the 20mm this started at: the company wanted their mark to
    carry the head of the page. */
 .band .logo{width:auto;height:28mm;object-fit:contain;margin:0;}
 html[dir="ltr"] .band .logo{order:-1;}
+/* The wordmark, as the firm writes itself on paper: two lines under the logo
+   on the physical left, in every edition. */
+.band::after{content:"${lines(WORDMARK)}";
+  white-space:pre-line;position:absolute;left:0;top:50%;
+  transform:translateY(-50%);width:28mm;text-align:left;
+  font-size:11pt;font-weight:bold;color:${GOLD};line-height:1.25;
+  letter-spacing:0.3px;}
 .band .names{flex:1;text-align:center;}
 /* One masthead, as on their sheet, not the company's name in three languages
    stacked: the edition's own name is the big gold one and the others are put
