@@ -360,6 +360,21 @@ class AdminRepository {
     await callable.call<dynamic>({'uid': uid, 'newPassword': newPassword});
   }
 
+  /// Deletes a user — the Auth account and the profile — via the `deleteUser`
+  /// Cloud Function, which verifies the caller is a Super Admin.
+  ///
+  /// Their contracts and receipts are left exactly as they are: those are the
+  /// company's financial record and carry the agent's name at the time, so an
+  /// agent leaving must not rewrite what was signed and paid.
+  ///
+  /// The function refuses three accounts, each with its own code in the thrown
+  /// [FirebaseFunctionsException.details] — 'self', 'super_admin' and 'owner'
+  /// (a company's founding admin, whom the company document points at).
+  Future<void> deleteUser(String uid) async {
+    final callable = FirebaseFunctions.instance.httpsCallable('deleteUser');
+    await callable.call<dynamic>({'uid': uid});
+  }
+
   /// Creates another Super Admin (no company). Only an existing Super Admin can
   /// do this — the rules require isSuperAdmin() to mint a super_admin profile.
   Future<String> createSuperAdmin({

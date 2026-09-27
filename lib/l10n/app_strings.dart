@@ -385,6 +385,10 @@ class AppStrings {
     required this.fullName,
     required this.newPassword,
     required this.changePassword,
+    required this.deleteUser,
+    required this.userDeleted,
+    required this.cannotDeleteOwner,
+    required this.cannotDeleteSuperAdmin,
     required this.passwordChanged,
     required this.minSixChars,
     required this.emailValidShort,
@@ -868,6 +872,11 @@ class AppStrings {
   final String fullName;
   final String newPassword;
   final String changePassword;
+  final String deleteUser;
+  final String userDeleted;
+  /// Why a delete was refused — the company's founding admin.
+  final String cannotDeleteOwner;
+  final String cannotDeleteSuperAdmin;
   final String passwordChanged;
   final String minSixChars;
   final String emailValidShort;
@@ -1280,6 +1289,19 @@ class AppStrings {
             'ژمارەی مانگی کەمتر هەڵبژێرە.',
       };
 
+  /// Asked before a user is deleted. Says plainly what survives: their
+  /// contracts and receipts are the company's record and stay.
+  String deleteUserConfirm(String name) => switch (language) {
+        AppLanguage.ar =>
+          'هل تريد حذف حساب "$name"؟ لن يتمكن من تسجيل الدخول بعد الآن. '
+              'تبقى عقوده ووصولاته كما هي.',
+        AppLanguage.en =>
+          'Delete the account of "$name"? They will no longer be able to '
+              'sign in. Their contracts and receipts are left as they are.',
+        _ => 'هەژماری «$name» بسڕدرێتەوە؟ چیتر ناتوانێت بچێتە ژوورەوە. '
+            'گرێبەست و پسوولەکانی وەک خۆیان دەمێننەوە.',
+      };
+
   String monthNumber(int n) => switch (language) {
         AppLanguage.ar => 'الشهر $n',
         AppLanguage.en => 'Month $n',
@@ -1400,6 +1422,7 @@ class AppStrings {
         roleBranchAdmin, branchesCommaLabel,
         branchesCommaHint, branchesUpdated, newUser, noUsers, editUser, editInfo,
         fullName, newPassword, changePassword, passwordChanged, minSixChars,
+        deleteUser, userDeleted, cannotDeleteOwner, cannotDeleteSuperAdmin,
         emailValidShort, account1, account2, newSuperAdmin, superAdmins,
         demoAccount, demo7Days, demoEnabled, demoActivated, demoRemoved,
         sevenDaysFromNow, demoExpiredNote, demoExpiryNote, saveResetsDemo,
@@ -1783,6 +1806,10 @@ class AppStrings {
     fullName: 'ناوی تەواو',
     newPassword: 'وشەی نهێنی نوێ',
     changePassword: 'گۆڕینی وشەی نهێنی',
+    deleteUser: 'سڕینەوەی بەکارهێنەر',
+    userDeleted: 'بەکارهێنەرەکە سڕایەوە',
+    cannotDeleteOwner: 'ئەمە هەژماری خاوەنی کۆمپانیایە و ناسڕدرێتەوە.',
+    cannotDeleteSuperAdmin: 'سوپەر ئەدمین لە شاشەی خۆیەوە بەڕێوە دەبرێت.',
     passwordChanged: 'وشەی نهێنی گۆڕا',
     minSixChars: 'لانیکەم ٦ پیت',
     emailValidShort: 'ئیمەیڵی دروست',
@@ -2223,6 +2250,10 @@ class AppStrings {
     fullName: 'الاسم الكامل',
     newPassword: 'كلمة مرور جديدة',
     changePassword: 'تغيير كلمة المرور',
+    deleteUser: 'حذف المستخدم',
+    userDeleted: 'تم حذف المستخدم',
+    cannotDeleteOwner: 'هذا حساب مالك الشركة ولا يمكن حذفه.',
+    cannotDeleteSuperAdmin: 'حسابات المشرف العام تُدار من شاشتها الخاصة.',
     passwordChanged: 'تم تغيير كلمة المرور',
     minSixChars: '٦ أحرف على الأقل',
     emailValidShort: 'بريد صحيح',
@@ -2665,6 +2696,10 @@ class AppStrings {
     fullName: 'Full name',
     newPassword: 'New password',
     changePassword: 'Change password',
+    deleteUser: 'Delete user',
+    userDeleted: 'User deleted',
+    cannotDeleteOwner: "This is the company's owner account and cannot be deleted.",
+    cannotDeleteSuperAdmin: 'Super admins are managed on their own screen.',
     passwordChanged: 'Password changed',
     minSixChars: 'At least 6 characters',
     emailValidShort: 'A valid email',

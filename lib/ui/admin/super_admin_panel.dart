@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -979,6 +980,12 @@ class _CompanyUsersScreen extends ConsumerWidget {
                         icon: Icon(Icons.key_outlined, color: AppColors.current.textMuted),
                         onPressed: () => _changePassword(context, ref, u.uid, u.displayName),
                       ),
+                      IconButton(
+                        tooltip: S.deleteUser,
+                        icon: Icon(Icons.delete_outline,
+                            color: AppColors.current.danger),
+                        onPressed: () => _deleteUser(context, ref, u),
+                      ),
                     ],
                   ),
                 ),
@@ -988,6 +995,73 @@ class _CompanyUsersScreen extends ConsumerWidget {
         },
       ),
     );
+  }
+
+  /// Deletes a user's account, after asking.
+  ///
+  /// The work they did is not touched — their contracts and receipts are the
+  /// company's financial record — and the dialog says so, because "delete
+  /// user" reads like it might take the paperwork with it.
+  ///
+  /// Three accounts the server refuses, each with its own reason so the
+  /// Super Admin is not left staring at a raw error: their own, another super
+  /// admin, and the company's owner.
+  Future<void> _deleteUser(
+      BuildContext context, WidgetRef ref, AppUser user) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(S.deleteUser,
+            style: TextStyle(
+                color: AppColors.current.textStrong,
+                fontWeight: FontWeight.bold)),
+        content: Text(S.deleteUserConfirm(user.displayName)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(S.cancel,
+                style: TextStyle(color: AppColors.current.textMuted)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.current.danger,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10))),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(S.delete,
+                style: const TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+
+    try {
+      await ref.read(adminRepositoryProvider).deleteUser(user.uid);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(S.userDeleted),
+            backgroundColor: AppColors.current.success));
+      }
+    } on FirebaseFunctionsException catch (e) {
+      final why = switch (e.details) {
+        'owner' => S.cannotDeleteOwner,
+        'super_admin' => S.cannotDeleteSuperAdmin,
+        _ => S.error(e.message ?? e.code),
+      };
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(why), backgroundColor: AppColors.current.danger));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(S.error(e)),
+            backgroundColor: AppColors.current.danger));
+      }
+    }
   }
 
   /// Edits a user's profile: name, phone, role, branch.

@@ -280,6 +280,83 @@ exports.setUserPassword = onCall(async (request) => {
 });
 
 /**
+ * Deletes a user: the Auth account and the `users` profile, in that order.
+ * Callable only by a Super Admin, like setUserPassword above — removing an
+ * account takes the Admin SDK.
+ *
+ * What it does NOT touch is the work they did. Contracts and receipts carry
+ * the agent's uid and name, and they are the company's financial record: an
+ * agent leaving must not rewrite what was signed and paid while they were
+ * there. Their documents keep their name and stay where they are.
+ *
+ * Two accounts are refused:
+ *   - the caller's own, which would lock the Super Admin out mid-session;
+ *   - a company's owner, the admin the company was created with. The company
+ *     document still points at them, and deleting it would leave a tenant
+ *     whose owner does not exist.
+ *
+ * Deleting a super admin is refused too — this endpoint is for a company's
+ * users, and those accounts are managed on their own screen.
+ */
+exports.deleteUser = onCall(async (request) => {
+  const auth = request.auth;
+  if (!auth) {
+    throw new HttpsError("unauthenticated", "Sign in required.");
+  }
+
+  const db = admin.firestore();
+  const callerSnap = await db.collection("users").doc(auth.uid).get();
+  if (!callerSnap.exists || callerSnap.data().role !== "super_admin") {
+    throw new HttpsError("permission-denied", "Super admin only.");
+  }
+
+  const uid = request.data && request.data.uid;
+  if (typeof uid !== "string" || uid.length === 0) {
+    throw new HttpsError("invalid-argument", "uid is required.");
+  }
+  if (uid === auth.uid) {
+    throw new HttpsError(
+        "failed-precondition", "Cannot delete your own account.", "self");
+  }
+
+  const snap = await db.collection("users").doc(uid).get();
+  if (!snap.exists) {
+    // The profile is already gone; clear any Auth account left behind rather
+    // than refusing, so a half-deleted user can still be finished off.
+    await admin.auth().deleteUser(uid).catch(() => {});
+    return {ok: true};
+  }
+  const user = snap.data();
+  if (user.role === "super_admin") {
+    throw new HttpsError(
+        "failed-precondition", "Super admins are managed elsewhere.",
+        "super_admin");
+  }
+
+  const companyId = user.company_id || "";
+  if (companyId) {
+    const company = await db.collection("companies").doc(companyId).get();
+    if (company.exists && company.data().owner_uid === uid) {
+      throw new HttpsError(
+          "failed-precondition", "This is the company's owner account.",
+          "owner");
+    }
+  }
+
+  // Auth first: if this throws, the profile is still there and the Super
+  // Admin sees a failure. The other order can leave an account that can sign
+  // in with no profile behind it, which the app reads as a broken session.
+  await admin.auth().deleteUser(uid).catch((e) => {
+    // An account already removed from Auth should not block tidying the
+    // profile that is still pointing at it.
+    if (e && e.code === "auth/user-not-found") return;
+    throw e;
+  });
+  await db.collection("users").doc(uid).delete();
+  return {ok: true};
+});
+
+/**
  * Renders a receipt (پسولە) to a PDF via headless Chromium so Kurdish/Arabic
  * shaping is correct. Takes a saved receipt's id, verifies the caller belongs
  * to the receipt's company, and returns the PDF as base64.
