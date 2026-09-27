@@ -81,13 +81,18 @@ class ContractRepository {
   /// enforced client-side. Everyone except company-wide admins is scoped to
   /// their own branch (so they cannot reach another branch's contracts even via
   /// a direct API call).
-  Query<Map<String, dynamic>> _scopedQuery() {
+  /// The tenant (and branch) filter, unordered — for a query that has to sort
+  /// by something other than the creation date.
+  Query<Map<String, dynamic>> _scopedBase() {
     var query = _contracts.where('company_id', isEqualTo: _user.companyId);
     if (!_user.isCompanyWide) {
       query = query.where('branch', isEqualTo: _user.branch);
     }
-    return query.orderBy('created_at', descending: true);
+    return query;
   }
+
+  Query<Map<String, dynamic>> _scopedQuery() =>
+      _scopedBase().orderBy('created_at', descending: true);
 
   /// Live stream of contracts for the current tenant/branch.
   ///
@@ -143,9 +148,16 @@ class ContractRepository {
   /// than this many contracts in arrears has a problem no list will solve, and
   /// the dashboard total would be misleading either way.
   Future<List<RentContract>> fetchOverdue({int limit = 200}) async {
-    final snap = await _scopedQuery()
+    final snap = await _scopedBase()
         .where('contract_type', isEqualTo: ContractType.rent.wire)
         .where('earliest_pending_due', isLessThan: Timestamp.now())
+        // Longest overdue first, which is the order this list is read in —
+        // and the order the index is built for. Sorting by created_at here
+        // instead put the ordered field ahead of the filtered one, which is
+        // an index Firestore does not have: the screen failed outright with
+        // "the query requires an index".
+        .orderBy('earliest_pending_due')
+        .orderBy('created_at', descending: true)
         .limit(limit)
         .get();
     return snap.docs

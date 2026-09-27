@@ -15,8 +15,6 @@
  * the foot of the last page.
  */
 
-const {hejarFace} = require("./ashti_font");
-
 /**
  * Brand colours, read off the printed contract with a canvas (the scan is a
  * little faded, so these are the most saturated pixels found in each area —
@@ -108,9 +106,9 @@ const cardHtml = (vm) => {
 };
 
 const css = `
-/* Unikurd Hejar — the face their printed contract is set in. */
-${hejarFace()}
-html:not([lang="en"]) body{font-family:'Hejar','DocFont' !important;}
+/* Speda, the house face — what the company asked for. 'DocFont' is the
+   shared family the renderer embeds per language (Speda for Kurdish and
+   English, Amiri for Arabic), so naming it is all this needs. */
 body{font-size:12pt !important;color:${SLATE};}
 
 /* Room for the letterhead the document draws itself: the header block repeats
@@ -133,7 +131,9 @@ body{font-size:12pt !important;color:${SLATE};}
    has to be told. */
 .band{display:flex;align-items:center;justify-content:space-between;
   padding:0 0 1mm;}
-.band .logo{width:auto;height:20mm;object-fit:contain;margin:0;}
+/* Bigger than the 20mm this started at: the company wanted their mark to
+   carry the head of the page. */
+.band .logo{width:auto;height:28mm;object-fit:contain;margin:0;}
 html[dir="ltr"] .band .logo{order:-1;}
 .band .names{flex:1;text-align:center;}
 /* One masthead, as on their sheet, not the company's name in three languages

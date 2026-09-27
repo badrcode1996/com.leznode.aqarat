@@ -136,7 +136,8 @@ body{font-family:'Speda';direction:rtl;color:#1A1A1A;font-size:${vm.fontSize};}
 .meta{font-size:0.92em;line-height:1.7;}
 .cen{font-size:1.15em;font-weight:bold;color:${accent};line-height:1.3;
   letter-spacing:0.5px;}
-.logo{max-width:34mm;max-height:22mm;object-fit:contain;}
+/* Bigger than the 34x22mm it started at, at the company's request. */
+.logo{max-width:46mm;max-height:30mm;object-fit:contain;}
 /* The band naming the voucher, under the logo. */
 .band{margin-top:2mm;background:${accent};color:#fff;font-weight:bold;
   font-size:1.05em;padding:1.4mm 3mm;border-radius:1mm;}
