@@ -84,6 +84,14 @@ const receiptHtml = (vm) => {
   const amountInWords = [vm.amountWords, r.currency_label]
       .filter(Boolean).join(" ");
 
+  // The figure names the currency too, which the company asked for: a bare
+  // ٥٠٠ on a voucher is not an amount. The short word beside the figure and
+  // the full label beside the words, so the line does not say "دیناری
+  // عێراقی" twice.
+  const SHORT_CURRENCY = {IQD: "دینار", USD: "دۆلار"};
+  const amountFigure =
+    [vm.money(r.amount), SHORT_CURRENCY[r.currency]].filter(Boolean).join(" ");
+
   const phones = [c.phone1, c.phone2].filter(Boolean).join("   ");
   const branch = r.branch ? ` / ${r.branch}` : "";
 
@@ -107,7 +115,7 @@ const receiptHtml = (vm) => {
 
     <div class="body">
       ${row(vm.isPay ? "پێدرا بە بەڕێز:" : "وەرمگرت لە بەڕێز:", r.person_name || "")}
-      ${row("بڕی پارە:", vm.money(r.amount), amountInWords)}
+      ${row("بڕی پارە:", amountFigure, amountInWords)}
       ${row("لە بری:", r.payment_purpose || "")}
       ${r.note ? row("تێبینی:", r.note) : ""}
     </div>
@@ -164,9 +172,10 @@ body{font-family:'Speda';direction:rtl;color:#1A1A1A;font-size:${vm.fontSize};}
 /* The date, the time and the voucher number keep Latin figures, and stay
    left-to-right so a date does not come apart in a right-to-left line. */
 .fig{direction:ltr;unicode-bidi:isolate;font-weight:bold;}
-/* The band naming the voucher, sitting straight under the logo — the gap
-   between the two is what the company asked to close. */
-.band{margin-top:0;background:${accent};color:#fff;font-weight:bold;
+/* The band naming the voucher. The logo above it is cropped to its artwork
+   (see .logobox), so this 5mm is the whole gap between the two — asked for
+   once the file's own empty space was out of the way. */
+.band{margin-top:5mm;background:${accent};color:#fff;font-weight:bold;
   font-size:1.05em;padding:1.4mm 3mm;border-radius:1mm;}
 
 /* --- The details, each on its own dotted rule --------------------------- */
