@@ -10,4 +10,11 @@
 
 const WORDMARK = ["Crest Home", "Real Estate"];
 
-module.exports = {WORDMARK};
+/**
+ * The Kurdish masthead, also over two lines: the trade above, the name below.
+ * Set by hand for the same reason as the wordmark — the company record holds
+ * "کۆمپانیای کریست هۆم" as one line, and their voucher breaks it.
+ */
+const NAME_KU = ["کۆمپانیای عەقارات", "کریست هۆم"];
+
+module.exports = {WORDMARK, NAME_KU};

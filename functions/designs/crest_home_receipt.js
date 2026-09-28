@@ -26,7 +26,7 @@
  */
 
 /** The colour comes from the view model, so the app's picker still works. */
-const {WORDMARK} = require("./crest_home_brand");
+const {WORDMARK, NAME_KU} = require("./crest_home_brand");
 
 /**
  * Escapes for the page but leaves the digits as typed. vm.esc rewrites 0-9 as
@@ -90,7 +90,7 @@ const receiptHtml = (vm) => {
   <div class="v">
     <div class="head">
       <div class="col right">
-        <div class="cname">${e(c.nameKu || c.nameAr || c.nameEn || "")}</div>
+        ${NAME_KU.map((l, i) => `<div class="${i ? "cname" : "ctrade"}">${e(l)}</div>`).join("")}
         <div class="meta">${e("بەروار:")} <b class="fig">${plain(vm.dateText)}</b></div>
         ${timeText ? `<div class="meta"><b class="fig">${plain(timeText)}</b></div>` : ""}
         <div class="meta">${e("ژ. پسوولە:")} <b class="fig">${plain(r.receipt_number || "")}</b></div>
@@ -141,18 +141,23 @@ body{font-family:'Speda';direction:rtl;color:#1A1A1A;font-size:${vm.fontSize};}
 .right{text-align:right;}
 .left{text-align:left;}
 .mid{flex:0 0 46mm;text-align:center;}
+/* The masthead: the trade on a smaller line above the name, as on their
+   voucher. */
+.ctrade{font-size:1.15em;font-weight:bold;color:${accent};line-height:1.3;}
 .cname{font-size:1.9em;font-weight:bold;color:${accent};line-height:1.25;
   margin-bottom:2mm;}
 .meta{font-size:0.92em;line-height:1.7;}
-.cen{font-size:1.55em;font-weight:bold;color:${accent};line-height:1.25;
+.cen{font-size:1.85em;font-weight:bold;color:${accent};line-height:1.25;
   letter-spacing:0.5px;text-transform:uppercase;}
 /* 34x22mm at first, then 46x30; the company asked for bigger again. */
-.logo{max-width:62mm;max-height:40mm;object-fit:contain;}
+.logo{max-width:62mm;max-height:40mm;object-fit:contain;display:block;
+  margin:0 auto;}
 /* The date, the time and the voucher number keep Latin figures, and stay
    left-to-right so a date does not come apart in a right-to-left line. */
 .fig{direction:ltr;unicode-bidi:isolate;font-weight:bold;}
-/* The band naming the voucher, under the logo. */
-.band{margin-top:2mm;background:${accent};color:#fff;font-weight:bold;
+/* The band naming the voucher, sitting straight under the logo — the gap
+   between the two is what the company asked to close. */
+.band{margin-top:0;background:${accent};color:#fff;font-weight:bold;
   font-size:1.05em;padding:1.4mm 3mm;border-radius:1mm;}
 
 /* --- The details, each on its own dotted rule --------------------------- */
