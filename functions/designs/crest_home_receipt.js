@@ -109,7 +109,8 @@ const receiptHtml = (vm) => {
         <div class="band">${e(vm.titleKu)}</div>
       </div>
       <div class="col left">
-        ${WORDMARK.map((l) => `<div class="cen">${e(l)}</div>`).join("")}
+        ${WORDMARK.map((l, i) =>
+    `<div class="cen${i ? " sub" : ""}">${e(l)}</div>`).join("")}
       </div>
     </div>
 
@@ -156,8 +157,11 @@ body{font-family:'Speda';direction:rtl;color:#1A1A1A;font-size:${vm.fontSize};}
 .cname{font-size:1.9em;font-weight:bold;color:${accent};line-height:1.25;
   margin-bottom:2mm;}
 .meta{font-size:0.92em;line-height:1.7;}
-.cen{font-size:1.85em;font-weight:bold;color:${accent};line-height:1.25;
+/* The wordmark, the two lines at different weights of size as the logo file
+   sets them: the name larger, the trade under it smaller. */
+.cen{font-size:2.1em;font-weight:bold;color:${accent};line-height:1.25;
   letter-spacing:0.5px;text-transform:uppercase;}
+.cen.sub{font-size:1.55em;}
 /* The logo file is mostly empty space: measured on the artwork they sent,
    21.9% of its height is blank above the mark and 26.9% below, which is the
    gap that kept opening between it and the band underneath.
