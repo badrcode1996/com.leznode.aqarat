@@ -56,8 +56,9 @@ const receiptHtml = (vm) => {
     return `${String(h % 12 || 12).padStart(2, "0")}:${m} ${am}`;
   })();
 
+  // Cropped by the wrapper below — see .logobox in the stylesheet.
   const logo = vm.logoUri ?
-    `<img class="logo" src="${vm.logoUri}">` : "";
+    `<div class="logobox"><img class="logo" src="${vm.logoUri}"></div>` : "";
 
   // A row of the body: label, then the value on a dotted rule. `second` is
   // the figure's twin — the amount spelled out — which sits to its left.
@@ -149,9 +150,17 @@ body{font-family:'Speda';direction:rtl;color:#1A1A1A;font-size:${vm.fontSize};}
 .meta{font-size:0.92em;line-height:1.7;}
 .cen{font-size:1.85em;font-weight:bold;color:${accent};line-height:1.25;
   letter-spacing:0.5px;text-transform:uppercase;}
-/* 34x22mm at first, then 46x30; the company asked for bigger again. */
-.logo{max-width:62mm;max-height:40mm;object-fit:contain;display:block;
-  margin:0 auto;}
+/* The logo file is mostly empty space: measured on the artwork they sent,
+   21.9% of its height is blank above the mark and 26.9% below, which is the
+   gap that kept opening between it and the band underneath.
+.logobox crops both away, so the band sits against the artwork and the mark
+   itself prints bigger for the same space.
+
+   The three figures below are that measurement. If the company ever replaces
+   the logo with one trimmed to its artwork, set LOGO_H as the height you want
+   and the other two to 0 and 100%.  */
+.logobox{height:28.7mm;overflow:hidden;line-height:0;}
+.logo{display:block;width:auto;height:56mm;margin:-12.25mm auto 0;}
 /* The date, the time and the voucher number keep Latin figures, and stay
    left-to-right so a date does not come apart in a right-to-left line. */
 .fig{direction:ltr;unicode-bidi:isolate;font-weight:bold;}
