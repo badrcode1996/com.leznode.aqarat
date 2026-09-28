@@ -122,7 +122,7 @@ const receiptHtml = (vm) => {
 
     <div class="signs">
       ${sign("وەرگر", receiver)}
-      ${sign("پارەدەر", payer)}
+      ${sign("پێدەر", payer)}
     </div>
 
     <div class="foot">
