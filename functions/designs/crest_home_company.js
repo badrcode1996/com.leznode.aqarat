@@ -198,12 +198,13 @@ html[dir="ltr"] .ch-mark{text-align:right;}
 .ch-l{font-weight:bold;}
 
 /* --- The clauses ------------------------------------------------------- */
-/* Their heading is a gold band across the page, squared off at the start and
-   rounded at the end. */
-.chead{background:${GOLD};color:#fff;font-size:12pt !important;
+/* A band across the page in the company's brown — the colour their name is
+   set in — and a plain rectangle, like the one on their voucher. It was gold
+   and tapered at one end, from the printed contract this design started from;
+   the company asked for their own colour and shape. */
+.chead{background:${BROWN};color:#fff;font-size:12pt !important;
   font-weight:bold;text-align:center;padding:1.6mm 6mm;
-  border-radius:3mm 0 0 3mm;margin:0 0 4mm !important;}
-html[dir="ltr"] .chead{border-radius:0 3mm 3mm 0;}
+  border-radius:1mm;margin:0 0 4mm !important;}
 
 /* The number hangs in the margin beside the clause, which is what gives their
    page its column of numerals down the edge. */
