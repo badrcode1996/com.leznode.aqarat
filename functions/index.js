@@ -298,7 +298,12 @@ exports.setUserPassword = onCall(async (request) => {
  * Deleting a super admin is refused too — this endpoint is for a company's
  * users, and those accounts are managed on their own screen.
  */
-exports.deleteUser = onCall(async (request) => {
+// invoker "public" is about Cloud Run's own door, not this function's: a
+// callable authenticates inside itself, and the checks below still demand a
+// signed-in Super Admin. Without it the first deploy left the service
+// requiring an IAM identity, and every call died as "internal" before any of
+// this code ran.
+exports.deleteUser = onCall({invoker: "public"}, async (request) => {
   const auth = request.auth;
   if (!auth) {
     throw new HttpsError("unauthenticated", "Sign in required.");
