@@ -92,6 +92,21 @@ service cloud.firestore {
         && (seesAllBranches() || userData().get('branch', '') == branch);
     }
 
+    // The fields an AGENT may change on a contract. Everything else on it —
+    // the parties, the rent, the dates, the clauses — is the admin's.
+    //
+    //   installments / earliest_pending_due : taking rent and handing it on
+    //   commission_items                    : confirming a commission
+    //   guarantee_returned(_at)             : handing a deposit back
+    //
+    // Editing and deleting are admin work, and the app shows an agent no
+    // button for either; this is the half that cannot be got round.
+    function agentContractFieldsOnly() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+        .hasOnly(['installments', 'earliest_pending_due', 'commission_items',
+                  'guarantee_returned', 'guarantee_returned_at']);
+    }
+
     // --- Global app config (e.g. the Super-Admin-edited plan matrix). Any
     //     signed-in user may read it (the app gates features off it); only
     //     Super Admins may edit. Plan feature gating is enforced in the app +
@@ -166,7 +181,10 @@ service cloud.firestore {
       allow update: if (isSuperAdmin()
           || inBranch(resource.data.company_id, resource.data.branch))
         && request.resource.data.company_id == resource.data.company_id
-        && request.resource.data.branch == resource.data.branch;
+        && request.resource.data.branch == resource.data.branch
+        // An agent may move the contract along — rent, commission, deposit —
+        // but not rewrite what it says.
+        && (isSuperAdmin() || isCompanyAdmin() || agentContractFieldsOnly());
       allow delete: if isSuperAdmin()
         || (isCompanyAdmin()
             && inBranch(resource.data.company_id, resource.data.branch));
@@ -178,8 +196,11 @@ service cloud.firestore {
         || inBranch(resource.data.company_id, resource.data.branch);
       allow create: if inBranch(request.resource.data.company_id,
         request.resource.data.branch);
+      // A voucher records money that changed hands. An agent writes one;
+      // correcting it afterwards is the admin's.
       allow update: if (isSuperAdmin()
-          || inBranch(resource.data.company_id, resource.data.branch))
+          || (isCompanyAdmin()
+              && inBranch(resource.data.company_id, resource.data.branch)))
         && request.resource.data.company_id == resource.data.company_id
         && request.resource.data.branch == resource.data.branch;
       allow delete: if isSuperAdmin()
@@ -245,9 +266,15 @@ service cloud.firestore {
       allow update: if (isSuperAdmin()
           || inBranch(resource.data.company_id, resource.data.branch))
         && request.resource.data.company_id == resource.data.company_id
-        && request.resource.data.branch == resource.data.branch;
+        && request.resource.data.branch == resource.data.branch
+        // An agent may mark the deal done or reopen it; changing the entry
+        // itself is the admin's.
+        && (isSuperAdmin() || isCompanyAdmin()
+            || request.resource.data.diff(resource.data).affectedKeys()
+                .hasOnly(['is_archived']));
       allow delete: if isSuperAdmin()
-        || inBranch(resource.data.company_id, resource.data.branch);
+        || (isCompanyAdmin()
+            && inBranch(resource.data.company_id, resource.data.branch));
     }
 
     match /requests/{id} {
@@ -258,9 +285,15 @@ service cloud.firestore {
       allow update: if (isSuperAdmin()
           || inBranch(resource.data.company_id, resource.data.branch))
         && request.resource.data.company_id == resource.data.company_id
-        && request.resource.data.branch == resource.data.branch;
+        && request.resource.data.branch == resource.data.branch
+        // An agent may mark the deal done or reopen it; changing the entry
+        // itself is the admin's.
+        && (isSuperAdmin() || isCompanyAdmin()
+            || request.resource.data.diff(resource.data).affectedKeys()
+                .hasOnly(['is_archived']));
       allow delete: if isSuperAdmin()
-        || inBranch(resource.data.company_id, resource.data.branch);
+        || (isCompanyAdmin()
+            && inBranch(resource.data.company_id, resource.data.branch));
     }
 
     // --- Market: the public, owner-free projection of public listings. Any

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../data/contract_repository.dart';
+import '../../auth/session.dart';
 import '../../models/contract_model.dart';
 import '../../theme/app_colors.dart';
 import '../../l10n/app_strings.dart';
@@ -237,20 +238,24 @@ class _CommissionCard extends ConsumerWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.current.textStrong,
-                    side: BorderSide(color: AppColors.current.divider),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
+              // Editing the amount received is the admin's; an agent can
+              // still confirm what was agreed.
+              if (ref.watch(currentUserProvider).isAdmin) ...[
+                Expanded(
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.current.textStrong,
+                      side: BorderSide(color: AppColors.current.divider),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                    icon: const Icon(Icons.edit_outlined, size: 18),
+                    label: Text(S.editShort),
+                    onPressed: () => _edit(context, ref),
                   ),
-                  icon: const Icon(Icons.edit_outlined, size: 18),
-                  label: Text(S.editShort),
-                  onPressed: () => _edit(context, ref),
                 ),
-              ),
-              const SizedBox(width: 8),
+                const SizedBox(width: 8),
+              ],
               Expanded(
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(

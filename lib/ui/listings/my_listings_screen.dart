@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/listing_repository.dart';
+import '../../auth/session.dart';
 import '../../data/plan_config_repository.dart';
 import '../../models/enums.dart';
 import '../../models/property_model.dart';
@@ -313,6 +314,9 @@ class _ListingCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     watchAppShell(context);
+    // An agent lists properties and takes requests; changing or removing one
+    // is the admin's to do.
+    final isAdmin = ref.watch(currentUserProvider).isAdmin;
     final isOffer = kind == ListingKind.offer;
     final iconColor = isOffer ? AppColors.current.textStrong : accentYellow;
     final bgColor = isOffer ? primaryDarkBlue.withValues(alpha: 0.1) : accentYellow.withValues(alpha: 0.2);
@@ -443,20 +447,22 @@ class _ListingCard extends ConsumerWidget {
                     ),
                   ),
                 ],
-                const SizedBox(width: 8),
-                _iconAction(
-                  icon: Icons.edit_outlined,
-                  color: AppColors.current.textStrong,
-                  tooltip: S.edit,
-                  onPressed: () => _edit(context),
-                ),
-                const SizedBox(width: 8),
-                _iconAction(
-                  icon: Icons.delete_outline,
-                  color: AppColors.current.danger,
-                  tooltip: S.delete,
-                  onPressed: () => _delete(context, ref),
-                ),
+                if (isAdmin) ...[
+                  const SizedBox(width: 8),
+                  _iconAction(
+                    icon: Icons.edit_outlined,
+                    color: AppColors.current.textStrong,
+                    tooltip: S.edit,
+                    onPressed: () => _edit(context),
+                  ),
+                  const SizedBox(width: 8),
+                  _iconAction(
+                    icon: Icons.delete_outline,
+                    color: AppColors.current.danger,
+                    tooltip: S.delete,
+                    onPressed: () => _delete(context, ref),
+                  ),
+                ],
               ],
             ),
           ],
