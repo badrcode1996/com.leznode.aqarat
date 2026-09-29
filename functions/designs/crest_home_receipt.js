@@ -173,17 +173,23 @@ body{font-family:'Speda';direction:rtl;color:#1A1A1A;font-size:${vm.fontSize};}
 .cen{font-size:2.1em;font-weight:bold;color:${accent};line-height:1.25;
   letter-spacing:0.5px;text-transform:uppercase;}
 .cen.sub{font-size:1.55em;}
-/* The logo file is mostly empty space: measured on the artwork they sent,
-   21.9% of its height is blank above the mark and 26.9% below, which is the
-   gap that kept opening between it and the band underneath.
-.logobox crops both away, so the band sits against the artwork and the mark
-   itself prints bigger for the same space.
+/* The logo file is mostly empty space, so .logobox crops it to the artwork:
+   the band below sits against the mark, and the mark prints as large as the
+   space allows instead of floating in the middle of a mostly blank image.
 
-   The three figures below are that measurement. If the company ever replaces
-   the logo with one trimmed to its artwork, set LOGO_H as the height you want
-   and the other two to 0 and 100%.  */
+   Measured on the file the company sent (1145x1373): the artwork runs from
+   28.9% to 66.9% of the image's height — 28.9% blank above it, 33.1% below,
+   37.9% of artwork. The two figures below follow from that and the 28.7mm of
+   artwork we want on the page:
+
+     .logo height  = 28.7 / 0.379 = 75.7mm
+     .logo margin  = -0.289 x 75.7 = -21.9mm
+
+   REDO THESE IF THE LOGO FILE CHANGES — a file with different blank margins
+   will be cropped in the wrong place. One trimmed to its own artwork needs
+   only the height, with no negative margin and no .logobox clipping. */
 .logobox{height:28.7mm;overflow:hidden;line-height:0;}
-.logo{display:block;width:auto;height:56mm;margin:-12.25mm auto 0;}
+.logo{display:block;width:auto;height:75.7mm;margin:-21.9mm auto 0;}
 /* The date, the time and the voucher number keep Latin figures, and stay
    left-to-right so a date does not come apart in a right-to-left line. */
 .fig{direction:ltr;unicode-bidi:isolate;font-weight:bold;}

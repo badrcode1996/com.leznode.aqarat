@@ -162,15 +162,16 @@ html[dir="ltr"] .ch-mark{text-align:right;}
 .ch-m2{font-size:12.5pt;font-weight:bold;color:${BROWN};line-height:1.25;
   letter-spacing:0.5px;text-transform:uppercase;}
 
-/* The logo file is mostly empty space — 21.9% of its height above the mark
-   and 26.9% below, measured on the artwork they sent — which is why it read
-   as small here however large the box was. The box is clipped to the artwork
-   instead, so the mark fills it.
+/* The logo file is mostly empty space — 28.9% of its height above the mark
+   and 33.1% below, measured on the file the company sent — which is why it
+   read as small here however large the box was. The box is clipped to the
+   artwork instead, so the mark fills it.
 
-   Same figures as the voucher. A logo file trimmed to its artwork wants the
-   height alone, with no clip and no negative margins. */
+   Same arithmetic as the voucher (see crest_home_receipt.js), for 26mm of
+   artwork: 26 / 0.379 = 68.6mm tall, pulled up by 0.289 x 68.6 = 19.8mm.
+   REDO BOTH IF THE LOGO FILE CHANGES. */
 .ch-logo{flex:0 0 auto;height:26mm;overflow:hidden;line-height:0;}
-.band .logo{display:block;width:auto;height:51mm;margin:-11.2mm 0 0;
+.band .logo{display:block;width:auto;height:68.6mm;margin:-19.8mm 0 0;
   object-fit:contain;}
 
 /* The rule, with the company's slogan sitting on it either side. */
