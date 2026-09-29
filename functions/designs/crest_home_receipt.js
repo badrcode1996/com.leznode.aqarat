@@ -42,6 +42,15 @@ const receiptHtml = (vm) => {
   const c = vm.company || {};
   const accent = vm.accent;
 
+  // On an external voucher the note line is headed "بڕی ماوە" — the balance
+  // left — because that is what the company writes there, and it prints even
+  // when empty so there is a rule to write it on. A rent voucher's note stays
+  // a note, and stays off the page when there is none.
+  //
+  // Nothing in the app computes a balance; this is the note field relabelled,
+  // so what it says is whatever the person entering the receipt typed.
+  const isExternal = String(r.type || "").startsWith("external");
+
   // Who signs which side. On a payment the roles swap: the company pays out,
   // so its agent is the payer and the person is the receiver.
   const payer = vm.isPay ? r.agent_name : r.person_name;
@@ -118,7 +127,9 @@ const receiptHtml = (vm) => {
       ${row(vm.isPay ? "پێدرا بە بەڕێز:" : "وەرمگرت لە بەڕێز:", r.person_name || "")}
       ${row("بڕی پارە:", amountFigure, amountInWords)}
       ${row("لە بری:", r.payment_purpose || "")}
-      ${r.note ? row("تێبینی:", r.note) : ""}
+      ${isExternal ?
+        row("بڕی ماوە:", r.note || "") :
+        (r.note ? row("تێبینی:", r.note) : "")}
     </div>
 
     <div class="signs">
