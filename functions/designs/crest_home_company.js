@@ -35,24 +35,43 @@ const SLATE = "#2E3D45";
 const BROWN = "#6B3A18";
 
 /**
- * The lines under the company name on their letterhead: what the firm does,
- * in the three languages, exactly as the printed sheet carries them.
- *
  * SLOGAN is the pair sitting on the rule under the header — the printed sheet
  * they modelled this on reads "your dream, our goal" there. Left blank until
  * the company gives us their own wording: inventing a slogan for a firm is not
  * ours to do.
  *
+ * (That sheet also carried three lines describing the trade under the company
+ * name. The company asked for the voucher's letterhead here instead, which
+ * has the name, the logo and the English wordmark and nothing else.)
+ *
  * That sheet also carries a QR code beside the header. Crest Home asked for
  * none, so there is none here.
  */
-const {WORDMARK} = require("./crest_home_brand");
+const {WORDMARK, NAME_KU} = require("./crest_home_brand");
 
-const TAGLINES = [
-  "بۆ خزمەتگوزاری عقارات",
-  "للخدمات العقارية",
-  "For Real Estate Services",
-];
+/**
+ * The letterhead, laid out like the one on their voucher: the Kurdish name on
+ * one side, the logo in the middle, the English wordmark on the other. Their
+ * two documents are handed over together, so they open the same way.
+ *
+ * The logo arrives as the shared <img>; .ch-logo crops the empty space out of
+ * the file — see the stylesheet.
+ *
+ * @param {object} vm the contract view model
+ * @param {object} parts {logo} the logo markup, already a data: URI
+ * @return {string} markup
+ */
+const bandHtml = (vm, parts) => `
+  <div class="ch-name">
+    ${NAME_KU.map((l, i) =>
+    `<div class="${i ? "ch-n2" : "ch-n1"}">${vm.esc(l)}</div>`).join("")}
+  </div>
+  <div class="ch-logo">${parts.logo}</div>
+  <div class="ch-mark">
+    ${WORDMARK.map((l, i) =>
+    `<div class="${i ? "ch-m2" : "ch-m1"}">${vm.esc(l)}</div>`).join("")}
+  </div>`;
+
 const SLOGAN = {ku: "", ar: ""};
 
 /** CSS string list, for a ::after that prints one line per entry. */
@@ -127,39 +146,32 @@ body{font-size:12pt !important;color:${SLATE};}
   --min-tail:3;}
 
 /* --- Letterhead ------------------------------------------------------- */
-/* Logo left, the company's names stacked in the middle, and a rule under the
-   lot. The shared band writes the names first and the logo second, which in
-   Kurdish and Arabic already puts the logo on the left; the English edition
-   has to be told. */
-/* The wordmark sits in the padding at the far left, beside the logo rather
-   than under it: the header repeats on every page, so any height added here
-   is paid for on all of them — stacking the two cost a whole extra page. */
-.band{position:relative;display:flex;align-items:center;
-  justify-content:space-between;padding:0 0 1mm 30mm;}
-/* Bigger than the 20mm this started at: the company wanted their mark to
-   carry the head of the page. */
-.band .logo{width:auto;height:28mm;object-fit:contain;margin:0;}
-html[dir="ltr"] .band .logo{order:-1;}
-/* The wordmark, as the firm writes itself on paper: two lines under the logo
-   on the physical left, in every edition. */
-.band::after{content:"${lines(WORDMARK)}";
-  white-space:pre-line;position:absolute;left:0;top:50%;
-  transform:translateY(-50%);width:28mm;text-align:left;
-  font-size:12pt;font-weight:bold;color:${GOLD};line-height:1.25;
-  letter-spacing:0.3px;text-transform:uppercase;}
-.band .names{flex:1;text-align:center;}
-/* One masthead, as on their sheet, not the company's name in three languages
-   stacked: the edition's own name is the big gold one and the others are put
-   away. The shared band lists Kurdish, Arabic, English — except the Arabic
-   edition, which drops the Kurdish and so leads with the right one already. */
-.band .names div{display:none;}
-.band .names div:first-child{display:block;font-size:26pt;color:${GOLD};
-  font-weight:bold;line-height:1.2;}
-html[lang="en"] .band .names div:first-child{display:none;}
-html[lang="en"] .band .names div:last-child{display:block;font-size:26pt;
-  color:${GOLD};font-weight:bold;line-height:1.2;}
-.band .names::after{content:"${lines(TAGLINES)}";white-space:pre-line;
-  display:block;font-size:10pt;font-weight:bold;color:${SLATE};line-height:1.45;}
+/* Three columns, as on their voucher: the Kurdish name, the logo, the English
+   wordmark. Written by bandHtml above rather than styled out of the shared
+   band, which carries the company's names and nothing else. */
+.band{display:flex;align-items:center;justify-content:space-between;
+  gap:6mm;padding:0 0 1mm;}
+.ch-name{flex:1;text-align:right;}
+.ch-mark{flex:1;text-align:left;}
+html[dir="ltr"] .ch-name{text-align:left;}
+html[dir="ltr"] .ch-mark{text-align:right;}
+.ch-n1{font-size:12pt;font-weight:bold;color:${BROWN};line-height:1.3;}
+.ch-n2{font-size:20pt;font-weight:bold;color:${BROWN};line-height:1.25;}
+.ch-m1{font-size:17pt;font-weight:bold;color:${BROWN};line-height:1.25;
+  letter-spacing:0.5px;text-transform:uppercase;}
+.ch-m2{font-size:12.5pt;font-weight:bold;color:${BROWN};line-height:1.25;
+  letter-spacing:0.5px;text-transform:uppercase;}
+
+/* The logo file is mostly empty space — 21.9% of its height above the mark
+   and 26.9% below, measured on the artwork they sent — which is why it read
+   as small here however large the box was. The box is clipped to the artwork
+   instead, so the mark fills it.
+
+   Same figures as the voucher. A logo file trimmed to its artwork wants the
+   height alone, with no clip and no negative margins. */
+.ch-logo{flex:0 0 auto;height:26mm;overflow:hidden;line-height:0;}
+.band .logo{display:block;width:auto;height:51mm;margin:-11.2mm 0 0;
+  object-fit:contain;}
 
 /* The rule, with the company's slogan sitting on it either side. */
 .bandline{border-bottom:1.2px solid ${SLATE};margin:0 0 4mm;
@@ -248,4 +260,5 @@ html[dir="ltr"] .chead{border-radius:0 3mm 3mm 0;}
 // than styled over the shared one, and lives in its own file.
 const {receiptHtml} = require("./crest_home_receipt");
 
-module.exports = {css, receiptHtml, receiptAccent: BROWN, metaHtml, cardHtml};
+module.exports =
+  {css, receiptHtml, receiptAccent: BROWN, bandHtml, metaHtml, cardHtml};

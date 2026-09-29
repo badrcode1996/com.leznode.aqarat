@@ -387,6 +387,14 @@ function buildContractHtml(o) {
         .join('<span class="sep"> - </span>') +
     `</div>`;
 
+  // The letterhead. A design may lay its own out — the company's names and
+  // logo arranged its way — and gets the logo markup so it does not have to
+  // rebuild the data: URI handling. Anything else keeps the shared band.
+  const bandInner = typeof design.bandHtml === "function" ?
+    design.bandHtml(vm, {logo}) :
+    `<div class="names">${names.map((n) =>
+      `<div>${esc(n)}</div>`).join("")}</div>${logo}`;
+
   // A design may lift the contract number out of the card and print it in its
   // own block above — see design.metaHtml. When it does, the card drops the
   // row so the number does not appear twice on the page.
@@ -565,8 +573,7 @@ ${design.css || ""}
 ${watermark}
 <table class="page">
   <thead><tr><td>
-    <div class="band"><div class="names">${names.map((n) =>
-    `<div>${esc(n)}</div>`).join("")}</div>${logo}</div>
+    <div class="band">${bandInner}</div>
     <div class="bandline"></div>
   </td></tr></thead>
   <tbody><tr><td>
