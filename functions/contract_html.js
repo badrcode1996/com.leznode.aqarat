@@ -189,6 +189,8 @@ function tokensFor(c, company, lang) {
   const common = {
     company: cn,
     contract_number: String(c.contract_number || ""),
+    // The day the contract was written — a closing clause names it.
+    date: fmtDate(c.created_at),
     party1: c.party1_name || "",
     party2: c.party2_name || "",
     property_type: c.property_type || "",
@@ -217,9 +219,15 @@ function tokensFor(c, company, lang) {
       late_fee: words(c.late_fee_per_day),
     }));
   }
+  // What is still owed on a sale: the price less the deposit taken. Never
+  // below zero — a deposit larger than the price is a data error, and a
+  // negative figure on a signed contract would be worse than a blunt zero.
+  const remaining = Math.max(0, (c.total_price || 0) - (c.down_payment || 0));
+
   return Object.assign(common, {
     total_price: money(c.total_price),
     down_payment: money(c.down_payment),
+    remaining: money(remaining),
     payment_method: c.payment_method || "",
     delivery_date: fmtDate(c.delivery_date),
     late_fee: money(c.late_fee_per_day),
@@ -229,6 +237,7 @@ function tokensFor(c, company, lang) {
   }, spelled({
     total_price: words(c.total_price),
     down_payment: words(c.down_payment),
+    remaining: words(remaining),
     late_fee: words(c.late_fee_per_day),
     withdrawal: words(c.withdrawal_amount),
   }));
