@@ -396,6 +396,13 @@ function buildContractHtml(o) {
         .join('<span class="sep"> - </span>') +
     `</div>`;
 
+  // The footer. A design may put its own inside the table's foot, which
+  // repeats on every page AND takes part in the flow — so it is exactly as
+  // wide as the text above it, which a fixed box is not. The shared footer
+  // stays fixed (see the note by .foot) for everyone else.
+  const footInner = typeof design.footHtml === "function" ?
+    design.footHtml(vm) : "";
+
   // The letterhead. A design may lay its own out — the company's names and
   // logo arranged its way — and gets the logo markup so it does not have to
   // rebuild the data: URI handling. Anything else keeps the shared band.
@@ -600,12 +607,12 @@ ${watermark}
     </div>
     <span class="signend"></span>
   </td></tr></tbody>
-  ${footerCells.length ? `<tfoot><tr><td>
-    <div class="footspace"></div>
+  ${footerCells.length || footInner ? `<tfoot><tr><td>
+    ${footInner || '<div class="footspace"></div>'}
   </td></tr></tfoot>` : ""}
 </table>
 ${attachmentsHtml}
-${footerCells.length ? `<div class="foot">${footerCells.map((x) =>
+${footerCells.length && !footInner ? `<div class="foot">${footerCells.map((x) =>
     `<span>${esc(x)}</span>`).join("")}</div>` : ""}
 <script>
 /*
@@ -657,7 +664,10 @@ window.__fitLayout = function () {
     var el = document.querySelector(sel);
     return el ? el.getBoundingClientRect().height : 0;
   };
-  var colH = pageH - box("table.page thead") - box(".footspace");
+  // The whole foot, not just the spacer inside it: a design may put a real
+  // footer there (see footHtml), and then the spacer is zero while the foot
+  // still takes its room on every page.
+  var colH = pageH - box("table.page thead") - box("table.page tfoot");
 
   // Columns follow the text direction: right to left for Kurdish and Arabic,
   // left to right for English. Counting them one way only gave the English

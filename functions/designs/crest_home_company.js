@@ -126,6 +126,24 @@ const cardHtml = (vm) => {
     `</div>`;
 };
 
+/**
+ * The bar at the foot of every page: the phones on one side, the address on
+ * the other. It goes in the table's foot rather than the shared fixed box —
+ * see footHtml in contract_html.js — because the company wants it exactly as
+ * long as the clause band above it, and only the flow can promise that.
+ *
+ * @param {object} vm the contract view model
+ * @return {string} markup
+ */
+const footHtml = (vm) => {
+  const c = vm.company;
+  const phones = [c.phone1, c.phone2].filter(Boolean).join("   /   ");
+  return `<div class="ch-foot">
+    <span class="ch-ph">${vm.esc(phones)}</span>
+    <span>${vm.esc(c.address || "")}</span>
+  </div>`;
+};
+
 const css = `
 /* Speda, the house face — what the company asked for. 'DocFont' is the
    shared family the renderer embeds per language (Speda for Kurdish and
@@ -223,28 +241,19 @@ html[dir="ltr"] .ch-mark{text-align:right;}
 /* --- Footer ------------------------------------------------------------ */
 /* Phones on one side, address on the other, and the chevron bar under them.
    .foot is fixed, so this prints on every page as it does on theirs. */
-/* One brown bar across the foot, the same as the voucher's, with the phones
-   and the address inside it.
-
-   Width is pinned to the text column — 210mm less the 14mm margins either
-   side — and centred, rather than offset from the page edges: a fixed box's
-   edges and the flow's edges are not the same thing in print, and the company
-   wants this bar exactly as long as the clause band above it. Its padding and
-   size match that band too, so the two are the same depth.
-
-   .foot is fixed, so it prints at the foot of every page. */
-.foot{position:fixed;bottom:9mm;left:50%;transform:translateX(-50%);
-  width:182mm;border:0;background:${BROWN};color:#fff;border-radius:1mm;
-  padding:1.6mm 6mm;display:flex;justify-content:space-between;
-  align-items:center;gap:6mm;font-size:12pt;font-weight:bold;
-  white-space:pre-line;}
+/* The bar at the foot of every page. It sits in the table's foot, so it is
+   the width of the text column — the same as the clause band — and its
+   padding and size match that band so the two are the same depth. */
+.ch-foot{background:${BROWN};color:#fff;border-radius:1mm;
+  padding:1.6mm 6mm;margin-top:6mm;display:flex;
+  justify-content:space-between;align-items:center;gap:6mm;
+  font-size:12pt;font-weight:bold;}
 /* The phone numbers read left to right whatever the page does. */
-.foot span:first-child{direction:ltr;letter-spacing:0.5px;}
+.ch-ph{direction:ltr;letter-spacing:0.5px;}
 
-/* What the footer takes out of every page: the phones and address, the bar,
-   and air above them. The rehearsal subtracts this, so the clauses stop clear
-   of the footer instead of printing through it. */
-.footspace{height:24mm !important;}
+/* Nothing to reserve: the bar above is part of the flow now, not a fixed box
+   painted over it. */
+.footspace{height:0 !important;}
 
 /* Their sheets carry no watermark. */
 .watermark{display:none !important;}
@@ -255,5 +264,5 @@ html[dir="ltr"] .ch-mark{text-align:right;}
 // than styled over the shared one, and lives in its own file.
 const {receiptHtml} = require("./crest_home_receipt");
 
-module.exports =
-  {css, receiptHtml, receiptAccent: BROWN, bandHtml, metaHtml, cardHtml};
+module.exports = {css, receiptHtml, receiptAccent: BROWN,
+  bandHtml, footHtml, metaHtml, cardHtml};
