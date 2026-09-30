@@ -609,6 +609,7 @@ exports.renderContractPdf = onCall(
         start_date: toDate(k.start_date),
         end_date: toDate(k.end_date),
         delivery_date: toDate(k.delivery_date),
+        remaining_due_date: toDate(k.remaining_due_date),
         // Every date the renderer formats has to be converted here: a
         // Firestore Timestamp reaches `new Date()` as an object and comes out
         // NaN/NaN/NaN on the page. created_at is the one a dated document
@@ -673,6 +674,7 @@ exports.renderExportPdf = onCall(
           ...k,
           start_date: toDate(k.start_date),
           delivery_date: toDate(k.delivery_date),
+        remaining_due_date: toDate(k.remaining_due_date),
         };
       });
       const receipts = rQ.docs.map((d) => {

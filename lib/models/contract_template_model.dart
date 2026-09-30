@@ -281,6 +281,7 @@ class ContractTemplate {
     '{remaining}': 'بڕی ماوە (نرخ - پێشەکی)',
     '{payment_method}': 'شێوازی پارەدان',
     '{delivery_date}': 'ڕێکەوتی تەسلیم',
+    '{remaining_date}': 'بەرواری پارەی ماوە',
     '{withdrawal}': 'بڕی پاشگەزبوونەوە',
     '{lawyer}': 'پارێزەر',
     // Each money token has a `_words` twin that spells the amount out, so a

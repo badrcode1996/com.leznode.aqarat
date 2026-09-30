@@ -420,6 +420,7 @@ class SaleContract extends Contract {
     required this.withdrawalAmount, // بڕی پاشگەزبوونەوە
     required this.lawyer, // پارێزەر
     required this.deliveryDate, // ڕێکەوتی تەسلیم
+    this.remainingDueDate, // بەرواری پارەی ماوە — null when none was set
     this.commissionRate = 1, // ڕێژەی عمولە (%)
     this.commissionItems = const [], // ٢ ئایتم: لایەنی یەکەم + دووەم
     this.notes = '',
@@ -451,6 +452,11 @@ class SaleContract extends Contract {
 
   final String notes;
   final String agentName; // name of the user who created the contract
+
+  /// When the balance falls due. Optional: a contract paid in full at
+  /// signing has no such date, and a clause naming it then prints nothing
+  /// rather than a date nobody agreed to.
+  final DateTime? remainingDueDate;
 
   /// Photos of supporting documents (IDs, deeds…) — Storage download URLs.
   @override
@@ -505,6 +511,7 @@ class SaleContract extends Contract {
       lawyer: json['lawyer'] as String? ?? '',
       deliveryDate:
           (json['delivery_date'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      remainingDueDate: (json['remaining_due_date'] as Timestamp?)?.toDate(),
       commissionRate: json['commission_rate'] as num? ?? 1,
       commissionItems: (json['commission_items'] as List<dynamic>? ?? const [])
           .map((e) => CommissionItem.fromJson(e as Map<String, dynamic>))
@@ -536,6 +543,9 @@ class SaleContract extends Contract {
         'withdrawal_amount': withdrawalAmount,
         'lawyer': lawyer,
         'delivery_date': Timestamp.fromDate(deliveryDate),
+        'remaining_due_date': remainingDueDate == null
+            ? null
+            : Timestamp.fromDate(remainingDueDate!),
         'commission_rate': commissionRate,
         'commission_items': commissionItems.map((i) => i.toJson()).toList(),
         'notes': notes,

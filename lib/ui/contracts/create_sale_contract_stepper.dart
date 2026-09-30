@@ -128,6 +128,10 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
 
   Currency _currency = Currency.iqd;
   DateTime _deliveryDate = DateTime.now();
+  // When the balance falls due. Null until set: a sale paid in full at
+  // signing has no such date, and a clause naming it then prints nothing
+  // rather than today's date, which nobody agreed to.
+  DateTime? _remainingDueDate;
   final _docs = ContractDocsController();
 
   /// Free text printed under the last clause. A sale contract has always had
@@ -161,6 +165,7 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
     _lawyer.text = e.lawyer;
     _currency = e.currency;
     _deliveryDate = e.deliveryDate;
+    _remainingDueDate = e.remainingDueDate;
     _docs.urls.addAll(e.attachmentUrls);
     _docs.printDocs = e.printAttachments;
     _notes = e.notes;
@@ -287,6 +292,7 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
       commissionItems: items,
       lawyer: _lawyer.text.trim(),
       deliveryDate: _deliveryDate,
+      remainingDueDate: _remainingDueDate,
       notes: _notes.trim(),
       agentName: existing?.agentName ?? user.displayName,
       attachmentUrls: attachmentUrls,
@@ -495,6 +501,14 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
 
                       _datePicker(S.deliveryDate, _deliveryDate, (d) => setState(() => _deliveryDate = d)),
 
+                      // Optional, so it offers a date rather than holding one:
+                      // empty until the user picks, and clearable after.
+                      _optionalDatePicker(
+                        S.remainingDueDate,
+                        _remainingDueDate,
+                        (d) => setState(() => _remainingDueDate = d),
+                      ),
+
                       const SizedBox(height: 12),
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -663,6 +677,53 @@ class _CreateSaleContractStepperState extends ConsumerState<CreateSaleContractSt
       );
 
   // فەنکشن بۆ هەڵبژاردنی بەروار بە دیزاینێکی مۆدێرن
+  /// A date that may legitimately be absent. Shows a dash until one is
+  /// picked, and offers to clear it afterwards — a sale paid in full at
+  /// signing has no balance falling due later, and the clause that names the
+  /// date then prints nothing instead of a date nobody agreed to.
+  Widget _optionalDatePicker(
+          String label, DateTime? value, ValueChanged<DateTime?> onPick) =>
+      Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () async {
+            final picked = await showDatePicker(
+              context: context,
+              initialDate: value ?? DateTime.now(),
+              firstDate: DateTime(2020),
+              lastDate: DateTime(2100),
+            );
+            if (picked != null) onPick(picked);
+          },
+          child: InputDecorator(
+            decoration: modernInputDecoration(
+                label: label, icon: Icons.event_available_rounded),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    value == null ? S.emptyValue : _date.format(value),
+                    style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: value == null
+                            ? AppColors.current.textMuted
+                            : AppColors.current.textBody),
+                  ),
+                ),
+                if (value != null)
+                  InkWell(
+                    onTap: () => onPick(null),
+                    child: Icon(Icons.close_rounded,
+                        size: 18, color: AppColors.current.textMuted),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      );
+
   Widget _datePicker(String label, DateTime value, ValueChanged<DateTime> onPick) =>
       Padding(
         padding: const EdgeInsets.only(bottom: 16),

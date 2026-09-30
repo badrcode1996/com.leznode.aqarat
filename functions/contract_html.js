@@ -230,6 +230,7 @@ function tokensFor(c, company, lang) {
     remaining: money(remaining),
     payment_method: c.payment_method || "",
     delivery_date: fmtDate(c.delivery_date),
+    remaining_date: fmtDate(c.remaining_due_date),
     late_fee: money(c.late_fee_per_day),
     withdrawal: money(c.withdrawal_amount),
     commission: String(c.commission_rate || 0) + "%",

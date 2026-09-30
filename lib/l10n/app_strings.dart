@@ -291,6 +291,7 @@ class AppStrings {
     required this.withdrawalAmount,
     required this.commissionRate,
     required this.deliveryDate,
+    required this.remainingDueDate,
     required this.lawyer,
     required this.pickFromList,
     required this.pickLawyer,
@@ -770,6 +771,8 @@ class AppStrings {
   final String withdrawalAmount;
   final String commissionRate;
   final String deliveryDate;
+  /// Sale contracts: when the balance falls due. Optional.
+  final String remainingDueDate;
   final String lawyer;
   final String pickFromList;
   final String pickLawyer;
@@ -1401,7 +1404,7 @@ class AppStrings {
         downPaymentMonths, paymentEveryMonths, guaranteeAmount, gracePeriod,
         rentalPurpose, lateFeePerDay, startDate, handoverDate, currencyType,
         notes, notesSection, notesHint, installmentsAuto, salePrice, downPaymentSale,
-        paymentMethod, withdrawalAmount, commissionRate, deliveryDate, lawyer,
+        paymentMethod, withdrawalAmount, commissionRate, deliveryDate, remainingDueDate, lawyer,
         pickFromList, pickLawyer, noLawyersHint, newRentContract, editRentContract,
         newSaleContract, editSaleContract, savingContract, updatingContract,
         rentContractUpdated, saleContractUpdated, docLanguage, langKurdish,
@@ -1713,6 +1716,7 @@ class AppStrings {
     withdrawalAmount: 'بڕی پاشگەزبوونەوە',
     commissionRate: 'ڕێژەی عمولە % (هەر لایەک)',
     deliveryDate: 'ڕێکەوتی تەسلیم',
+    remainingDueDate: 'بەرواری پارەی ماوە',
     lawyer: 'پارێزەر',
     pickFromList: 'هەڵبژاردن لە لیست',
     pickLawyer: 'هەڵبژاردنی پارێزەر',
@@ -2157,6 +2161,7 @@ class AppStrings {
     withdrawalAmount: 'مبلغ التراجع',
     commissionRate: 'نسبة العمولة % (لكل طرف)',
     deliveryDate: 'تاريخ التسليم',
+    remainingDueDate: 'تاريخ المبلغ المتبقي',
     lawyer: 'المحامي',
     pickFromList: 'اختيار من القائمة',
     pickLawyer: 'اختيار المحامي',
@@ -2603,6 +2608,7 @@ class AppStrings {
     withdrawalAmount: 'Withdrawal amount',
     commissionRate: 'Commission % (each party)',
     deliveryDate: 'Delivery date',
+    remainingDueDate: 'Balance due date',
     lawyer: 'Lawyer',
     pickFromList: 'Pick from the list',
     pickLawyer: 'Pick a lawyer',
