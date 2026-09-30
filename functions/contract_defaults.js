@@ -144,7 +144,7 @@ const DEFAULTS = {
   sale_clauses_ar: SALE_CLAUSES_AR,
   rent_clauses_en: RENT_CLAUSES_EN,
   sale_clauses_en: SALE_CLAUSES_EN,
-  primary_color: "0F2C59",
+  primary_color: "001E52",
   clause_font_size: 16,
   rent_clauses: RENT_CLAUSES,
   sale_clauses: [

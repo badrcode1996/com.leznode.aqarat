@@ -485,6 +485,9 @@ exports.renderReceiptPdf = onCall(
 
       const company = {
         nameKu: c.name_ku || "",
+        // The voucher's letterhead prints all three, as the contract does.
+        nameAr: c.name_ar || "",
+        nameEn: c.name_en || "",
         phone1: c.phone1 || "",
         phone2: c.phone2 || "",
         address: c.address || "",

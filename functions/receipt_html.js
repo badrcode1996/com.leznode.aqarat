@@ -137,6 +137,12 @@ function buildReceiptHtml(o) {
     return design.receiptHtml(vm, o);
   }
 
+  // A design may hand its sheet over as a function of the document — see
+  // contract_html.js. Resolved here so the fallback to design.css cannot
+  // stringify one into the page.
+  const sheet = design.receiptCss === undefined ? design.css : design.receiptCss;
+  const receiptCss = typeof sheet === "function" ? sheet(vm) : (sheet || "");
+
   const {accent, isPay, receivedBy, deliveredTo, footerCells, amountWords} = vm;
   const fs = vm.fontSize;
   const personKuAr = vm.personLabelKuAr;
@@ -254,7 +260,7 @@ body{font-family:'Speda';direction:rtl;color:#111;font-size:${fs};}
 /* A design written for the contract would otherwise push its page margins
    and letterhead rules onto the voucher, which is a different document
    entirely: receiptCss is what it prints here instead, "" for nothing. */
-${design.receiptCss === undefined ? (design.css || "") : design.receiptCss}
+${receiptCss}
 </style></head><body>
 ${copy("کۆپی کۆمپانیا")}
 ${copy("کۆپی زەبوون")}

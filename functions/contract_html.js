@@ -415,6 +415,12 @@ function buildContractHtml(o) {
   // A design may lift the contract number out of the card and print it in its
   // own block above — see design.metaHtml. When it does, the card drops the
   // row so the number does not appear twice on the page.
+  // The design's stylesheet. A function when the sheet depends on the
+  // document — the house design colours its bands with whatever the company
+  // picked in the app, which is only known here. A plain string otherwise.
+  const designCss = typeof design.css === "function" ?
+    design.css(vm) : (design.css || "");
+
   const meta = typeof design.metaHtml === "function" ?
     design.metaHtml(vm) : "";
   const numberRow = meta ? "" : row(T.contractNo, c.contract_number);
@@ -585,7 +591,7 @@ thead{display:table-header-group;}
    text on every printed page. Available on all plans. */
 .watermark{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
   width:62%;opacity:.06;z-index:-1;pointer-events:none;}
-${design.css || ""}
+${designCss}
 </style></head><body>
 ${watermark}
 <table class="page">

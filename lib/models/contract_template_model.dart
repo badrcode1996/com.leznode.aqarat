@@ -319,9 +319,9 @@ class ContractTemplate {
   static ContractTemplate defaults() => const ContractTemplate(
         rentTitle: 'گرێبەستی کرێ',
         saleTitle: 'گرێبەستی فرۆشتن',
-        primaryColorHex: '0F2C59',
+        primaryColorHex: '001E52',
         clauseFontSize: 16,
-        receiptColorHex: '1E4D8B',
+        receiptColorHex: '001E52',
         receiptFontSize: 10,
         rentClauses: _defaultRentClauses,
         saleClauses: _defaultSaleClauses,

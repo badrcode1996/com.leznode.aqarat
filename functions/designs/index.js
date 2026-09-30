@@ -52,10 +52,16 @@ const REGISTRY = {
   "crest_home_company": require("./crest_home_company"),
 };
 
-const EMPTY = {};
+/**
+ * The look every other company gets. Not in REGISTRY: that list is the
+ * companies whose paperwork was built to their own printed forms, which is
+ * what the app marks out in Super Admin — this is the house design, and being
+ * on it is not a distinction.
+ */
+const HOUSE = require("./house");
 
 /**
- * The design for a company, or an empty design (= the shared default look).
+ * The design for a company: its own if it has one, the house design if not.
  * @param {string} companyId Firestore `companies` document id.
  * @return {{css?: string, contractHtml?: Function, receiptHtml?: Function}}
  */
@@ -63,9 +69,9 @@ function resolveDesign(companyId) {
   // Own-property check: a company id like "constructor" or "toString" would
   // otherwise resolve to something off Object.prototype.
   if (!companyId || !Object.prototype.hasOwnProperty.call(REGISTRY, companyId)) {
-    return EMPTY;
+    return HOUSE;
   }
-  return REGISTRY[companyId] || EMPTY;
+  return REGISTRY[companyId] || HOUSE;
 }
 
 module.exports = {resolveDesign, REGISTRY};
