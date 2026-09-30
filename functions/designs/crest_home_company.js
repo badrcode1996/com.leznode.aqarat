@@ -150,15 +150,16 @@ const css = `
    English, Amiri for Arabic), so naming it is all this needs. */
 body{font-size:12pt !important;color:${SLATE};}
 
-/* Room for the letterhead the document draws itself: the header block repeats
-   through the table's thead, the footer is fixed to the foot of every page.
-   No bottom margin, deliberately — a fixed element sits at the bottom of the
-   page's CONTENT box, so any margin there would float the chevron bar above
-   the edge of the sheet instead of running it off the bottom as their printed
-   contract does. The space the footer needs is reserved by .footspace below,
-   which is what the page rehearsal measures. */
-@page{margin:8mm 14mm 0;}
-:root{--page-h:289mm;--text-w:182mm;
+/* Room for the letterhead the document draws itself: the header repeats
+   through the table's head, the footer bar through its foot.
+
+   The bottom margin is back. It was zero while the footer was a fixed box
+   that had to reach the edge of the sheet; now the bar is part of the flow,
+   and with no margin it printed hard against the paper's edge on every page
+   that filled up — while the last page, where the table ends early, had room
+   around it. 9mm gives every page the last one's footing. */
+@page{margin:8mm 14mm 9mm;}
+:root{--page-h:280mm;--text-w:182mm;
   /* Their contract ends with the signatures under the last clauses rather
      than on a page of their own. */
   --min-tail:3;}
