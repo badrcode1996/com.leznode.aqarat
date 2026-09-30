@@ -224,15 +224,19 @@ html[dir="ltr"] .ch-mark{text-align:right;}
 /* Phones on one side, address on the other, and the chevron bar under them.
    .foot is fixed, so this prints on every page as it does on theirs. */
 /* One brown bar across the foot, the same as the voucher's, with the phones
-   and the address inside it. It was two lines of text sitting above a gold
-   chevron strip, both inherited from the printed contract this design started
-   from; the company asked for their own.
+   and the address inside it.
 
-   .foot is fixed, so this prints at the foot of every page. */
-.foot{position:fixed;left:14mm;right:14mm;bottom:9mm;border:0;
-  background:${BROWN};color:#fff;border-radius:1mm;
-  padding:1.8mm 5mm;display:flex;justify-content:space-between;
-  align-items:center;gap:6mm;font-size:10pt;font-weight:bold;
+   Width is pinned to the text column — 210mm less the 14mm margins either
+   side — and centred, rather than offset from the page edges: a fixed box's
+   edges and the flow's edges are not the same thing in print, and the company
+   wants this bar exactly as long as the clause band above it. Its padding and
+   size match that band too, so the two are the same depth.
+
+   .foot is fixed, so it prints at the foot of every page. */
+.foot{position:fixed;bottom:9mm;left:50%;transform:translateX(-50%);
+  width:182mm;border:0;background:${BROWN};color:#fff;border-radius:1mm;
+  padding:1.6mm 6mm;display:flex;justify-content:space-between;
+  align-items:center;gap:6mm;font-size:12pt;font-weight:bold;
   white-space:pre-line;}
 /* The phone numbers read left to right whatever the page does. */
 .foot span:first-child{direction:ltr;letter-spacing:0.5px;}
