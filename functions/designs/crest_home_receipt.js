@@ -138,7 +138,7 @@ const receiptHtml = (vm) => {
     </div>
 
     <div class="foot">
-      <span>${e((c.nameKu || "") + branch)}</span>
+      <span>${e(NAME_KU.join(" ") + branch)}</span>
       ${c.address ? `<span class="addr">${e(c.address)}</span>` : ""}
       <span class="ph">${e(phones)}</span>
     </div>

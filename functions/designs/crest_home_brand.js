@@ -15,6 +15,6 @@ const WORDMARK = ["Crest Home", "Real Estate"];
  * Set by hand for the same reason as the wordmark — the company record holds
  * "کۆمپانیای کریست هۆم" as one line, and their voucher breaks it.
  */
-const NAME_KU = ["کۆمپانیای عقارات", "کریست هۆم"];
+const NAME_KU = ["کۆمپانیای عقارات", "کرێست هۆم"];
 
 module.exports = {WORDMARK, NAME_KU};

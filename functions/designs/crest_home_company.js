@@ -16,12 +16,12 @@
  */
 
 /**
- * Brand colours, read off the printed contract with a canvas (the scan is a
- * little faded, so these are the most saturated pixels found in each area —
- * the truest reading a photocopy allows). If the company sends their real
- * brand values, these two lines are the only place to change them.
+ * The slate the body text and the header rule are set in, read off the
+ * printed contract this design started from.
+ *
+ * The gold that went with it is gone: band by band the company asked for
+ * their own brown instead, until nothing was left in it.
  */
-const GOLD = "#F7C10A";
 const SLATE = "#2E3D45";
 
 /**
@@ -223,30 +223,19 @@ html[dir="ltr"] .ch-mark{text-align:right;}
 /* --- Footer ------------------------------------------------------------ */
 /* Phones on one side, address on the other, and the chevron bar under them.
    .foot is fixed, so this prints on every page as it does on theirs. */
-.foot{border:0;padding:0 14mm 12mm;display:flex;justify-content:space-between;
-  align-items:flex-end;font-size:10pt;font-weight:bold;color:${SLATE};
-  gap:8mm;white-space:pre-line;}
-.foot span{display:inline-block;}
-/* A phone and a pin, drawn rather than fetched: no network in the renderer. */
-.foot span:first-child::before, .foot span:last-child::before{
-  content:"";display:inline-block;width:4.2mm;height:4.2mm;
-  margin-inline-end:2mm;vertical-align:-0.9mm;background-size:contain;
-  background-repeat:no-repeat;}
-.foot span:first-child::before{background-image:url("data:image/svg+xml;utf8,\
-<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>\
-<circle cx='12' cy='12' r='12' fill='%23${GOLD.slice(1)}'/>\
-<path fill='%23fff' d='M17.4 15.1l-2-.9a.9.9 0 00-1 .2l-.8.9a8 8 0 01-3.9-3.9l.9-.8a.9.9 0 00.2-1l-.9-2a.9.9 0 00-1-.5l-1.7.4a1 1 0 00-.8 1c.2 5 4.2 9 9.2 9.2a1 1 0 001-.8l.4-1.7a.9.9 0 00-.6-1.1z'/></svg>");}
-.foot span:last-child::before{background-image:url("data:image/svg+xml;utf8,\
-<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>\
-<circle cx='12' cy='12' r='12' fill='%23${GOLD.slice(1)}'/>\
-<path fill='%23fff' d='M12 5.5a4.4 4.4 0 00-4.4 4.4c0 3.3 4.4 8.6 4.4 8.6s4.4-5.3 4.4-8.6A4.4 4.4 0 0012 5.5zm0 6a1.6 1.6 0 110-3.2 1.6 1.6 0 010 3.2z'/></svg>");}
-/* The bar: gold across, with two slate chevrons at the outer end. */
-.foot::after{content:"";position:absolute;left:0;right:0;bottom:0;height:7mm;
-  background:
-    linear-gradient(115deg, transparent 0 62%, ${SLATE} 62% 70%,
-      transparent 70% 73%, ${SLATE} 73% 81%, transparent 81%),
-    linear-gradient(${GOLD}, ${GOLD});
-  background-size:100% 100%;}
+/* One brown bar across the foot, the same as the voucher's, with the phones
+   and the address inside it. It was two lines of text sitting above a gold
+   chevron strip, both inherited from the printed contract this design started
+   from; the company asked for their own.
+
+   .foot is fixed, so this prints at the foot of every page. */
+.foot{position:fixed;left:14mm;right:14mm;bottom:9mm;border:0;
+  background:${BROWN};color:#fff;border-radius:1mm;
+  padding:1.8mm 5mm;display:flex;justify-content:space-between;
+  align-items:center;gap:6mm;font-size:10pt;font-weight:bold;
+  white-space:pre-line;}
+/* The phone numbers read left to right whatever the page does. */
+.foot span:first-child{direction:ltr;letter-spacing:0.5px;}
 
 /* What the footer takes out of every page: the phones and address, the bar,
    and air above them. The rehearsal subtracts this, so the clauses stop clear
