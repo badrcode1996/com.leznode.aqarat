@@ -102,10 +102,11 @@ const cardHtml = (vm) => {
  */
 const footHtml = (vm) => {
   const c = vm.company || {};
-  const phones = [c.phone1, c.phone2].filter(Boolean).join("   /   ");
+  // Latin digits, dashed, in the order they are dialled — see phone.js.
+  const phones = vm.phonesText;
   if (!phones && !c.address) return "";
   return `<div class="hs-foot">
-    <span class="hs-ph">${vm.esc(phones)}</span>
+    <span class="hs-ph">${vm.plain(phones)}</span>
     <span>${vm.esc(c.address || "")}</span>
   </div>`;
 };

@@ -10,6 +10,7 @@
 const {DEFAULTS, LEGACY_TITLES} = require("./contract_defaults");
 const {moneyWords} = require("./number_words");
 const {resolveDesign} = require("./designs");
+const {joinPhones} = require("./designs/phone");
 
 /**
  * Every fixed string on the document, per language. The contract is rendered
@@ -325,6 +326,12 @@ function contractViewModel(o) {
       [company.nameAr, company.nameEn] :
       [company.nameKu, company.nameAr, company.nameEn]).filter(Boolean),
     logoUri: company.logo_data_uri || "",
+    /**
+     * The company's numbers on one line, Latin-digited and dashed. A
+     * design prints THIS rather than the raw fields: see designs/phone.js
+     * for why a phone number cannot go through esc.
+     */
+    phonesText: joinPhones([company.phone1, company.phone2]),
     /** Attachment photos as data: URIs, for appendix pages. */
     attachments: Array.isArray(o.attachments) ? o.attachments : [],
     /** [label, value] pairs describing the property. */
@@ -335,7 +342,7 @@ function contractViewModel(o) {
       [label.area, (c.area || 0) + label.areaUnit],
     ],
     footerCells: [
-      [company.phone1, company.phone2].filter(Boolean).join(" / "),
+      joinPhones([company.phone1, company.phone2], " / "),
       company.address,
     ].filter(Boolean),
     fontRegB64: o.fontRegB64,
@@ -344,6 +351,8 @@ function contractViewModel(o) {
     // language like the shared layout's does: a design that printed through
     // the module-level one put Arabic-Indic digits into the English edition.
     esc: isRtl(lang) ? escArabicNum : escHtml,
+    /** Escapes, but leaves the digits as typed — for phone numbers. */
+    plain: escHtml,
     money, fmtDate, applyTokens, arabicNum,
   };
 }
@@ -620,7 +629,7 @@ ${watermark}
 </table>
 ${attachmentsHtml}
 ${footerCells.length && !footInner ? `<div class="foot">${footerCells.map((x) =>
-    `<span>${esc(x)}</span>`).join("")}</div>` : ""}
+    `<span>${escHtml(x)}</span>`).join("")}</div>` : ""}
 <script>
 /*
  * Drops the signatures to the foot of the last page.

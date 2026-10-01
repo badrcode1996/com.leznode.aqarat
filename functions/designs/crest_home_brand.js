@@ -17,4 +17,15 @@ const WORDMARK = ["Crest Home", "Real Estate"];
  */
 const NAME_KU = ["کۆمپانیای عقارات", "کرێست هۆم"];
 
-module.exports = {WORDMARK, NAME_KU};
+/**
+ * The brown of their logo, which both their documents print in instead of the
+ * house navy. Taken as the commonest ink colour in the logo they sent (the
+ * dominant bins were #582808 and #683818; this sits between them, dark enough
+ * to carry white text on a band).
+ *
+ * It lives here, beside the wordmark, because the contract and the voucher
+ * both need it and neither file can require the other.
+ */
+const BROWN = "#6B3A18";
+
+module.exports = {WORDMARK, NAME_KU, BROWN};

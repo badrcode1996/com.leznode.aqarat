@@ -25,8 +25,9 @@
  *     phones and an address; the address takes that line instead.
  */
 
-/** The colour comes from the view model, so the app's picker still works. */
-const {WORDMARK, NAME_KU} = require("./crest_home_brand");
+const {WORDMARK, NAME_KU, BROWN} = require("./crest_home_brand");
+const {isFactory} = require("./factory_colour");
+const {joinPhones} = require("./phone");
 
 /**
  * Escapes for the page but leaves the digits as typed. vm.esc rewrites 0-9 as
@@ -40,7 +41,11 @@ const receiptHtml = (vm) => {
   const e = vm.esc;
   const r = vm.receipt || {};
   const c = vm.company || {};
-  const accent = vm.accent;
+  // Their brown, unless somebody picked a colour for this company in the
+  // app. A colour the app itself stored as its factory setting is not
+  // somebody picking — see factory_colour.js — which is what twice printed
+  // these vouchers in the house blue.
+  const accent = isFactory(vm.accent) ? BROWN : vm.accent;
 
   // On an external voucher the note line is headed "بڕی ماوە" — the balance
   // left — because that is what the company writes there, and it prints even
@@ -101,7 +106,7 @@ const receiptHtml = (vm) => {
   const amountFigure =
     [vm.money(r.amount), SHORT_CURRENCY[r.currency]].filter(Boolean).join(" ");
 
-  const phones = [c.phone1, c.phone2].filter(Boolean).join("   ");
+  const phones = joinPhones([c.phone1, c.phone2], "   ");
   const branch = r.branch ? ` / ${r.branch}` : "";
 
   const voucher = () => `
@@ -140,7 +145,7 @@ const receiptHtml = (vm) => {
     <div class="foot">
       <span>${e(NAME_KU.join(" ") + branch)}</span>
       ${c.address ? `<span class="addr">${e(c.address)}</span>` : ""}
-      <span class="ph">${e(phones)}</span>
+      <span class="ph">${plain(phones)}</span>
     </div>
   </div>`;
 

@@ -25,16 +25,6 @@
 const SLATE = "#2E3D45";
 
 /**
- * The brown of their logo, which their vouchers print in instead of the house
- * blue. Taken as the commonest ink colour in the logo they sent (the dominant
- * bins were #582808 and #683818; this sits between them, dark enough to carry
- * white text on the banner).
- *
- * A default, not an override — a colour picked in the app still wins.
- */
-const BROWN = "#6B3A18";
-
-/**
  * SLOGAN is the pair sitting on the rule under the header — the printed sheet
  * they modelled this on reads "your dream, our goal" there. Left blank until
  * the company gives us their own wording: inventing a slogan for a firm is not
@@ -47,7 +37,7 @@ const BROWN = "#6B3A18";
  * That sheet also carries a QR code beside the header. Crest Home asked for
  * none, so there is none here.
  */
-const {WORDMARK, NAME_KU} = require("./crest_home_brand");
+const {WORDMARK, NAME_KU, BROWN} = require("./crest_home_brand");
 
 /**
  * The letterhead, laid out like the one on their voucher: the Kurdish name on
@@ -137,9 +127,10 @@ const cardHtml = (vm) => {
  */
 const footHtml = (vm) => {
   const c = vm.company;
-  const phones = [c.phone1, c.phone2].filter(Boolean).join("   /   ");
+  // Latin digits, dashed, in the order they are dialled — see phone.js.
+  const phones = vm.phonesText;
   return `<div class="ch-foot">
-    <span class="ch-ph">${vm.esc(phones)}</span>
+    <span class="ch-ph">${vm.plain(phones)}</span>
     <span>${vm.esc(c.address || "")}</span>
   </div>`;
 };

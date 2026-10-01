@@ -13,16 +13,7 @@
 const NAVY = "#001E52";
 const GOLD = "#F79226";
 
-/**
- * The colours the app has shipped as "the default" over time. A company that
- * never touched the colour picker has one of these stored in its template, so
- * they mean "unset" rather than "chosen": they map to the navy above, and the
- * house look reaches those companies without anyone reopening the editor.
- *
- * Anything else in that field was picked by a person and is left alone — the
- * picker still means something.
- */
-const LEGACY = new Set(["0F2C59", "1E4D8B", "03286E"]);
+const {isFactory} = require("./factory_colour");
 
 /**
  * The document's main ink: the company's own colour when it chose one, the
@@ -31,9 +22,6 @@ const LEGACY = new Set(["0F2C59", "1E4D8B", "03286E"]);
  * @param {string} accent vm.accent, e.g. "#0F2C59"
  * @return {string} a CSS colour
  */
-const ink = (accent) => {
-  const bare = String(accent || "").replace(/^#/, "").toUpperCase();
-  return (!bare || LEGACY.has(bare)) ? NAVY : "#" + bare;
-};
+const ink = (accent) => (isFactory(accent) ? NAVY : "#" + String(accent).replace(/^#/, ""));
 
-module.exports = {NAVY, GOLD, ink};
+module.exports = {NAVY, GOLD, ink, isFactory};

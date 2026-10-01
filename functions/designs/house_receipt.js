@@ -21,6 +21,7 @@
  */
 
 const {GOLD, ink} = require("./house_brand");
+const {joinPhones} = require("./phone");
 
 /**
  * Escapes for the page but leaves the digits as typed. vm.esc rewrites 0-9 as
@@ -90,7 +91,7 @@ const receiptHtml = (vm) => {
   const amountFigure =
     [vm.money(r.amount), SHORT_CURRENCY[r.currency]].filter(Boolean).join(" ");
 
-  const phones = [c.phone1, c.phone2].filter(Boolean).join("   ");
+  const phones = joinPhones([c.phone1, c.phone2], "   ");
   const branch = r.branch ? ` / ${r.branch}` : "";
   // The name in the foot bar: the Kurdish one, or whatever the company has.
   const footName = (c.nameKu || c.nameAr || c.nameEn || "") + branch;
@@ -139,7 +140,7 @@ const receiptHtml = (vm) => {
     ${footName || phones || c.address ? `<div class="foot">
       <span>${e(footName)}</span>
       ${c.address ? `<span class="addr">${e(c.address)}</span>` : ""}
-      <span class="ph">${e(phones)}</span>
+      <span class="ph">${plain(phones)}</span>
     </div>` : ""}
   </div>`;
 

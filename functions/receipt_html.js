@@ -8,6 +8,7 @@
  */
 
 const {resolveDesign} = require("./designs");
+const {fmtPhone, joinPhones} = require("./designs/phone");
 const {moneyWords} = require("./number_words");
 
 const TYPE = {
@@ -119,10 +120,17 @@ function receiptViewModel(o) {
      */
     amountWords: moneyWords(r.amount, r.currency),
     logoUri: c.logo_data_uri || "",
-    footerCells: [c.phone1, c.phone2, c.address].filter(Boolean),
+    // The numbers Latin-digited and dashed — see designs/phone.js. They are
+    // printed with plain below, not esc, so they stay that way.
+    footerCells: [fmtPhone(c.phone1), fmtPhone(c.phone2), c.address]
+        .filter(Boolean),
+    /** The company's numbers on one line, for a design with its own bar. */
+    phonesText: joinPhones([c.phone1, c.phone2]),
     fontRegB64: o.fontRegB64,
     fontBoldB64: o.fontBoldB64,
     esc, money, fmtDate,
+    /** Escapes, but leaves the digits as typed — for phone numbers. */
+    plain: escHtml,
   };
 }
 
@@ -148,7 +156,7 @@ function buildReceiptHtml(o) {
   const personKuAr = vm.personLabelKuAr;
   const ty = [vm.titleKu, vm.titleAr, vm.titleEn];
 
-  const phones = [c.phone1, c.phone2].filter(Boolean).join(" / ");
+
 
   const field = (kuAr, val, opts) => {
     opts = opts || {};
@@ -200,7 +208,7 @@ function buildReceiptHtml(o) {
       ${sign("وەرگر / تسلیم الی", "Delivered To", deliveredTo)}
     </div>
     ${footerCells.length ? `<div class="footer" style="background:${accent}">
-      ${footerCells.map((x) => `<span>${esc(x)}</span>`)
+      ${footerCells.map((x) => `<span>${escHtml(x)}</span>`)
       .join('<span class="sep"></span>')}
     </div>` : ""}
   </div>`;
